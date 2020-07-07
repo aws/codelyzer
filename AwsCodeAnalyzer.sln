@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AwsCodeAnalyzer", "src\AwsCodeAnalyzer\AwsCodeAnalyzer.csproj", "{BDE5AC46-B937-4EAE-92F8-AE59E9005C29}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AwsCodeAnalyzer.Build", "src\AwsCodeAnalyzer.Build\AwsCodeAnalyzer.Build.csproj", "{DE7DE201-A18C-49A1-9501-EC0053FF0B89}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AwsCodeAnalyzer.Model", "src\AwsCodeAnalyzer.Model\AwsCodeAnalyzer.Model.csproj", "{19F5F605-BC7B-4122-965C-3B2468C8C227}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AwsCodeAnalyzer.CSharp", "src\AwsCodeAnalyzer.CSharp\AwsCodeAnalyzer.CSharp.csproj", "{D6C91EEA-08F6-48D5-9D26-AB3C7CA36AF1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AwsCodeAnalyzer.Common", "src\AwsCodeAnalyzer.Common\AwsCodeAnalyzer.Common.csproj", "{E85A6836-B5BB-4D10-8AD0-88BF8E093C96}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AwsCodeAnalyzerTests", "tst\AwsCodeAnalyzerTests\AwsCodeAnalyzerTests.csproj", "{D67521E9-CF96-4F4E-ABC9-4DB321AD99C2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BDE5AC46-B937-4EAE-92F8-AE59E9005C29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDE5AC46-B937-4EAE-92F8-AE59E9005C29}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDE5AC46-B937-4EAE-92F8-AE59E9005C29}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDE5AC46-B937-4EAE-92F8-AE59E9005C29}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE7DE201-A18C-49A1-9501-EC0053FF0B89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE7DE201-A18C-49A1-9501-EC0053FF0B89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE7DE201-A18C-49A1-9501-EC0053FF0B89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE7DE201-A18C-49A1-9501-EC0053FF0B89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19F5F605-BC7B-4122-965C-3B2468C8C227}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19F5F605-BC7B-4122-965C-3B2468C8C227}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19F5F605-BC7B-4122-965C-3B2468C8C227}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19F5F605-BC7B-4122-965C-3B2468C8C227}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6C91EEA-08F6-48D5-9D26-AB3C7CA36AF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6C91EEA-08F6-48D5-9D26-AB3C7CA36AF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6C91EEA-08F6-48D5-9D26-AB3C7CA36AF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6C91EEA-08F6-48D5-9D26-AB3C7CA36AF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E85A6836-B5BB-4D10-8AD0-88BF8E093C96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E85A6836-B5BB-4D10-8AD0-88BF8E093C96}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E85A6836-B5BB-4D10-8AD0-88BF8E093C96}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E85A6836-B5BB-4D10-8AD0-88BF8E093C96}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D67521E9-CF96-4F4E-ABC9-4DB321AD99C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D67521E9-CF96-4F4E-ABC9-4DB321AD99C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D67521E9-CF96-4F4E-ABC9-4DB321AD99C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D67521E9-CF96-4F4E-ABC9-4DB321AD99C2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
