@@ -21,12 +21,12 @@ namespace AwsCodeAnalyzer.Model
         public string SemanticReturnType { get; set; }
         
         [JsonProperty("semantic-properties", Order = 14)]
-        public List<string> SemanticProperties { get; set; }
+        public UstList<string> SemanticProperties { get; set; }
         public MethodDeclaration()
             : base(TYPE)
         {
-            Parameters = new List<Parameter>();
-            SemanticProperties = new List<string>();
+            Parameters = new UstList<Parameter>();
+            SemanticProperties = new UstList<string>();
         }
     }
 }

@@ -10,4 +10,8 @@
       <PackageReference Include="Serilog" Version="2.9.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\AwsCodeAnalyzer.Model\AwsCodeAnalyzer.Model.csproj" />
+    </ItemGroup>
+
 </Project>

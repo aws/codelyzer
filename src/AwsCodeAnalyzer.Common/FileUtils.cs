@@ -16,17 +16,20 @@ namespace AwsCodeAnalyzer.Common
             using (StreamWriter outputFile = new StreamWriter(Path.Combine(dir, file)) )
             {
                 await outputFile.WriteAsync(content);
-                Console.WriteLine("D");
             }
 
             return Path.Combine(dir, file);
+        }
+        
+        public static string ReadFile(string pathFile)
+        {
+            return File.ReadAllText(pathFile);
         }
 
         public static void CreateDirectory(string path)
         {
             System.IO.Directory.CreateDirectory(path);
         }
-        
         
         public static string GetRelativePath(string filePath, string dirPath)
         {

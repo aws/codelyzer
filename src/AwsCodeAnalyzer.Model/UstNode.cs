@@ -21,12 +21,12 @@ namespace AwsCodeAnalyzer.Model
         public UstNode Parent { get; set; }
 
         [JsonProperty("children", Order = 100)]
-        public List<UstNode> Children { get; set; }
+        public UstList<UstNode> Children { get; set; }
 
         public UstNode(NodeType nodeType)
         {
             NodeType = nodeType;
-            Children = new List<UstNode>();
+            Children = new UstList<UstNode>();
         }
     }
 

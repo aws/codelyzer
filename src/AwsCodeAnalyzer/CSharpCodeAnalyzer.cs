@@ -74,7 +74,7 @@ namespace AwsCodeAnalyzer
             Logger.Debug("Analyzing the project: " + projectResult.ProjectPath);
             ProjectWorkspace workspace = new ProjectWorkspace(projectResult.ProjectPath)
             {
-                SourceFiles = projectResult.SourceFiles,
+                SourceFiles = new UstList<string>(projectResult.SourceFiles),
                 BuildErrors = projectResult.BuildErrors,
                 BuildErrorsCount = projectResult.BuildErrors.Count
             };
@@ -91,7 +91,7 @@ namespace AwsCodeAnalyzer
 
                 CSharpRoslynProcessor processor = new CSharpRoslynProcessor(codeContext);
                 var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
-                workspace.SourceFileResults.Add(result);
+                workspace.SourceFileResults.Add((RootUstNode)result);
             }
             
             return workspace;
