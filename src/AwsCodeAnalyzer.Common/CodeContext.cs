@@ -9,11 +9,13 @@ namespace AwsCodeAnalyzer.Common
             SyntaxTree syntaxTree,
             string workspacePath,
             string sourceFilePath,
+            AnalyzerConfiguration analyzerConfiguration,
             ILogger logger)
         {
             SemanticModel = semanticModel;
             SyntaxTree = syntaxTree;
             WorkspacePath = workspacePath;
+            AnalyzerConfiguration = analyzerConfiguration;
             SourceFilePath = sourceFilePath;
             Logger = logger;
         }
@@ -24,6 +26,8 @@ namespace AwsCodeAnalyzer.Common
         public string WorkspacePath { get; private set;  }
         
         public string SourceFilePath { get; private set; }
+        
+        public AnalyzerConfiguration AnalyzerConfiguration { get; private set; }
         
         public ILogger Logger { get; private set; }
     }

@@ -12,10 +12,10 @@ namespace AwsCodeAnalyzer.Model
         public const string RootIdName = "source-file-root";
 
         public const int UsingDirectiveId = 102;
-        public const string UsingDirectiveIdName = "using-dir-or-import";
+        public const string UsingDirectiveIdName = "using-directive";
         
         public const int NamespaceId = 103;
-        public const string NamespaceIdName = "namespace-or-package";
+        public const string NamespaceIdName = "namespace";
         
         public const int ClassId = 104;
         public const string ClassIdName = "class";
@@ -31,5 +31,9 @@ namespace AwsCodeAnalyzer.Model
         
         public const int InvocationId = 108;
         public const string InvocationIdName = "invocation";
+        
+        public const int ObjectCreationId = 109;
+        public const string ObjectCreationIdName = "object-creation";
+
     }
 }

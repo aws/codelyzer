@@ -4,9 +4,9 @@ namespace AwsCodeAnalyzer
 {
     public static class CodeAnalyzerFactory
     {
-        public static CodeAnalyzer GetAnalyzer(AnalyzerOptions options, ILogger logger)
+        public static CodeAnalyzer GetAnalyzer(AnalyzerConfiguration configuration, ILogger logger)
         {
-            return new CSharpCodeAnalyzer(options, logger);
+            return new CSharpCodeAnalyzer(configuration, logger);
         }
     }
 }

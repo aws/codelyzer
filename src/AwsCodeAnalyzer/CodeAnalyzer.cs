@@ -6,12 +6,12 @@ namespace AwsCodeAnalyzer
 {
     public abstract class CodeAnalyzer
     {
-        protected readonly AnalyzerOptions AnalyzerOptions;
+        protected readonly AnalyzerConfiguration AnalyzerConfiguration;
         protected readonly ILogger Logger;
 
-        protected CodeAnalyzer(AnalyzerOptions options, ILogger logger)
+        protected CodeAnalyzer(AnalyzerConfiguration configuration, ILogger logger)
         {
-            AnalyzerOptions = options;
+            AnalyzerConfiguration = configuration;
             Logger = logger;
         }
         

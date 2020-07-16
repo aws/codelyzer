@@ -12,8 +12,8 @@ namespace AwsCodeAnalyzer
 {
     public class CSharpCodeAnalyzer : CodeAnalyzer
     {
-        public CSharpCodeAnalyzer(AnalyzerOptions options, ILogger logger)
-            : base(options, logger)
+        public CSharpCodeAnalyzer(AnalyzerConfiguration configuration, ILogger logger)
+            : base(configuration, logger)
         {
         }
 
@@ -39,34 +39,36 @@ namespace AwsCodeAnalyzer
             var projectBuildResults = await builder.Build();
 
             List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
-
             foreach (var projectBuildResult in projectBuildResults)
             {
                 var workspaceResult =  await AnalyzeProject(projectBuildResult);
                 workspaceResults.Add(workspaceResult);
             }
 
-            List<AnalyzerResult> analyzerResults = new List<AnalyzerResult>();
-            FileUtils.CreateDirectory(AnalyzerOptions.JsonOutputPath);
-            
-            foreach (var workspaceResult in workspaceResults)
-            {
-                Logger.Debug("Generating Json file for " + workspaceResult.ProjectName);
-                var jsonOutput = SerializeUtils.ToJson<ProjectWorkspace>(workspaceResult);
-                var jsonFilePath = await FileUtils.WriteFileAsync(AnalyzerOptions.JsonOutputPath, 
-                    workspaceResult.ProjectName+".json", jsonOutput);
-                
-                Logger.Debug("Generated Json file  " + jsonFilePath);
-                
-                AnalyzerResult result = new AnalyzerResult
-                {
-                    ProjectResult = workspaceResult,
-                    OutputJsonFilePath = jsonFilePath
-                };
-                analyzerResults.Add(result);
-            }
+            //Generate Output result
+            var analyzerResults = workspaceResults.Select(w => 
+                new AnalyzerResult() { ProjectResult = w }).ToList();
+
+            await GenerateOptionalOutput(analyzerResults);
 
             return analyzerResults;
+        }
+
+        private async Task GenerateOptionalOutput(List<AnalyzerResult> analyzerResults)
+        {
+            if (AnalyzerConfiguration.ExportSettings.GenerateJsonOutput)
+            {
+                FileUtils.CreateDirectory(AnalyzerConfiguration.ExportSettings.OutputPath);
+                foreach (var analyzerResult in analyzerResults)
+                {
+                    Logger.Debug("Generating Json file for " + analyzerResult.ProjectResult.ProjectName);
+                    var jsonOutput = SerializeUtils.ToJson<ProjectWorkspace>(analyzerResult.ProjectResult);
+                    var jsonFilePath = await FileUtils.WriteFileAsync(AnalyzerConfiguration.ExportSettings.OutputPath, 
+                        analyzerResult.ProjectResult.ProjectName+".json", jsonOutput);
+                    analyzerResult.OutputJsonFilePath = jsonFilePath;
+                    Logger.Debug("Generated Json file  " + jsonFilePath);
+                }
+            }
         }
 
         private async Task<ProjectWorkspace> AnalyzeProject(ProjectBuildResult projectResult)
@@ -85,6 +87,7 @@ namespace AwsCodeAnalyzer
                     fileBuildResult.SyntaxTree,
                     workspace.ProjectRootPath,
                     fileBuildResult.SourceFilePath,
+                    AnalyzerConfiguration,
                     Log.Logger);
 
                 Log.Logger.Debug("Analyzing: " + fileBuildResult.SourceFileFullPath);

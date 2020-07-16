@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using AwsCodeAnalyzer.Build;
 using AwsCodeAnalyzer.Common;
@@ -18,29 +19,57 @@ namespace AwsCodeAnalyzer
     {
         static async Task Main(string[] args)
         {
-            string path = 
-            path = "/Users/shiramsn/workplace/encore/src/AmazonSourceCodeAnalyzerRoslyn/AmazonSourceCodeAnalyzerRoslyn.csproj";
-           
+            if (args == null || args.Length != 2)
+            {
+                Console.WriteLine("Missing Arguments. <ProjectFilePath> <OutputFilePath>");
+                return;
+            }
+            
+            string projectPath = args[0];
+            string outputPath = args[1];
+
+            Console.WriteLine("Project file: " + projectPath);
+            Console.WriteLine("Output path: " + outputPath);
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
                 .WriteTo.File("log-.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
-            AnalyzerOptions options = new AnalyzerOptions(AnalyzerOptions.LANGUAGE_CSHARP);
-            options.JsonOutputPath = @"/Users/shiramsn/encore/analysis";
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    OutputPath = outputPath
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true
+                }
+            };
             
-            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(options, Log.Logger);
-            var analyzerResult = await analyzer.AnalyzeProject(path);
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, Log.Logger);
+            var analyzerResult = await analyzer.AnalyzeProject(projectPath);
             Console.WriteLine("Exported to : " + analyzerResult.OutputJsonFilePath);
-            
+            var sourcefile = analyzerResult.ProjectResult.SourceFileResults.First();
+            foreach (var invocation in sourcefile.AllInvocationExpressions())
+            {
+                Console.WriteLine(invocation.MethodName + ":" + invocation.SemanticMethodSignature);
+            }
+
             // Verify the exported file
-            string exportJsonFile = analyzerResult.OutputJsonFilePath;
-            string newFile = Path.GetFileName(exportJsonFile) + ".export";
+            /*string exportJsonFile = analyzerResult.OutputJsonFilePath;
+            string newFile = Path.GetFileName(projectPath) + ".export";
             var exportedProject = SerializeUtils.FromJson<ProjectWorkspace>(FileUtils.ReadFile(exportJsonFile));
             string exportedJson = SerializeUtils.ToJson(exportedProject);
-            var exportResult = await FileUtils.WriteFileAsync(options.JsonOutputPath, newFile, exportedJson);
-            Console.WriteLine("Re-exported to : " + exportResult);
+            var exportResult = await FileUtils.WriteFileAsync(
+                configuration.ExportSettings.OutputPath, newFile,
+                exportedJson);
+            Console.WriteLine("Re-exported to : " + exportResult);*/
         }
     }
 }

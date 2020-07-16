@@ -15,7 +15,7 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("modifiers", Order = 11)]
         public string Modifiers { get; set; }
         
-        [JsonProperty("semantic-namespace-or-package", Order = 12)]
+        [JsonProperty("semantic-namespace", Order = 12)]
         public string SemanticNamespace { get; set; }
         
         [JsonProperty("caller-identifier", Order = 13) ]
@@ -39,10 +39,17 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("semantic-properties", Order = 19)]
         public List<string> SemanticProperties { get; set; }
 
+        public InvocationExpression(NodeType type)
+            : base(type)
+        {
+            SemanticProperties = new List<string>();
+        }
+        
         public InvocationExpression()
             : base(TYPE)
         {
             SemanticProperties = new List<string>();
+            Parameters = new List<Parameter>();
         }
     }
 }

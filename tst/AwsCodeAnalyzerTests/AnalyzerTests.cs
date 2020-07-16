@@ -23,9 +23,21 @@ namespace AwsCodeAnalyzer.Tests
         {
             string projectPath = GetPath(@"Projects\CodelyzerDummy\CodelyzerDummy.csproj");
 
-            AnalyzerOptions options = new AnalyzerOptions(AnalyzerOptions.LANGUAGE_CSHARP);
-            options.JsonOutputPath = "/tmp/unittests";
-            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(options, Logger.None);
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, Logger.None);
             AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
             Assert.True(result != null);
         }

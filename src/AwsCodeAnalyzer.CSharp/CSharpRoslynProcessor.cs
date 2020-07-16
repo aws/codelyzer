@@ -21,7 +21,7 @@ namespace AwsCodeAnalyzer.CSharp
         protected SemanticModel SemanticModel { get => context.SemanticModel; }
         protected SyntaxTree SyntaxTree { get => context.SyntaxTree; }
         protected ILogger Logger { get => context.Logger; }
-
+        protected MetaDataSettings MetaDataSettings { get => context.AnalyzerConfiguration.MetaDataSettings; } 
         protected RootUstNode RootNode { get; set; }
 
         public CSharpRoslynProcessor(CodeContext context)
@@ -132,17 +132,31 @@ namespace AwsCodeAnalyzer.CSharp
         {
             BlockStatementHandler handler = new BlockStatementHandler(context, node);
             var result = handler.UstNode;
-            var expressions = node.DescendantNodes().OfType<InvocationExpressionSyntax>();
-            foreach (var expression in expressions)
+
+            if (MetaDataSettings.MethodInvocations)
             {
-                result.Children.Add(VisitInvocationExpression((InvocationExpressionSyntax)expression));
+                var expressions = node.DescendantNodes().OfType<InvocationExpressionSyntax>();
+                foreach (var expression in expressions)
+                {
+                    result.Children.Add(VisitInvocationExpression((InvocationExpressionSyntax) expression));
+                }
             }
             
-            var literalExpressions = node.DescendantNodes().OfType<LiteralExpressionSyntax>();
-            foreach (var expression in literalExpressions)
+            var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
+            foreach (var expression in objCreations)
             {
-                result.Children.Add(VisitLiteralExpression((LiteralExpressionSyntax)expression));
+                result.Children.Add(VisitObjectCreationExpression((ObjectCreationExpressionSyntax) expression));
             }
+
+            if (MetaDataSettings.LiteralExpressions)
+            {
+                var literalExpressions = node.DescendantNodes().OfType<LiteralExpressionSyntax>();
+                foreach (var expression in literalExpressions)
+                {
+                    result.Children.Add(VisitLiteralExpression((LiteralExpressionSyntax) expression));
+                }
+            }
+
             return result;
         }
 
@@ -153,13 +167,23 @@ namespace AwsCodeAnalyzer.CSharp
 
         public override UstNode VisitLiteralExpression(LiteralExpressionSyntax node)
         {
+            if (!MetaDataSettings.LiteralExpressions) return null;
+            
             LiteralExpressionHandler handler = new LiteralExpressionHandler(context, node);
             return handler.UstNode;
         }
 
         public override UstNode VisitInvocationExpression(InvocationExpressionSyntax node)
         {
+            if (!MetaDataSettings.MethodInvocations) return null;
+
             InvocationExpressionHandler handler = new InvocationExpressionHandler(context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
+        {
+            ObjectCreationExpressionHandler handler = new ObjectCreationExpressionHandler(context, node);
             return handler.UstNode;
         }
     }
