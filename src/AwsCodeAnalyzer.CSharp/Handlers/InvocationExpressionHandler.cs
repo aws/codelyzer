@@ -34,13 +34,16 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             else
             {
                 // Local invocations
-                Model.MethodName = syntaxNode.Expression.ToString();
+                if (syntaxNode.Expression != null)
+                    Model.MethodName = syntaxNode.Expression.ToString();
             }
 
             foreach (var argumentSyntax in syntaxNode.ArgumentList.Arguments)
             {
                 Parameter parameter = new Parameter();
-                parameter.Name = argumentSyntax.Expression.ToString();
+                if (argumentSyntax.Expression != null)
+                    parameter.Name = argumentSyntax.Expression.ToString();
+                
                 parameter.SemanticType = 
                     SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel);
             }
@@ -53,11 +56,16 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             
             //Set semantic details
             Model.MethodName = invokedSymbol.Name;
-            Model.SemanticNamespace = invokedSymbol.ContainingNamespace.ToString();
-            Model.SemanticMethodSignature = invokedSymbol.ToString();
-            Model.SemanticOriginalDefinition = invokedSymbol.OriginalDefinition.ToString();
-            Model.SemanticReturnType = invokedSymbol.ReturnType.Name;
+            if (invokedSymbol.ContainingNamespace != null)
+                Model.SemanticNamespace = invokedSymbol.ContainingNamespace.ToString();
             
+            Model.SemanticMethodSignature = invokedSymbol.ToString();
+            if (invokedSymbol.OriginalDefinition != null)
+                Model.SemanticOriginalDefinition = invokedSymbol.OriginalDefinition.ToString();
+            
+            if (invokedSymbol.ReturnType != null)
+                Model.SemanticReturnType = invokedSymbol.ReturnType.Name;
+
             //Set method properties
             SemanticHelper.AddMethodProperties(invokedSymbol, Model.SemanticProperties);
 

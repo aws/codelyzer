@@ -12,8 +12,12 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             LiteralExpressionSyntax syntaxNode)
             : base(context, syntaxNode, new LiteralExpression())
         {
-            Model.Identifier = syntaxNode.Token.ValueText;
-            Model.LiteralType = syntaxNode.Token.Value.GetType().ToString();
+            if (syntaxNode.Token != null)
+                Model.Identifier = syntaxNode.Token.ValueText;
+            
+            if (syntaxNode.Token != null && syntaxNode.Token.Value != null)
+                Model.LiteralType = syntaxNode.Token.Value.GetType().ToString();
+            
             Model.SemanticType = SemanticHelper.GetSemanticType(syntaxNode, SemanticModel);
         }
     }

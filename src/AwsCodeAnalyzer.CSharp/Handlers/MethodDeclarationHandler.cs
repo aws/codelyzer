@@ -19,18 +19,27 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
 
         private void SetMetaData(MethodDeclarationSyntax syntaxNode)
         {
-            Model.ReturnType = syntaxNode.ReturnType.ToString();
+            if (syntaxNode.ReturnType != null)
+                Model.ReturnType = syntaxNode.ReturnType.ToString();
+            
             Model.SemanticReturnType = 
                 SemanticHelper.GetSemanticType(syntaxNode.ReturnType, SemanticModel);
 
-            foreach (var parameter in syntaxNode.ParameterList.Parameters)
+            if (syntaxNode.ParameterList != null)
             {
-                var param = new Parameter();
-                param.Name = parameter.Identifier.Text;
-                param.Type = parameter.Type.ToString();
-                param.SemanticType = 
-                    SemanticHelper.GetSemanticType(parameter.Type, SemanticModel);
-                Model.Parameters.Add(param);
+                foreach (var parameter in syntaxNode.ParameterList.Parameters)
+                {
+                    var param = new Parameter();
+                    if (parameter.Identifier != null)
+                        param.Name = parameter.Identifier.Text;
+                    
+                    if (parameter.Type != null)
+                        param.Type = parameter.Type.ToString();
+                    
+                    param.SemanticType =
+                        SemanticHelper.GetSemanticType(parameter.Type, SemanticModel);
+                    Model.Parameters.Add(param);
+                }
             }
 
             Model.Modifiers = syntaxNode.Modifiers.ToString();

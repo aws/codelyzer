@@ -22,15 +22,20 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
         {
             Model.MethodName = syntaxNode.Type.ToString();
 
-            foreach (var argumentSyntax in syntaxNode.ArgumentList.Arguments)
+            if (syntaxNode.ArgumentList != null)
             {
-                Parameter parameter = new Parameter();
-                parameter.Name = argumentSyntax.Expression.ToString();
-                parameter.SemanticType = 
-                    SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel);
-                Model.Parameters.Add(parameter);
+                foreach (var argumentSyntax in syntaxNode.ArgumentList.Arguments)
+                {
+                    Parameter parameter = new Parameter();
+                    if (argumentSyntax.Expression != null)
+                        parameter.Name = argumentSyntax.Expression.ToString();
+                    
+                    parameter.SemanticType =
+                        SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel);
+                    Model.Parameters.Add(parameter);
+                }
             }
-            
+
             if (SemanticModel == null) return;
             
             IMethodSymbol invokedSymbol = 
@@ -39,10 +44,15 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             
             //Set semantic details
             Model.MethodName = invokedSymbol.Name;
-            Model.SemanticNamespace = invokedSymbol.ContainingNamespace.ToString();
+            if (invokedSymbol.ContainingNamespace != null)
+                Model.SemanticNamespace = invokedSymbol.ContainingNamespace.ToString();
+            
             Model.SemanticMethodSignature = invokedSymbol.ToString();
-            Model.SemanticOriginalDefinition = invokedSymbol.OriginalDefinition.ToString();
-            Model.SemanticReturnType = invokedSymbol.ReturnType.Name;
+            if (invokedSymbol.OriginalDefinition != null)
+                Model.SemanticOriginalDefinition = invokedSymbol.OriginalDefinition.ToString();
+            
+            if (invokedSymbol.ReturnType != null)
+                Model.SemanticReturnType = invokedSymbol.ReturnType.Name;
             
             //Set method properties
             SemanticHelper.AddMethodProperties(invokedSymbol, Model.SemanticProperties);
