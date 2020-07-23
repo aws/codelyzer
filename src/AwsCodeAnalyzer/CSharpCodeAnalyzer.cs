@@ -94,7 +94,7 @@ namespace AwsCodeAnalyzer
 
                 CSharpRoslynProcessor processor = new CSharpRoslynProcessor(codeContext);
                 var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
-                workspace.SourceFileResults.Add((RootUstNode)result);
+                workspace.Children.Add((RootUstNode)result);
             }
             
             return workspace;

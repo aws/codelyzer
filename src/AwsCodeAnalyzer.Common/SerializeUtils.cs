@@ -19,7 +19,9 @@ namespace AwsCodeAnalyzer.Common
     {
         public override bool CanConvert(Type objectType)
         {
-            return typeof(UstNode).IsAssignableFrom(objectType);
+            var projectType = typeof(ProjectWorkspace).Equals(objectType);
+            return typeof(UstNode).IsAssignableFrom(objectType) 
+                   && !projectType;
         }
 
         public override object ReadJson(JsonReader reader, 
