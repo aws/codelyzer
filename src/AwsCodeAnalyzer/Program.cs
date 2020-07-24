@@ -55,16 +55,8 @@ namespace AwsCodeAnalyzer
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, Log.Logger);
             var analyzerResult = await analyzer.AnalyzeProject(projectPath);
             Console.WriteLine("Exported to : " + analyzerResult.OutputJsonFilePath);
-            var sourcefile = analyzerResult.ProjectResult.Children.First();
-            //Source file result
+            var sourcefile = analyzerResult.ProjectResult.SourceFileResults.First();
             foreach (var invocation in sourcefile.AllInvocationExpressions())
-            {
-                Console.WriteLine(invocation.MethodName + ":" + invocation.SemanticMethodSignature);
-            }
-            
-            //Project result
-            Console.WriteLine("Project Results: ");
-            foreach (var invocation in analyzerResult.ProjectResult.AllInvocationExpressions())
             {
                 Console.WriteLine(invocation.MethodName + ":" + invocation.SemanticMethodSignature);
             }
