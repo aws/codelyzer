@@ -1,3 +1,5 @@
+using System;
+using System.Text.RegularExpressions;
 using AwsCodeAnalyzer.Common;
 using AwsCodeAnalyzer.Model;
 using Microsoft.CodeAnalysis;
@@ -53,6 +55,13 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             
             if (invokedSymbol.ReturnType != null)
                 Model.SemanticReturnType = invokedSymbol.ReturnType.Name;
+            
+            if (invokedSymbol.ContainingType != null)
+            {
+                string classNameWithNamespace = invokedSymbol.ContainingType.ToString();
+                Model.SemanticClassType = Model.SemanticNamespace == null ? classNameWithNamespace : 
+                    SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.SemanticNamespace);
+            }
             
             //Set method properties
             SemanticHelper.AddMethodProperties(invokedSymbol, Model.SemanticProperties);

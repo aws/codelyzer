@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -50,6 +52,12 @@ namespace AwsCodeAnalyzer.CSharp
             if (invokedSymbol.IsStatic) properties.Add("static");
             if (invokedSymbol.IsVirtual) properties.Add("virtual");
             if (invokedSymbol.IsReadOnly) properties.Add("readonly");
+        }
+
+        public static string GetSemanticClassType(string classNameWithNamespace, string semanticNamespace)
+        {
+            Match match = Regex.Match(classNameWithNamespace, String.Format("{0}.(.*)", Regex.Escape(semanticNamespace)));
+            return match.Success ? match.Groups[1].Value : classNameWithNamespace;
         }
         
     }
