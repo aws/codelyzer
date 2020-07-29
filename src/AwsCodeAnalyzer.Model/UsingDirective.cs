@@ -5,7 +5,7 @@ namespace AwsCodeAnalyzer.Model
         public static readonly NodeType TYPE = new NodeType(IdConstants.UsingDirectiveId, 
             IdConstants.UsingDirectiveIdName);
         public UsingDirective()
-            : base(TYPE)
+            : base(TYPE.Name)
         {
         }
     }

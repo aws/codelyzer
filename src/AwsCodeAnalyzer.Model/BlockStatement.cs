@@ -5,7 +5,7 @@ namespace AwsCodeAnalyzer.Model
         public static readonly NodeType TYPE = new NodeType(IdConstants.BodyId, 
             IdConstants.BodyIdName);
         public BlockStatement()
-            : base(TYPE)
+            : base(TYPE.Name)
         {
         }
     }

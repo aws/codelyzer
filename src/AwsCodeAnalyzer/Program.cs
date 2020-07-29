@@ -19,25 +19,21 @@ namespace AwsCodeAnalyzer
     {
         static async Task Main(string[] args)
         {
-            if (args == null || args.Length != 2)
-            {
-                Console.WriteLine("Missing Arguments. <ProjectFilePath> <OutputFilePath>");
-                return;
-            }
-            
-            string projectPath = args[0];
-            string outputPath = args[1];
+            AnalyzerCLI cli = new AnalyzerCLI();
+            cli.HandleCommand(args);
+            Console.WriteLine(cli.Project + " -- " + cli.FilePath);
+            Console.WriteLine(SerializeUtils.ToJson(cli.Configuration));
 
-            Console.WriteLine("Project file: " + projectPath);
-            Console.WriteLine("Output path: " + outputPath);
 
+            /* 1. Logger object */
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console(theme: AnsiConsoleTheme.Code)
                 .WriteTo.File("log-.txt", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
 
-            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            /* 2. Create Configuration settings */
+            /*AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
             {
                 ExportSettings =
                 {
@@ -50,16 +46,26 @@ namespace AwsCodeAnalyzer
                     LiteralExpressions = true,
                     MethodInvocations = true
                 }
-            };
-            
-            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, Log.Logger);
-            var analyzerResult = await analyzer.AnalyzeProject(projectPath);
+            };*/
+
+            /* 3. Get Analyzer instance based on language */
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(cli.Configuration, Log.Logger);
+
+            /* 4. Analyze the project or solution */
+            var analyzerResult = await analyzer.AnalyzeProject(cli.FilePath);
             Console.WriteLine("Exported to : " + analyzerResult.OutputJsonFilePath);
+
+            /* Consume the results as model objects */
             var sourcefile = analyzerResult.ProjectResult.SourceFileResults.First();
             foreach (var invocation in sourcefile.AllInvocationExpressions())
             {
                 Console.WriteLine(invocation.MethodName + ":" + invocation.SemanticMethodSignature);
             }
+
+            var objectCreations = sourcefile.AllObjectCreationExpressions();
+            var allClasses = sourcefile.AllClasses();
+            var allMethods = sourcefile.AllMethods();
+            var allLiterals = sourcefile.AllLiterals();
 
             // Verify the exported file
             /*string exportJsonFile = analyzerResult.OutputJsonFilePath;

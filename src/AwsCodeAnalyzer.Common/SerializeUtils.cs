@@ -29,9 +29,9 @@ namespace AwsCodeAnalyzer.Common
 
             var type = jObject["type"];
 
-            if (type != null && type["name"] != null)
+            if (type != null)
             { 
-                string ustType = type["name"].ToString();
+                string ustType = type.ToString();
                 UstNode item = ModelFactory.GetObject(ustType);
                 serializer.Populate(jObject.CreateReader(), item);
                 return item;

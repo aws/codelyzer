@@ -37,5 +37,6 @@ namespace AwsCodeAnalyzer
     {
         public bool MethodInvocations;
         public bool LiteralExpressions;
+        public bool LambdaMethods;
     }
 }

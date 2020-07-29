@@ -9,7 +9,7 @@ namespace AwsCodeAnalyzer.Model
     public partial class UstNode
     {
         [JsonProperty("type", Order = 1)]
-        public NodeType NodeType { get; set; }
+        public string NodeType { get; set; }
         
         [JsonProperty("identifier", Order = 2)]
         public string Identifier { get; set; }
@@ -23,7 +23,7 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("children", Order = 100)]
         public UstList<UstNode> Children { get; set; }
 
-        public UstNode(NodeType nodeType)
+        public UstNode(string nodeType)
         {
             NodeType = nodeType;
             Children = new UstList<UstNode>();

@@ -16,7 +16,7 @@ namespace AwsCodeAnalyzer.Model
         
         [JsonProperty("file-full-path", Order = 12)]
         public string FileFullPath { get; set; }
-        public RootUstNode() : base(TYPE)
+        public RootUstNode() : base(TYPE.Name)
         {
         }
 

@@ -5,7 +5,7 @@ namespace AwsCodeAnalyzer.Model
         public static readonly NodeType TYPE = new NodeType(IdConstants.ClassId, 
             IdConstants.ClassIdName);
         public ClassDeclaration()
-            : base(TYPE)
+            : base(TYPE.Name)
         {
         }
     }

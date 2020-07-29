@@ -12,7 +12,7 @@ namespace AwsCodeAnalyzer.Model
         public const string RootIdName = "source-file-root";
 
         public const int UsingDirectiveId = 102;
-        public const string UsingDirectiveIdName = "using-directive";
+        public const string UsingDirectiveIdName = "import-dependency";
         
         public const int NamespaceId = 103;
         public const string NamespaceIdName = "namespace";
