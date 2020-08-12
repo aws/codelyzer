@@ -1,0 +1,5 @@
+{
+  "Language" : "CSharp",
+  "ExportSettings": {"GenerateJsonOutput":true, "OutputPath" : "/tmp/out"},
+  "MetaDataSettings": {"MethodInvocations":true, "LiteralExpressions":true}
+}

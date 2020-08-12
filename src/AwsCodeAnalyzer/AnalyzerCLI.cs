@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using AwsCodeAnalyzer.Common;
 using CommandLine;
 
@@ -13,8 +14,11 @@ namespace AwsCodeAnalyzer
         [Option('s', "solution-path", Required = false, HelpText = "Solution file path.")]
         public string SolutionPath { get; set; }
         
-        [Option('j', "json-input", Required = true, HelpText = "Configuration json input.")]
+        [Option('j', "json-input", Required = false, HelpText = "Configuration json input.")]
         public string JsonInput { get; set; }
+
+        [Option('f', "json-input-infile", Required = true, HelpText = "Configuration json input file")]
+        public string JsonInputFile { get; set; }
     }
     
     public class AnalyzerCLI
@@ -22,6 +26,7 @@ namespace AwsCodeAnalyzer
         public bool Project;
         public string FilePath;
         public AnalyzerConfiguration Configuration;
+
         public void HandleCommand(String[] args)
         {
             Parser.Default.ParseArguments<Options>(args)
@@ -39,7 +44,24 @@ namespace AwsCodeAnalyzer
                         FilePath = o.SolutionPath;
                     }
 
-                    Configuration = SerializeUtils.FromJson<AnalyzerConfiguration>(o.JsonInput);
+                    String jsonData;
+                    if (o.JsonInputFile != null && o.JsonInputFile.Length != 0)
+                    {
+                        try
+                        {
+                            jsonData = File.ReadAllText(o.JsonInputFile);
+                        }
+                        catch (Exception e)
+                        {
+                            jsonData = null;
+                            Console.WriteLine("Exception " + e.Message);
+                            Environment.Exit(-1);
+                        }
+                    } else
+                    {
+                        jsonData = o.JsonInput;
+                    }
+                    Configuration = SerializeUtils.FromJson<AnalyzerConfiguration>(jsonData);
                 });
         }
         
