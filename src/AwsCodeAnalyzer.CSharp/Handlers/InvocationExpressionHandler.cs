@@ -73,6 +73,11 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
                 Model.SemanticClassType = Model.SemanticNamespace == null ? classNameWithNamespace : 
                     SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.SemanticNamespace);
             }
+
+            if(invokedSymbol.ReducedFrom != null)
+            {
+                Model.IsExtension = true;
+            }
            
             //Set method properties
             SemanticHelper.AddMethodProperties(invokedSymbol, Model.SemanticProperties);

@@ -1,5 +1,14 @@
 {
-  "Language" : "CSharp",
-  "ExportSettings": {"GenerateJsonOutput":true, "OutputPath" : "/tmp/out"},
-  "MetaDataSettings": {"MethodInvocations":true, "LiteralExpressions":true}
+  "Language": "CSharp",
+  "ExportSettings": {
+    "GenerateJsonOutput": true,
+    "OutputPath": "C:\\w\\Samples\\mvcmusicstore-replacetests\\"
+  },
+  "MetaDataSettings": {
+    "MethodInvocations": true,
+    "LiteralExpressions": true,
+    "DeclarationNodes": true,
+    "Annotations": true,
+    "LocationData": false
+  }
 }

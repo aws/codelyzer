@@ -36,7 +36,7 @@ namespace AwsCodeAnalyzer.CSharp
             {
                 return null;
             }
-            
+                                    
             var children = new List<UstNode>();
             foreach (SyntaxNode child in node.ChildNodes())
             {
@@ -59,7 +59,7 @@ namespace AwsCodeAnalyzer.CSharp
             
             return RootNode;
         }
-        
+
         private List<UstNode> HandleGenericMembers(in SyntaxList<SyntaxNode> nodeMembers)
         {
             List<UstNode> members = new List<UstNode>();
@@ -113,6 +113,22 @@ namespace AwsCodeAnalyzer.CSharp
             ClassDeclarationHandler handler = new ClassDeclarationHandler(context, node);
             handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
 
+            var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
+            foreach (var attribute in attributes)
+            {
+                handler.UstNode.Children.Add(VisitAttribute((AttributeSyntax)attribute));
+            }
+
+            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
+            foreach (var identifierName in identifierNames)
+            {
+                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
+                if (identifier != null)
+                {
+                    handler.UstNode.Children.Add(identifier);
+                }
+            }
+
             return handler.UstNode;
         }
 
@@ -123,6 +139,16 @@ namespace AwsCodeAnalyzer.CSharp
             if (node.Body != null)
             {
                 handler.UstNode.Children.Add(VisitBlock(node.Body));
+            }
+
+            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
+            foreach (var identifierName in identifierNames)
+            {
+                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
+                if (identifier != null)
+                {
+                    handler.UstNode.Children.Add(identifier);
+                }
             }
 
             return handler.UstNode;
@@ -138,14 +164,14 @@ namespace AwsCodeAnalyzer.CSharp
                 var expressions = node.DescendantNodes().OfType<InvocationExpressionSyntax>();
                 foreach (var expression in expressions)
                 {
-                    result.Children.Add(VisitInvocationExpression((InvocationExpressionSyntax) expression));
+                    result.Children.Add(VisitInvocationExpression((InvocationExpressionSyntax)expression));
                 }
             }
-            
+
             var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
             foreach (var expression in objCreations)
             {
-                result.Children.Add(VisitObjectCreationExpression((ObjectCreationExpressionSyntax) expression));
+                result.Children.Add(VisitObjectCreationExpression((ObjectCreationExpressionSyntax)expression));
             }
 
             if (MetaDataSettings.LiteralExpressions)
@@ -153,7 +179,17 @@ namespace AwsCodeAnalyzer.CSharp
                 var literalExpressions = node.DescendantNodes().OfType<LiteralExpressionSyntax>();
                 foreach (var expression in literalExpressions)
                 {
-                    result.Children.Add(VisitLiteralExpression((LiteralExpressionSyntax) expression));
+                    result.Children.Add(VisitLiteralExpression((LiteralExpressionSyntax)expression));
+                }
+            }
+
+            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
+            foreach (var identifierName in identifierNames)
+            {
+                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
+                if (identifier != null)
+                {
+                    result.Children.Add(identifier);
                 }
             }
 
@@ -185,6 +221,29 @@ namespace AwsCodeAnalyzer.CSharp
         {
             ObjectCreationExpressionHandler handler = new ObjectCreationExpressionHandler(context, node);
             return handler.UstNode;
+        }
+
+        public override UstNode VisitAttribute(AttributeSyntax node)
+        {
+            if (MetaDataSettings.Annotations)
+            {
+                AttributeHandler handler = new AttributeHandler(context, node);
+                return handler.UstNode;
+            }
+            return null;
+        }
+
+        public override UstNode VisitIdentifierName(IdentifierNameSyntax node)
+        {
+            if (MetaDataSettings.DeclarationNodes)
+            {
+                IdentifierNameHandler handler = new IdentifierNameHandler(context, node);
+                if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
+                {
+                    return handler.UstNode;
+                }
+            }
+            return null;
         }
     }
 

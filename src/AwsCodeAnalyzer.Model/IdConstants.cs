@@ -35,5 +35,11 @@ namespace AwsCodeAnalyzer.Model
         public const int ObjectCreationId = 109;
         public const string ObjectCreationIdName = "object-creation";
 
+        public const int DeclarationNodeId = 110;
+        public const string DeclarationNodeIdName = "declaration-node";
+
+        public const int AnnotationId = 111;
+        public const string AnnotationIdName = "annotation";
+
     }
 }

@@ -60,12 +60,16 @@ namespace AwsCodeAnalyzer.Model
 
             foreach (UstNode child in node.Children)
             {
-                if (child.GetType() == typeof(T))
+                if (child != null)
                 {
-                    nodes.Add((T) child);
-                } else
-                {
-                    nodes.AddRange(GetNodes<T>(child));
+                    if (child.GetType() == typeof(T))
+                    {
+                        nodes.Add((T)child);
+                    }
+                    else
+                    {
+                        nodes.AddRange(GetNodes<T>(child));
+                    }
                 }
             }
 

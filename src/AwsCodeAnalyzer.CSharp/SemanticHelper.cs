@@ -40,6 +40,22 @@ namespace AwsCodeAnalyzer.CSharp
             return type;
         }
 
+        public static string GetSemanticType(IdentifierNameSyntax identifierNameSyntax,
+          SemanticModel semanticModel)
+        {
+            if (semanticModel == null) return null;
+
+            string type = null;
+
+            var typeInfo = semanticModel.GetTypeInfo(identifierNameSyntax);
+            if (typeInfo.Type != null)
+            {
+                type = semanticModel.GetTypeInfo(identifierNameSyntax).Type.Name;
+            }
+
+            return type;
+        }
+
         public static void AddMethodProperties(IMethodSymbol invokedSymbol, List<string> properties)
         {
             //Set method properties

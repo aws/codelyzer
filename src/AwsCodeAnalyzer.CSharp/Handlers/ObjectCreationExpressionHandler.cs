@@ -34,7 +34,10 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
                     
                     parameter.SemanticType =
                         SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel);
-                    Model.Parameters.Add(parameter);
+                    if (Model.Parameters != null)
+                    {
+                        Model.Parameters.Add(parameter);
+                    }
                 }
             }
 

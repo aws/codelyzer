@@ -39,6 +39,9 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("semantic-properties", Order = 19)]
         public List<string> SemanticProperties { get; set; }
 
+        [JsonProperty("semantic-is-extension", Order = 20)]
+        public bool IsExtension { get; set; }
+
         public InvocationExpression(NodeType type)
             : base(type)
         {
