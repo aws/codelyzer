@@ -9,6 +9,6 @@
     "LiteralExpressions": true,
     "DeclarationNodes": true,
     "Annotations": true,
-    "LocationData": false
+    "LocationData": true
   }
 }

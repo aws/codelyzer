@@ -29,7 +29,7 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
                 if (symbolInfo.Symbol != null)
                 {
                     Model.Identifier = type;
-                    Model.SemanticNamespace = symbolInfo.Symbol.ContainingNamespace.ToString().Trim();
+                    Model.SemanticNamespace = symbolInfo.Symbol.ContainingNamespace != null ? symbolInfo.Symbol.ContainingNamespace.ToString().Trim() : string.Empty;
                 } 
                 else
                 {
