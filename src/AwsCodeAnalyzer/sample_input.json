@@ -2,7 +2,7 @@
   "Language": "CSharp",
   "ExportSettings": {
     "GenerateJsonOutput": true,
-    "OutputPath": "C:\\w\\Samples\\mvcmusicstore-replacetests\\"
+    "OutputPath": "/tmp/out"
   },
   "MetaDataSettings": {
     "MethodInvocations": true,

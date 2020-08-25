@@ -20,18 +20,18 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
 
             if (syntaxNode == null || syntaxNode.GetLocation() == null) return;
 
-            if(context.AnalyzerConfiguration.MetaDataSettings.LocationData)
-            {
-                TextSpan textSpan = new TextSpan();
-                //internally  it uses 0 based index; 
-                textSpan.StartLinePosition = syntaxNode.GetLocation().GetLineSpan().StartLinePosition.Line + 1;
-                textSpan.StartCharPosition = syntaxNode.GetLocation().GetLineSpan().StartLinePosition.Character + 1;
+            if (!context.AnalyzerConfiguration.MetaDataSettings.LocationData) return;
 
-                textSpan.EndLinePosition = syntaxNode.GetLocation().GetLineSpan().EndLinePosition.Line + 1;
-                textSpan.EndCharPosition = syntaxNode.GetLocation().GetLineSpan().EndLinePosition.Character + 1;
+            TextSpan textSpan = new TextSpan();
+            //internally  it uses 0 based index; 
+            textSpan.StartLinePosition = syntaxNode.GetLocation().GetLineSpan().StartLinePosition.Line + 1;
+            textSpan.StartCharPosition = syntaxNode.GetLocation().GetLineSpan().StartLinePosition.Character + 1;
 
-                ustNode.TextSpan = textSpan;
-            }            
+            textSpan.EndLinePosition = syntaxNode.GetLocation().GetLineSpan().EndLinePosition.Line + 1;
+            textSpan.EndCharPosition = syntaxNode.GetLocation().GetLineSpan().EndLinePosition.Character + 1;
+
+            ustNode.TextSpan = textSpan;
+
         }
     }
 

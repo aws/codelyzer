@@ -13,11 +13,11 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             AttributeSyntax syntaxNode)
             : base(context, syntaxNode, new Annotation())
         {
+            Model.Identifier = syntaxNode.Name.ToString();
 
             var symbolInfo = SemanticModel.GetSymbolInfo(syntaxNode);
             if (symbolInfo.Symbol != null)
             {
-                Model.Identifier = syntaxNode.Name.ToString();
                 Model.SemanticNamespace = symbolInfo.Symbol.ContainingNamespace.ToString().Trim();
             }
         }
