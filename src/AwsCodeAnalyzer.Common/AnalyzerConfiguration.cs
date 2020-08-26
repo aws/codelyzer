@@ -40,6 +40,6 @@ namespace AwsCodeAnalyzer
         public bool LambdaMethods;
         public bool DeclarationNodes;
         public bool Annotations;
-        public bool LocationData;
+        public bool LocationData = true;
     }
 }
