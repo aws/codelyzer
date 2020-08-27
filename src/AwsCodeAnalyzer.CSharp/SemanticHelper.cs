@@ -18,7 +18,7 @@ namespace AwsCodeAnalyzer.CSharp
             var typeInfo = semanticModel.GetTypeInfo(parameter);
             if (typeInfo.Type != null)
             {
-                type = semanticModel.GetTypeInfo(parameter).Type.Name;
+                type = typeInfo.Type.Name;
             }
 
             return type;
@@ -34,7 +34,7 @@ namespace AwsCodeAnalyzer.CSharp
             var typeInfo = semanticModel.GetTypeInfo(expressionSyntax);
             if (typeInfo.Type != null)
             {
-                type = semanticModel.GetTypeInfo(expressionSyntax).Type.Name;
+                type = typeInfo.Type.Name;
             }
 
             return type;
@@ -46,11 +46,11 @@ namespace AwsCodeAnalyzer.CSharp
             if (semanticModel == null) return null;
 
             string type = null;
-
+            
             var typeInfo = semanticModel.GetTypeInfo(identifierNameSyntax);
             if (typeInfo.Type != null)
             {
-                type = semanticModel.GetTypeInfo(identifierNameSyntax).Type.Name;
+                type = typeInfo.Type.Name;
             }
 
             return type;

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AwsCodeAnalyzer": {
+      "commandName": "Project",
+      "commandLineArgs": "-p C:\\Users\\markfawa\\workplace\\Projects\\MvcMusicStore\\MvcMusicStore.sln -f C:\\Users\\markfawa\\workplace\\Backups\\CR-32039246-AwsCodeAnalyzerRoslyn\\src\\AwsCodeAnalyzer\\sample_input.json"
+    }
+  }
+}

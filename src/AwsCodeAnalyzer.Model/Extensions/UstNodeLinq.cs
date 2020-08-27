@@ -1,3 +1,5 @@
+using System.Xml.Serialization;
+
 namespace AwsCodeAnalyzer.Model
 {
     public static class UstNodeLinq
@@ -62,7 +64,7 @@ namespace AwsCodeAnalyzer.Model
             {
                 if (child != null)
                 {
-                    if (child.GetType() == typeof(T))
+                    if (child is T)
                     {
                         nodes.Add((T)child);
                     }

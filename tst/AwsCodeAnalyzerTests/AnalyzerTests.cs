@@ -47,6 +47,7 @@ namespace AwsCodeAnalyzer.Tests
         public async Task TestMvcMusicStore()
         {
             string projectPath = GetPath(@"Projects\MvcMusicStore\MvcMusicStore\MvcMusicStore.csproj");
+            FileAssert.Exists(projectPath);
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
             {
@@ -72,13 +73,19 @@ namespace AwsCodeAnalyzer.Tests
             var accountController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("AccountController.cs")).FirstOrDefault();
             Assert.NotNull(accountController);
 
+            var classDeclarations = accountController.Children.OfType<AwsCodeAnalyzer.Model.NamespaceDeclaration>().FirstOrDefault();
+            Assert.Greater(classDeclarations.Children.Count, 0);
+
             var classDeclaration = accountController.Children.OfType<AwsCodeAnalyzer.Model.NamespaceDeclaration>().FirstOrDefault().Children[0];
             Assert.NotNull(classDeclaration);
 
             var declarationNodes = classDeclaration.Children.OfType<AwsCodeAnalyzer.Model.DeclarationNode>();
             var attributeNodes = classDeclaration.Children.OfType<AwsCodeAnalyzer.Model.Annotation>();
 
+            //AccountController has 15 identifiers declared within the class declaration:
             Assert.AreEqual(declarationNodes.Count(), 15);
+
+            //AccountController has 5 attributes:
             Assert.AreEqual(attributeNodes.Count(), 5);
         }
     }
