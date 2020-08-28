@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using AwsCodeAnalyzer.Common;
 using Buildalyzer;
 using Buildalyzer.Environment;
 using Buildalyzer.Workspaces;
@@ -18,9 +20,6 @@ namespace AwsCodeAnalyzer.Build
         private const string TargetFrameworkVersion = nameof(TargetFrameworkVersion);
         private const string Configuration = nameof(Configuration);
 
-        private const string WindowsPlatformPrefix = "WIN";
-        private const string MsBuildCommandName = "msbuild";
-        private const string RestorePackagesConfigArgument = "/p:RestorePackagesConfig=true";
 
 
         public readonly List<Project> Projects = null;
@@ -218,16 +217,33 @@ namespace AwsCodeAnalyzer.Build
 
         private EnvironmentOptions GetEnvironmentOptions()
         {
-            var os = Environment.OSVersion;
+            var os = DetermineOSPlatform();
             EnvironmentOptions options = new EnvironmentOptions();
 
-            if (!os.Platform.ToString().ToUpper().StartsWith(WindowsPlatformPrefix))
+            if(os == OSPlatform.Linux || os == OSPlatform.OSX)
             {
-                options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, MsBuildCommandName);
-            }
+                options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, Constants.MsBuildCommandName);
+            }            
 
-            options.Arguments.Add(RestorePackagesConfigArgument);
+            options.Arguments.Add(Constants.RestorePackagesConfigArgument);
             return options;
+        }
+
+        private OSPlatform DetermineOSPlatform()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return OSPlatform.Windows;
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return OSPlatform.Linux;
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Create("FREEBSD")))
+            {
+                return OSPlatform.FreeBSD;
+            }
+            return OSPlatform.Create("None");
         }
     }
 }
