@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Editing;
 using Serilog;
 
 namespace AwsCodeAnalyzer.Build
@@ -13,9 +14,9 @@ namespace AwsCodeAnalyzer.Build
     {
         public SyntaxTree SyntaxTree { get; set; }
         public SemanticModel SemanticModel { get; set; }
-        public string SourceFileFullPath { get; set; } 
-        
+        public string SourceFileFullPath { get; set; }         
         public string SourceFilePath { get; set; }
+        public SyntaxGenerator SyntaxGenerator { get; set; }
     }
     
     public  class ProjectBuildResult
@@ -125,7 +126,8 @@ namespace AwsCodeAnalyzer.Build
                 {
                     SyntaxTree = syntaxTree,
                     SemanticModel = Compilation.GetSemanticModel(syntaxTree),
-                    SourceFileFullPath = syntaxTree.FilePath
+                    SourceFileFullPath = syntaxTree.FilePath,
+                    SyntaxGenerator = SyntaxGenerator.GetGenerator(Project)
                 };
                 projectBuildResult.SourceFileBuildResults.Add(fileResult);
                 projectBuildResult.AddSourceFile(syntaxTree.FilePath);
