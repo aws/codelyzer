@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Serilog.Core;
 using System.Linq;
+using System.Net.Http;
+using System.IO;
+using System.IO.Compression;
 
 namespace AwsCodeAnalyzer.Tests
 {
@@ -17,6 +20,21 @@ namespace AwsCodeAnalyzer.Tests
         public void BaseSetUp()
         {
             Setup(this.GetType());
+            DownloadSampleWebApi();
+        }
+
+        private void DownloadSampleWebApi()
+        {
+            var link = @"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/master.zip";
+            using (var client = new HttpClient())
+            {
+                var content = client.GetByteArrayAsync(link).Result;
+                var tempDirectory = Directory.CreateDirectory(GetPath(@"Projects\Temp"));
+                var fileName = string.Concat(tempDirectory.FullName, @"\ASPNET-WebAPI-Sample-master.zip");
+                File.WriteAllBytes(fileName, content);
+                ZipFile.ExtractToDirectory(fileName, tempDirectory.FullName, true);
+                File.Delete(fileName);
+            }
         }
 
         [Test]
@@ -43,10 +61,12 @@ namespace AwsCodeAnalyzer.Tests
             Assert.True(result != null);
         }
 
+
+
         [Test]
-        public async Task TestMvcMusicStore()
+        public async Task TestSampleWebApi()
         {
-            string projectPath = GetPath(@"Projects\MvcMusicStore\MvcMusicStore\MvcMusicStore.csproj");
+            string projectPath = GetPath(@"Projects\Temp\ASPNET-WebAPI-Sample-master\SampleWebApi\SampleWebApi.csproj");
             FileAssert.Exists(projectPath);
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
@@ -70,23 +90,25 @@ namespace AwsCodeAnalyzer.Tests
             AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
             Assert.True(result != null);
 
-            var accountController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("AccountController.cs")).FirstOrDefault();
-            Assert.NotNull(accountController);
+            var houseController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HouseController.cs")).FirstOrDefault();
+            Assert.NotNull(houseController);
 
-            var classDeclarations = accountController.Children.OfType<AwsCodeAnalyzer.Model.NamespaceDeclaration>().FirstOrDefault();
+            var classDeclarations = houseController.Children.OfType<AwsCodeAnalyzer.Model.NamespaceDeclaration>().FirstOrDefault();
             Assert.Greater(classDeclarations.Children.Count, 0);
 
-            var classDeclaration = accountController.Children.OfType<AwsCodeAnalyzer.Model.NamespaceDeclaration>().FirstOrDefault().Children[0];
+            var classDeclaration = houseController.Children.OfType<AwsCodeAnalyzer.Model.NamespaceDeclaration>().FirstOrDefault().Children[0];
             Assert.NotNull(classDeclaration);
 
             var declarationNodes = classDeclaration.Children.OfType<AwsCodeAnalyzer.Model.DeclarationNode>();
             var attributeNodes = classDeclaration.Children.OfType<AwsCodeAnalyzer.Model.Annotation>();
 
-            //AccountController has 15 identifiers declared within the class declaration:
-            Assert.AreEqual(declarationNodes.Count(), 15);
+            //HouseController has 20 identifiers declared within the class declaration:
+            Assert.AreEqual(declarationNodes.Count(), 20);
 
-            //AccountController has 5 attributes:
-            Assert.AreEqual(attributeNodes.Count(), 5);
+            //HouseController has 17 attributes:
+            Assert.AreEqual(attributeNodes.Count(), 17);
+
+            Directory.Delete(GetPath(@"Projects\Temp\ASPNET-WebAPI-Sample-master"), true);
         }
     }
 }
