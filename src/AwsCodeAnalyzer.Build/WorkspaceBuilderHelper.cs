@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using AwsCodeAnalyzer.Common;
 using Buildalyzer;
 using Buildalyzer.Environment;
 using Buildalyzer.Workspaces;
@@ -17,6 +19,8 @@ namespace AwsCodeAnalyzer.Build
         private const string TargetFramework = nameof(TargetFramework);
         private const string TargetFrameworkVersion = nameof(TargetFrameworkVersion);
         private const string Configuration = nameof(Configuration);
+
+
 
         public readonly List<Project> Projects = null;
         private ILogger Logger { get; set; }
@@ -56,7 +60,7 @@ namespace AwsCodeAnalyzer.Build
                    {
                        LogWriter = writer
                    });
-
+                
                 Logger.Information("Loading the Solution Done: " + WorkspacePath);
 
                 // AnalyzerManager builds the projects based on their dependencies
@@ -69,7 +73,6 @@ namespace AwsCodeAnalyzer.Build
                 {
                     LogWriter = writer
                 });
-                
                 AdhocWorkspace workspace = new AdhocWorkspace();
                 Queue<string> queue = new Queue<string>();
                 ISet<string> existing = new HashSet<string>();
@@ -85,8 +88,9 @@ namespace AwsCodeAnalyzer.Build
                 {
                     var path = queue.Dequeue();
                     Logger.Information("Building: " + path);
+                    
                     IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(path);
-                    IAnalyzerResults analyzerResults = projectAnalyzer.Build();
+                    IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions());
                     IAnalyzerResult analyzerResult = analyzerResults.First();
                     analyzerResult.AddToWorkspace(workspace);
                     foreach (var pref in analyzerResult.ProjectReferences)
@@ -138,7 +142,7 @@ namespace AwsCodeAnalyzer.Build
         {
             try
             {
-                return projectAnalyzer.Build().FirstOrDefault();
+                return projectAnalyzer.Build(GetEnvironmentOptions()).FirstOrDefault();
             }catch(Exception e)
             {
                 Logger.Debug("Exception : " + projectAnalyzer.ProjectFile.Path);
@@ -209,6 +213,37 @@ namespace AwsCodeAnalyzer.Build
             analyzerManager.SetGlobalProperty(MsBuildProperties.AutoGenerateBindingRedirects, bool.TrueString);
             analyzerManager.SetGlobalProperty(MsBuildProperties.UseCommonOutputDirectory, bool.TrueString);
             analyzerManager.SetGlobalProperty(Configuration, "Release");
+        }
+
+        private EnvironmentOptions GetEnvironmentOptions()
+        {
+            var os = DetermineOSPlatform();
+            EnvironmentOptions options = new EnvironmentOptions();
+
+            if(os == OSPlatform.Linux || os == OSPlatform.OSX)
+            {
+                options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, Constants.MsBuildCommandName);
+            }            
+
+            options.Arguments.Add(Constants.RestorePackagesConfigArgument);
+            return options;
+        }
+
+        private OSPlatform DetermineOSPlatform()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return OSPlatform.Windows;
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return OSPlatform.Linux;
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Create("FREEBSD")))
+            {
+                return OSPlatform.FreeBSD;
+            }
+            return OSPlatform.Create("None");
         }
     }
 }
