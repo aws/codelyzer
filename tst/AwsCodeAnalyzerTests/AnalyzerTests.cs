@@ -1,12 +1,12 @@
 using NUnit.Framework;
-using Assert = NUnit.Framework.Assert;
+using NUnit.Framework.Internal;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Serilog.Core;
-using System.Linq;
-using System.Net.Http;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Assert = NUnit.Framework.Assert;
 
 namespace AwsCodeAnalyzer.Tests
 {
@@ -20,17 +20,22 @@ namespace AwsCodeAnalyzer.Tests
         public void BaseSetUp()
         {
             Setup(this.GetType());
-            DownloadSampleWebApi();
+            DownloadTempProjects();
         }
 
-        private void DownloadSampleWebApi()
+        private void DownloadTempProjects()
         {
-            var link = @"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/master.zip";
+            DownloadFromGitHub(@"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/master.zip", "ASPNET-WebAPI-Sample-master");
+            DownloadFromGitHub(@"https://github.com/carlosfigueira/WCFSamples/archive/master.zip", "WCFSamples-master");
+        }       
+
+        private void DownloadFromGitHub(string link, string name)
+        {
             using (var client = new HttpClient())
             {
                 var content = client.GetByteArrayAsync(link).Result;
-                var tempDirectory = Directory.CreateDirectory(GetPath(@"Projects\Temp"));
-                var fileName = string.Concat(tempDirectory.FullName, @"\ASPNET-WebAPI-Sample-master.zip");
+                var tempDirectory = Directory.CreateDirectory(GetPath(new string[] { "Projects", "Temp" }));
+                var fileName = string.Concat(tempDirectory.FullName, name, @".zip");
                 File.WriteAllBytes(fileName, content);
                 ZipFile.ExtractToDirectory(fileName, tempDirectory.FullName, true);
                 File.Delete(fileName);
@@ -40,7 +45,7 @@ namespace AwsCodeAnalyzer.Tests
         [Test]
         public async Task TestAnalyzer()
         {
-            string projectPath = GetPath(@"Projects\CodelyzerDummy\CodelyzerDummy.csproj");
+            string projectPath = string.Concat(GetPath(new string[] { "Projects", "CodelyzerDummy", "CodelyzerDummy" }),".csproj");
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
             {
@@ -56,7 +61,7 @@ namespace AwsCodeAnalyzer.Tests
                     MethodInvocations = true
                 }
             };
-            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, Logger.None);
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, Serilog.Core.Logger.None);
             AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
             Assert.True(result != null);
         }
@@ -64,9 +69,63 @@ namespace AwsCodeAnalyzer.Tests
 
 
         [Test]
+        public async Task TestWCFProjects()
+        {
+            string mainDir = GetPath(new string[] { "Projects", "Temp", "WCFSamples-master" });
+            DirectoryAssert.Exists(mainDir);
+
+            //Find all solutions
+            List<string> solutionsPath = Directory.EnumerateFiles(mainDir, "*.sln", SearchOption.AllDirectories).ToList();
+
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, Serilog.Core.Logger.None);
+
+            foreach (var solution in solutionsPath)
+            {
+                var result = await analyzer.AnalyzeSolution(solution);
+                Assert.NotNull(result);
+
+                TestContext.WriteLine(string.Format("Building {0}", solution));
+
+                foreach (var r in result)
+                {
+                    var projectResult = r.ProjectResult;
+                    Assert.NotNull(projectResult);
+
+                    if(projectResult.BuildErrors.Count > 0)
+                    {
+                        TestContext.WriteLine(string.Format("Error building {0}", projectResult.ProjectFilePath));
+                    }
+                    Assert.AreEqual(projectResult.BuildErrors.Count, 0);                    
+                }
+
+            }
+
+            Directory.Delete((mainDir), true);
+        }
+
+        [Test]
         public async Task TestSampleWebApi()
         {
-            string projectPath = GetPath(@"Projects\Temp\ASPNET-WebAPI-Sample-master\SampleWebApi\SampleWebApi.csproj");
+            string projectPath = string.Concat(GetPath(new string[] { "Projects", "Temp", "ASPNET-WebAPI-Sample-master", "SampleWebApi", "SampleWebApi" })
+                , ".csproj");
             FileAssert.Exists(projectPath);
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
@@ -86,7 +145,7 @@ namespace AwsCodeAnalyzer.Tests
                     LocationData = false
                 }
             };
-            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, Logger.None);
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, Serilog.Core.Logger.None);
             AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
             Assert.True(result != null);
 
@@ -108,7 +167,7 @@ namespace AwsCodeAnalyzer.Tests
             //HouseController has 17 attributes:
             Assert.AreEqual(attributeNodes.Count(), 17);
 
-            Directory.Delete(GetPath(@"Projects\Temp\ASPNET-WebAPI-Sample-master"), true);
+            Directory.Delete(GetPath(new string[] { "Projects", "Temp", "ASPNET-WebAPI-Sample-master" }), true);
         }
     }
 }

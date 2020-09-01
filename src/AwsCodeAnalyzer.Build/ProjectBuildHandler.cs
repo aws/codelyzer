@@ -27,6 +27,7 @@ namespace AwsCodeAnalyzer.Build
         public List<string> SourceFiles { get; private set; }
         public List<SourceFileBuildResult> SourceFileBuildResults { get; private set; }
         public List<string> BuildErrors { get; set; }
+        public Project Project { get; set; }
 
         public ProjectBuildResult()
         {
@@ -117,7 +118,8 @@ namespace AwsCodeAnalyzer.Build
             {
                 BuildErrors = Errors, 
                 ProjectPath = Project.FilePath,
-                ProjectRootPath = Path.GetDirectoryName(Project.FilePath)
+                ProjectRootPath = Path.GetDirectoryName(Project.FilePath),
+                Project = Project
             };
             
             foreach (var syntaxTree in Compilation.SyntaxTrees)

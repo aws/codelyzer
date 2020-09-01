@@ -20,13 +20,18 @@ namespace AwsCodeAnalyzer.Tests
             string projectPath = Path.GetFullPath(
                 Path.Combine(
                     Path.GetDirectoryName(type.Assembly.Location),
-                    @"..\..\..\.."));
+                    Path.Combine(new string[] { "..", "..", "..", ".." })));
             return projectPath;
         }
 
         public string GetPath(String path)
         {
             return Path.Combine(rootPath, path);
+        }
+
+        protected string GetPath(string[] pathStrings)
+        {
+            return Path.Combine(rootPath, Path.Combine(pathStrings));
         }
     }
     
