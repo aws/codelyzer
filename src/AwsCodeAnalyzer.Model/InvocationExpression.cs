@@ -41,6 +41,8 @@ namespace AwsCodeAnalyzer.Model
 
         [JsonProperty("semantic-is-extension", Order = 20)]
         public bool IsExtension { get; set; }
+        [JsonProperty("semantic-assembly", Order = 21)]
+        public string SemanticAssembly { get; set; }
 
         public InvocationExpression(NodeType type)
             : base(type)

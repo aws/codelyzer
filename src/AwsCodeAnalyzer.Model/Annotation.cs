@@ -9,6 +9,8 @@ namespace AwsCodeAnalyzer.Model
 
         [JsonProperty("semantic-namespace")]
         public string SemanticNamespace { get; set; }
+        [JsonProperty("semantic-assembly")]
+        public string SemanticAssembly { get; set; }
 
         public Annotation()
             : base(TYPE.Name)

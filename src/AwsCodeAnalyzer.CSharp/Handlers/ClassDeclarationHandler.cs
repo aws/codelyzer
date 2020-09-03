@@ -10,7 +10,7 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
     {
         private ClassDeclaration ClassDeclaration { get => (ClassDeclaration)UstNode; }
 
-        public ClassDeclarationHandler(CodeContext context, 
+        public ClassDeclarationHandler(CodeContext context,
             ClassDeclarationSyntax syntaxNode)
             : base(context, syntaxNode, new ClassDeclaration())
         {
@@ -21,6 +21,8 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             if (classSymbol != null && classSymbol.BaseType != null)
             {
                 ClassDeclaration.BaseType = classSymbol.BaseType.ToString();
+                ClassDeclaration.SemanticNamespace = classSymbol.BaseType.ContainingNamespace != null ? classSymbol.BaseType.ContainingNamespace.ToString() : string.Empty;
+                ClassDeclaration.SemanticAssembly = classSymbol.BaseType.ContainingAssembly != null ? classSymbol.BaseType.ContainingAssembly.Name.ToString() : string.Empty;
             }
         }
     }

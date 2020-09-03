@@ -21,14 +21,14 @@ namespace AwsCodeAnalyzer.CSharp
         protected SemanticModel SemanticModel { get => context.SemanticModel; }
         protected SyntaxTree SyntaxTree { get => context.SyntaxTree; }
         protected ILogger Logger { get => context.Logger; }
-        protected MetaDataSettings MetaDataSettings { get => context.AnalyzerConfiguration.MetaDataSettings; } 
+        protected MetaDataSettings MetaDataSettings { get => context.AnalyzerConfiguration.MetaDataSettings; }
         protected RootUstNode RootNode { get; set; }
 
         public CSharpRoslynProcessor(CodeContext context)
         {
             this.context = context;
         }
-        
+
         [return: MaybeNull]
         public override UstNode Visit(SyntaxNode node)
         {
@@ -36,7 +36,11 @@ namespace AwsCodeAnalyzer.CSharp
             {
                 return null;
             }
-                                    
+            if (RootNode == null)
+            {
+                RootNode = new RootUstNode();
+            }
+
             var children = new List<UstNode>();
             foreach (SyntaxNode child in node.ChildNodes())
             {
@@ -47,16 +51,11 @@ namespace AwsCodeAnalyzer.CSharp
                 }
             }
 
-            if (RootNode == null)
-            {
-                RootNode = new RootUstNode();
-            }
-
             RootNode.SetPaths(context.SourceFilePath, SyntaxTree.FilePath);
             RootNode.Language = node.Language;
 
             RootNode.Children.AddRange(children);
-            
+
             return RootNode;
         }
 
@@ -72,7 +71,7 @@ namespace AwsCodeAnalyzer.CSharp
                     members.Add(member);
                 }
             }
-            
+
             return members;
         }
         private UstNode HandleGenericVisit(SyntaxNode node)
@@ -111,6 +110,7 @@ namespace AwsCodeAnalyzer.CSharp
         public override UstNode VisitClassDeclaration(ClassDeclarationSyntax node)
         {
             ClassDeclarationHandler handler = new ClassDeclarationHandler(context, node);
+            HandleReferences(handler.UstNode as ClassDeclaration);
             handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
 
             var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
@@ -204,7 +204,7 @@ namespace AwsCodeAnalyzer.CSharp
         public override UstNode VisitLiteralExpression(LiteralExpressionSyntax node)
         {
             if (!MetaDataSettings.LiteralExpressions) return null;
-            
+
             LiteralExpressionHandler handler = new LiteralExpressionHandler(context, node);
             return handler.UstNode;
         }
@@ -214,6 +214,7 @@ namespace AwsCodeAnalyzer.CSharp
             if (!MetaDataSettings.MethodInvocations) return null;
 
             InvocationExpressionHandler handler = new InvocationExpressionHandler(context, node);
+            HandleReferences((InvocationExpression)handler.UstNode);
             return handler.UstNode;
         }
 
@@ -228,6 +229,7 @@ namespace AwsCodeAnalyzer.CSharp
             if (MetaDataSettings.Annotations)
             {
                 AttributeHandler handler = new AttributeHandler(context, node);
+                HandleReferences((Annotation)handler.UstNode);
                 return handler.UstNode;
             }
             return null;
@@ -240,10 +242,36 @@ namespace AwsCodeAnalyzer.CSharp
                 IdentifierNameHandler handler = new IdentifierNameHandler(context, node);
                 if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
                 {
+                    HandleReferences((DeclarationNode)handler.UstNode);
                     return handler.UstNode;
                 }
             }
             return null;
+        }
+        private void HandleReferences(ClassDeclaration node)
+        {
+            HandleReferences(node.SemanticNamespace, node.SemanticAssembly);
+        }
+
+        private void HandleReferences(InvocationExpression node)
+        {
+            HandleReferences(node.SemanticNamespace, node.SemanticAssembly);
+        }
+        private void HandleReferences(Annotation node)
+        {
+            HandleReferences(node.SemanticNamespace, node.SemanticAssembly);
+        }
+        private void HandleReferences(DeclarationNode node)
+        {
+            HandleReferences(node.SemanticNamespace, node.SemanticAssembly);
+        }
+
+        private void HandleReferences(string @namespace, string assembly)
+        {
+            if (MetaDataSettings.ReferenceData && !RootNode.References.Exists(r => r.Namespace == @namespace && r.Assembly == assembly))
+            {
+                RootNode.References.Add(new Reference() { Namespace = @namespace, Assembly = assembly });
+            }
         }
     }
 

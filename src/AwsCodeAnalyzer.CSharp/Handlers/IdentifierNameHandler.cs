@@ -9,20 +9,20 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
 {
     public class IdentifierNameHandler : UstNodeHandler
     {
-        private static Type[] identifierNameTypes = new Type[] { 
+        private static Type[] identifierNameTypes = new Type[] {
             typeof(MethodDeclarationSyntax),
-            typeof(ClassDeclarationSyntax), 
-            typeof(VariableDeclarationSyntax), 
-            typeof(ParameterSyntax), 
+            typeof(ClassDeclarationSyntax),
+            typeof(VariableDeclarationSyntax),
+            typeof(ParameterSyntax),
             typeof(ObjectCreationExpressionSyntax)};
 
         private DeclarationNode Model { get => (DeclarationNode)UstNode; }
 
-        public IdentifierNameHandler(CodeContext context, 
+        public IdentifierNameHandler(CodeContext context,
             IdentifierNameSyntax syntaxNode)
             : base(context, syntaxNode, new DeclarationNode())
         {
-            if(identifierNameTypes.Contains(syntaxNode.Parent.GetType()))
+            if (identifierNameTypes.Contains(syntaxNode.Parent.GetType()))
             {
                 var type = SemanticHelper.GetSemanticType(syntaxNode, SemanticModel);
                 var symbolInfo = SemanticModel.GetSymbolInfo(syntaxNode);
@@ -30,7 +30,8 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
                 {
                     Model.Identifier = type;
                     Model.SemanticNamespace = symbolInfo.Symbol.ContainingNamespace != null ? symbolInfo.Symbol.ContainingNamespace.ToString().Trim() : string.Empty;
-                } 
+                    Model.SemanticAssembly = symbolInfo.Symbol.ContainingAssembly != null ? symbolInfo.Symbol.ContainingAssembly.Name.ToString().Trim() : string.Empty;
+                }
                 else
                 {
                     Model.Identifier = syntaxNode.Identifier.Text.Trim();
