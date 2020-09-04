@@ -110,7 +110,7 @@ namespace AwsCodeAnalyzer.CSharp
         public override UstNode VisitClassDeclaration(ClassDeclarationSyntax node)
         {
             ClassDeclarationHandler handler = new ClassDeclarationHandler(context, node);
-            HandleReferences(handler.UstNode as ClassDeclaration);
+            HandleReferences(((ClassDeclaration)handler.UstNode).Reference );
             handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
 
             var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
@@ -214,7 +214,7 @@ namespace AwsCodeAnalyzer.CSharp
             if (!MetaDataSettings.MethodInvocations) return null;
 
             InvocationExpressionHandler handler = new InvocationExpressionHandler(context, node);
-            HandleReferences((InvocationExpression)handler.UstNode);
+            HandleReferences(((InvocationExpression)handler.UstNode).Reference);
             return handler.UstNode;
         }
 
@@ -229,7 +229,7 @@ namespace AwsCodeAnalyzer.CSharp
             if (MetaDataSettings.Annotations)
             {
                 AttributeHandler handler = new AttributeHandler(context, node);
-                HandleReferences((Annotation)handler.UstNode);
+                HandleReferences(((Annotation)handler.UstNode).Reference);
                 return handler.UstNode;
             }
             return null;
@@ -242,35 +242,19 @@ namespace AwsCodeAnalyzer.CSharp
                 IdentifierNameHandler handler = new IdentifierNameHandler(context, node);
                 if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
                 {
-                    HandleReferences((DeclarationNode)handler.UstNode);
+                    HandleReferences(((DeclarationNode)handler.UstNode).Reference);
                     return handler.UstNode;
                 }
             }
             return null;
         }
-        private void HandleReferences(ClassDeclaration node)
-        {
-            HandleReferences(node.SemanticNamespace, node.SemanticAssembly);
-        }
 
-        private void HandleReferences(InvocationExpression node)
+        private void HandleReferences(Reference reference)
         {
-            HandleReferences(node.SemanticNamespace, node.SemanticAssembly);
-        }
-        private void HandleReferences(Annotation node)
-        {
-            HandleReferences(node.SemanticNamespace, node.SemanticAssembly);
-        }
-        private void HandleReferences(DeclarationNode node)
-        {
-            HandleReferences(node.SemanticNamespace, node.SemanticAssembly);
-        }
-
-        private void HandleReferences(string @namespace, string assembly)
-        {
-            if (MetaDataSettings.ReferenceData && !RootNode.References.Exists(r => r.Namespace == @namespace && r.Assembly == assembly))
+            if (MetaDataSettings.ReferenceData 
+                && !RootNode.References.Contains(reference))
             {
-                RootNode.References.Add(new Reference() { Namespace = @namespace, Assembly = assembly });
+                RootNode.References.Add(reference);
             }
         }
     }

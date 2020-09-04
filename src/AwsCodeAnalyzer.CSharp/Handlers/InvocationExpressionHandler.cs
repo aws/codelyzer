@@ -74,10 +74,8 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
                     SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.SemanticNamespace);
             }
 
-            if (invokedSymbol.ContainingAssembly != null)
-            {
-                Model.SemanticAssembly = invokedSymbol.ContainingAssembly.Name.ToString();
-            }
+            Model.Reference.Namespace = GetNamespace(invokedSymbol);
+            Model.Reference.Assembly = GetAssembly(invokedSymbol);
 
             if (invokedSymbol.ReducedFrom != null)
             {

@@ -18,9 +18,10 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             var symbolInfo = SemanticModel.GetSymbolInfo(syntaxNode);
             if (symbolInfo.Symbol != null && symbolInfo.Symbol.ContainingNamespace != null)
             {
-                Model.SemanticNamespace = symbolInfo.Symbol.ContainingNamespace.ToString().Trim();
-                Model.SemanticAssembly = symbolInfo.Symbol.ContainingAssembly != null ? symbolInfo.Symbol.ContainingAssembly.Name.ToString().Trim() : string.Empty;
+                Model.Reference.Namespace = GetNamespace(symbolInfo.Symbol);
+                Model.Reference.Assembly = GetAssembly(symbolInfo.Symbol);
             }
         }
+
     }
 }

@@ -21,8 +21,8 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             if (classSymbol != null && classSymbol.BaseType != null)
             {
                 ClassDeclaration.BaseType = classSymbol.BaseType.ToString();
-                ClassDeclaration.SemanticNamespace = classSymbol.BaseType.ContainingNamespace != null ? classSymbol.BaseType.ContainingNamespace.ToString() : string.Empty;
-                ClassDeclaration.SemanticAssembly = classSymbol.BaseType.ContainingAssembly != null ? classSymbol.BaseType.ContainingAssembly.Name.ToString() : string.Empty;
+                ClassDeclaration.Reference.Namespace = GetNamespace(classSymbol);
+                ClassDeclaration.Reference.Assembly = GetAssembly(classSymbol);
             }
         }
     }

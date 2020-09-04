@@ -7,13 +7,12 @@ namespace AwsCodeAnalyzer.Model
         public static readonly NodeType TYPE = new NodeType(IdConstants.DeclarationNodeId,
             IdConstants.DeclarationNodeIdName);
 
-        [JsonProperty("semantic-namespace")]
-        public string SemanticNamespace { get; set; }
-        [JsonProperty("semantic-assembly")]
-        public string SemanticAssembly { get; set; }
+        [JsonProperty("references", Order = 99)]
+        public Reference Reference { get; set; }
         public DeclarationNode()
             : base(TYPE.Name)
         {
+            Reference = new Reference();
         }
     }
 }
