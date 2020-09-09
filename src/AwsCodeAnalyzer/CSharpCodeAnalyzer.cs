@@ -1,12 +1,12 @@
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using AwsCodeAnalyzer.Build;
 using AwsCodeAnalyzer.Common;
 using AwsCodeAnalyzer.CSharp;
 using AwsCodeAnalyzer.Model;
 using Serilog;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace AwsCodeAnalyzer
 {
@@ -39,15 +39,15 @@ namespace AwsCodeAnalyzer
             var projectBuildResults = await builder.Build();
 
             List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
+            var analyzerResults = new List<AnalyzerResult>();
             foreach (var projectBuildResult in projectBuildResults)
             {
                 var workspaceResult =  await AnalyzeProject(projectBuildResult);
                 workspaceResults.Add(workspaceResult);
-            }
 
-            //Generate Output result
-            var analyzerResults = workspaceResults.Select(w => 
-                new AnalyzerResult() { ProjectResult = w }).ToList();
+                //Generate Output result
+                analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
+            }
 
             await GenerateOptionalOutput(analyzerResults);
 

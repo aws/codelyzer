@@ -1,3 +1,4 @@
+using AwsCodeAnalyzer.Build;
 using AwsCodeAnalyzer.Model;
 
 namespace AwsCodeAnalyzer
@@ -6,5 +7,6 @@ namespace AwsCodeAnalyzer
     {
         public ProjectWorkspace ProjectResult;
         public string OutputJsonFilePath;
+        public ProjectBuildResult ProjectBuildResult;
     }
 }

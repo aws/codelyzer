@@ -18,8 +18,18 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             var symbolInfo = SemanticModel.GetSymbolInfo(syntaxNode);
             if (symbolInfo.Symbol != null && symbolInfo.Symbol.ContainingNamespace != null)
             {
+                var symbol = symbolInfo.Symbol;
+
                 Model.Reference.Namespace = GetNamespace(symbolInfo.Symbol);
                 Model.Reference.Assembly = GetAssembly(symbolInfo.Symbol);
+
+
+                if (symbol.ContainingType != null)
+                {
+                    string classNameWithNamespace = symbol.ContainingType.ToString();
+                    Model.SemanticClassType = Model.Reference.Namespace == null ? classNameWithNamespace :
+                        SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.Reference.Namespace);
+                }
             }
         }
 
