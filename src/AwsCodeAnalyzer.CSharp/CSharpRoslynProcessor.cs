@@ -55,7 +55,7 @@ namespace AwsCodeAnalyzer.CSharp
             RootNode.Language = node.Language;
 
             RootNode.Children.AddRange(children);
-
+            
             return RootNode;
         }
 
@@ -251,10 +251,19 @@ namespace AwsCodeAnalyzer.CSharp
 
         private void HandleReferences(Reference reference)
         {
-            if (MetaDataSettings.ReferenceData 
+            if (MetaDataSettings.ReferenceData
                 && !RootNode.References.Contains(reference))
             {
-                RootNode.References.Add(reference);
+                var rootReference = new Reference() { Assembly = reference.Assembly, Namespace = reference.Namespace };
+                if (reference.AssemblySymbol != null)
+                {
+                    var metaDataReference = SemanticModel.Compilation.GetMetadataReference(reference.AssemblySymbol);
+                    if (metaDataReference != null)
+                    {
+                        rootReference.AssemblyLocation = metaDataReference.Display;
+                    }
+                }
+                RootNode.References.Add(rootReference);
             }
         }
     }

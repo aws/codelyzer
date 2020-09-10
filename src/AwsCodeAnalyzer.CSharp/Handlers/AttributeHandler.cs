@@ -20,9 +20,9 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             {
                 var symbol = symbolInfo.Symbol;
 
-                Model.Reference.Namespace = GetNamespace(symbolInfo.Symbol);
-                Model.Reference.Assembly = GetAssembly(symbolInfo.Symbol);
-
+                Model.Reference.Namespace = GetNamespace(symbol);
+                Model.Reference.Assembly = GetAssembly(symbol);
+                Model.Reference.AssemblySymbol = symbol.ContainingAssembly;
 
                 if (symbol.ContainingType != null)
                 {

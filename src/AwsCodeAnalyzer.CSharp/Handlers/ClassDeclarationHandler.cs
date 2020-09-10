@@ -23,6 +23,7 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
                 ClassDeclaration.BaseType = classSymbol.BaseType.ToString();
                 ClassDeclaration.Reference.Namespace = GetNamespace(classSymbol);
                 ClassDeclaration.Reference.Assembly = GetAssembly(classSymbol);
+                ClassDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
             }
         }
     }

@@ -25,13 +25,19 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("errors-found", Order = 6)]
         public int BuildErrorsCount { get; set; }
 
-        [JsonProperty("source-file-results", Order = 8)]
+        [JsonProperty("target-version", Order = 7)]
+        public string TargetVersion { get; set; }
+
+        [JsonProperty("external-references", Order = 8)]
+        public ExternalReferences ExternalReferences { get; set; }
+
+        [JsonProperty("source-file-results", Order = 9)]
         public UstList<RootUstNode> SourceFileResults;
 
-        [JsonProperty("workspace-path", Order = 9)]
+        [JsonProperty("workspace-path", Order = 10)]
         public string ProjectFilePath { get; }
         
-        [JsonProperty("build-errors", Order = 10)]
+        [JsonProperty("build-errors", Order = 11)]
         public List<String> BuildErrors { get; set; }
 
         public ProjectWorkspace(string projectFilePath)

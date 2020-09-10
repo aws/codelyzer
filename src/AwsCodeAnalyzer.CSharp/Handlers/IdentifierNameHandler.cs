@@ -31,6 +31,7 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
                     Model.Identifier = type;
                     Model.Reference.Namespace = GetNamespace(symbolInfo.Symbol);
                     Model.Reference.Assembly = GetAssembly(symbolInfo.Symbol);
+                    Model.Reference.AssemblySymbol = symbolInfo.Symbol.ContainingAssembly;
                 }
                 else
                 {

@@ -2,6 +2,7 @@ using AwsCodeAnalyzer.Build;
 using AwsCodeAnalyzer.Common;
 using AwsCodeAnalyzer.CSharp;
 using AwsCodeAnalyzer.Model;
+using Microsoft.CodeAnalysis;
 using Serilog;
 using System.Collections.Generic;
 using System.IO;
@@ -81,6 +82,9 @@ namespace AwsCodeAnalyzer
                 BuildErrorsCount = projectResult.BuildErrors.Count
             };
 
+            workspace.ExternalReferences = GetExternalReferences(projectResult);
+            PopulateFrameworkVersion(workspace);
+
             foreach (var fileBuildResult in projectResult.SourceFileBuildResults)
             {
                 CodeContext codeContext = new CodeContext(fileBuildResult.SemanticModel,
@@ -91,13 +95,64 @@ namespace AwsCodeAnalyzer
                     Log.Logger);
 
                 Log.Logger.Debug("Analyzing: " + fileBuildResult.SourceFileFullPath);
-
+                
                 CSharpRoslynProcessor processor = new CSharpRoslynProcessor(codeContext);
                 var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
                 workspace.SourceFileResults.Add((RootUstNode)result);
             }
             
             return workspace;
+        }
+
+        private void PopulateFrameworkVersion(ProjectWorkspace workspace)
+        {
+            var mscorlib = workspace.ExternalReferences.SdkReferences.Where(r => r.Identity == Constants.MsCorlib).First();
+            if (mscorlib != null)
+            {
+                var arr = mscorlib.AssemblyLocation.Split(Path.DirectorySeparatorChar);
+                workspace.TargetVersion = arr[arr.Length - 2];
+            }
+        }
+
+        private ExternalReferences GetExternalReferences(ProjectBuildResult projectResult)
+        {
+            ExternalReferences externalReferences = new ExternalReferences();
+            if (AnalyzerConfiguration.MetaDataSettings.ReferenceData)
+            {
+                if (projectResult != null && projectResult.SourceFileBuildResults.Count > 0)
+                {
+                    var compilation = projectResult.SourceFileBuildResults[0].SemanticModel.Compilation;
+                    var externalReferencesMetaData = compilation.ExternalReferences;
+
+                    foreach (var externalReferenceMetaData in externalReferencesMetaData)
+                    {
+                        var symbol = compilation.GetAssemblyOrModuleSymbol(externalReferenceMetaData) as IAssemblySymbol;
+                        
+                        var filePath = externalReferenceMetaData.Display;
+                        var externalReference = new ExternalReference()
+                        {
+                            Identity = symbol.Identity.Name,
+                            Version = symbol.Identity.Version.ToString(),
+                            AssemblyLocation = filePath
+                        };
+
+                        var type = externalReferenceMetaData.ToString();
+                        if (type == Constants.ProjectReferenceType)
+                        {
+                            externalReferences.ProjectReferences.Add(externalReference);
+                        }
+                        else if (filePath.Contains("packages"))
+                        {
+                            externalReferences.NugetReferences.Add(externalReference);
+                        }
+                        else
+                        {
+                            externalReferences.SdkReferences.Add(externalReference);
+                        }
+                    }
+                }
+            }
+            return externalReferences;
         }
     }
 }

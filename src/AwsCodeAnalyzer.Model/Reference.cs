@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.CodeAnalysis;
+using Newtonsoft.Json;
 
 namespace AwsCodeAnalyzer.Model
 {
@@ -7,7 +8,12 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("namespace", Order = 1)]
         public string Namespace { get; set; }
         [JsonProperty("assembly", Order = 2)]
-        public string Assembly { get; set; }
+        public string Assembly { get; set; }        
+        [JsonProperty("assembly-location", Order = 3)]
+        public string AssemblyLocation { get; set; }
+
+        [JsonIgnore]
+        public IAssemblySymbol AssemblySymbol { get; set; }
 
         public override bool Equals(object obj)
         {

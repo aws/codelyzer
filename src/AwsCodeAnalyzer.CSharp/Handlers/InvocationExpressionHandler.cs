@@ -76,6 +76,7 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
 
             Model.Reference.Namespace = GetNamespace(invokedSymbol);
             Model.Reference.Assembly = GetAssembly(invokedSymbol);
+            Model.Reference.AssemblySymbol = invokedSymbol.ContainingAssembly;
 
             if (invokedSymbol.ReducedFrom != null)
             {
