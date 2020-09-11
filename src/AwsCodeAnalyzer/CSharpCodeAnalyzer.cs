@@ -2,7 +2,6 @@ using AwsCodeAnalyzer.Build;
 using AwsCodeAnalyzer.Common;
 using AwsCodeAnalyzer.CSharp;
 using AwsCodeAnalyzer.Model;
-using Microsoft.CodeAnalysis;
 using Serilog;
 using System.Collections.Generic;
 using System.IO;
@@ -85,7 +84,10 @@ namespace AwsCodeAnalyzer
                 BuildErrorsCount = projectResult.BuildErrors.Count
             };
 
-            workspace.ExternalReferences = GetExternalReferences(projectResult);
+            if (AnalyzerConfiguration.MetaDataSettings.ReferenceData)
+            {
+                workspace.ExternalReferences = projectResult.ExternalReferences;
+            }
             workspace.TargetFramework = projectResult.TargetFramework;
 
             foreach (var fileBuildResult in projectResult.SourceFileBuildResults)
@@ -105,47 +107,6 @@ namespace AwsCodeAnalyzer
             }
             
             return workspace;
-        }
-
-        private ExternalReferences GetExternalReferences(ProjectBuildResult projectResult)
-        {
-            ExternalReferences externalReferences = new ExternalReferences();
-            if (AnalyzerConfiguration.MetaDataSettings.ReferenceData)
-            {
-                if (projectResult != null && projectResult.SourceFileBuildResults.Count > 0)
-                {
-                    var compilation = projectResult.SourceFileBuildResults[0].SemanticModel.Compilation;
-                    var externalReferencesMetaData = compilation.ExternalReferences;
-
-                    foreach (var externalReferenceMetaData in externalReferencesMetaData)
-                    {
-                        var symbol = compilation.GetAssemblyOrModuleSymbol(externalReferenceMetaData) as IAssemblySymbol;
-                        
-                        var filePath = externalReferenceMetaData.Display;
-                        var externalReference = new ExternalReference()
-                        {
-                            Identity = symbol.Identity.Name,
-                            Version = symbol.Identity.Version.ToString(),
-                            AssemblyLocation = filePath
-                        };
-
-                        var type = externalReferenceMetaData.ToString();
-                        if (type == Constants.ProjectReferenceType)
-                        {
-                            externalReferences.ProjectReferences.Add(externalReference);
-                        }
-                        else if (filePath.Contains(Constants.PackagesDirectoryIdentifier,System.StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            externalReferences.NugetReferences.Add(externalReference);
-                        }
-                        else
-                        {
-                            externalReferences.SdkReferences.Add(externalReference);
-                        }
-                    }
-                }
-            }
-            return externalReferences;
         }
     }
 }
