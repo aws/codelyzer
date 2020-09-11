@@ -28,6 +28,7 @@ namespace AwsCodeAnalyzer.Build
         public List<SourceFileBuildResult> SourceFileBuildResults { get; private set; }
         public List<string> BuildErrors { get; set; }
         public Project Project { get; set; }
+        public string TargetFramework { get; set; }
 
         public ProjectBuildResult()
         {

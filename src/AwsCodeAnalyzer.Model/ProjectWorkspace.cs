@@ -25,8 +25,8 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("errors-found", Order = 6)]
         public int BuildErrorsCount { get; set; }
 
-        [JsonProperty("target-version", Order = 7)]
-        public string TargetVersion { get; set; }
+        [JsonProperty("target-framework", Order = 7)]
+        public string TargetFramework { get; set; }
 
         [JsonProperty("external-references", Order = 8)]
         public ExternalReferences ExternalReferences { get; set; }

@@ -83,7 +83,7 @@ namespace AwsCodeAnalyzer
             };
 
             workspace.ExternalReferences = GetExternalReferences(projectResult);
-            PopulateFrameworkVersion(workspace);
+            workspace.TargetFramework = projectResult.TargetFramework;
 
             foreach (var fileBuildResult in projectResult.SourceFileBuildResults)
             {
@@ -102,16 +102,6 @@ namespace AwsCodeAnalyzer
             }
             
             return workspace;
-        }
-
-        private void PopulateFrameworkVersion(ProjectWorkspace workspace)
-        {
-            var mscorlib = workspace.ExternalReferences.SdkReferences.Where(r => r.Identity == Constants.MsCorlib).First();
-            if (mscorlib != null)
-            {
-                var arr = mscorlib.AssemblyLocation.Split(Path.DirectorySeparatorChar);
-                workspace.TargetVersion = arr[arr.Length - 2];
-            }
         }
 
         private ExternalReferences GetExternalReferences(ProjectBuildResult projectResult)

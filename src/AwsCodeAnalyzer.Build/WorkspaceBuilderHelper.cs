@@ -21,8 +21,8 @@ namespace AwsCodeAnalyzer.Build
         private const string Configuration = nameof(Configuration);
 
 
-
         public readonly List<Project> Projects = null;
+        public readonly Dictionary<string, string> ProjectFrameworkVersions = null;
         private ILogger Logger { get; set; }
         
         public WorkspaceBuilderHelper(ILogger logger, string workspacePath)
@@ -30,6 +30,7 @@ namespace AwsCodeAnalyzer.Build
             this.Logger = logger;
             this.WorkspacePath = workspacePath;
             this.Projects = new List<Project>();
+            this.ProjectFrameworkVersions = new Dictionary<string, string>();
         }
 
         private string WorkspacePath { get; }
@@ -92,6 +93,9 @@ namespace AwsCodeAnalyzer.Build
                     IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(path);
                     IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions());
                     IAnalyzerResult analyzerResult = analyzerResults.First();
+
+                    AddTargetFramework(analyzerResult.ProjectGuid, analyzerResult.TargetFramework);
+                    
                     analyzerResult.AddToWorkspace(workspace);
                     foreach (var pref in analyzerResult.ProjectReferences)
                     {
@@ -105,11 +109,18 @@ namespace AwsCodeAnalyzer.Build
                 
                 var project = workspace.CurrentSolution.Projects.First(p => p.FilePath.Equals(WorkspacePath));
                 Projects.Add(project);
-               
             }
 
             Logger.Debug(sb.ToString());
             writer.Close();
+        }
+
+        private void AddTargetFramework(Guid projectGuid, string targetFramework)
+        {
+            if (projectGuid != null)
+            {
+                ProjectFrameworkVersions[projectGuid.ToString()] = targetFramework;
+            }
         }
 
         /*
@@ -133,6 +144,7 @@ namespace AwsCodeAnalyzer.Build
             AdhocWorkspace workspace = new AdhocWorkspace();
             foreach (IAnalyzerResult result in results)
             {
+                AddTargetFramework(result.ProjectGuid, result.TargetFramework);
                 result.AddToWorkspace(workspace);
             }
             return workspace;
