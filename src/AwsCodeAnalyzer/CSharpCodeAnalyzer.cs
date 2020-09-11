@@ -11,6 +11,9 @@ using System.Threading.Tasks;
 
 namespace AwsCodeAnalyzer
 {
+    /// <summary>
+    /// Code analyzer for CSharp
+    /// </summary>
     public class CSharpCodeAnalyzer : CodeAnalyzer
     {
         public CSharpCodeAnalyzer(AnalyzerConfiguration configuration, ILogger logger)
@@ -131,7 +134,7 @@ namespace AwsCodeAnalyzer
                         {
                             externalReferences.ProjectReferences.Add(externalReference);
                         }
-                        else if (filePath.Contains("packages"))
+                        else if (filePath.Contains(Constants.PackagesDirectoryIdentifier,System.StringComparison.CurrentCultureIgnoreCase))
                         {
                             externalReferences.NugetReferences.Add(externalReference);
                         }

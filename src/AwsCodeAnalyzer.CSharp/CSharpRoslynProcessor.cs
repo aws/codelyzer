@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
 using AwsCodeAnalyzer.Common;
 using AwsCodeAnalyzer.CSharp.Handlers;
 using AwsCodeAnalyzer.Model;
@@ -11,7 +5,10 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Serilog;
-using Serilog.Core;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace AwsCodeAnalyzer.CSharp
 {
@@ -248,7 +245,7 @@ namespace AwsCodeAnalyzer.CSharp
             }
             return null;
         }
-
+        
         private void HandleReferences(Reference reference)
         {
             if (MetaDataSettings.ReferenceData

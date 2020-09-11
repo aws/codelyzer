@@ -122,19 +122,20 @@ namespace AwsCodeAnalyzer.Build
                 ProjectRootPath = Path.GetDirectoryName(Project.FilePath),
                 Project = Project
             };
-            
+
             foreach (var syntaxTree in Compilation.SyntaxTrees)
             {
+                var sourceFilePath = Path.GetRelativePath(projectBuildResult.ProjectRootPath, syntaxTree.FilePath);
                 var fileResult = new SourceFileBuildResult
                 {
                     SyntaxTree = syntaxTree,
                     SemanticModel = Compilation.GetSemanticModel(syntaxTree),
                     SourceFileFullPath = syntaxTree.FilePath,
-                    SyntaxGenerator = SyntaxGenerator.GetGenerator(Project)
+                    SyntaxGenerator = SyntaxGenerator.GetGenerator(Project),
+                    SourceFilePath = sourceFilePath
                 };
                 projectBuildResult.SourceFileBuildResults.Add(fileResult);
-                projectBuildResult.AddSourceFile(syntaxTree.FilePath);
-                fileResult.SourceFilePath = projectBuildResult.SourceFiles.Last();
+                projectBuildResult.SourceFiles.Add(sourceFilePath);
             }
 
             return projectBuildResult;
