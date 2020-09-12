@@ -42,5 +42,6 @@ namespace AwsCodeAnalyzer
         public bool DeclarationNodes;
         public bool Annotations;
         public bool LocationData = true;
+        public bool ReferenceData;
     }
 }

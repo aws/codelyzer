@@ -24,6 +24,7 @@ namespace AwsCodeAnalyzer.Build
             {
                 ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, project);
                 var result = await projectBuildHandler.Build();
+                result.TargetFramework = _builder.ProjectFrameworkVersions[project.Id.Id.ToString()];
                 ProjectResults.Add(result);
             }
 

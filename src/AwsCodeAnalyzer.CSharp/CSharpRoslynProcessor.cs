@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Reflection;
-using System.Threading;
 using AwsCodeAnalyzer.Common;
 using AwsCodeAnalyzer.CSharp.Handlers;
 using AwsCodeAnalyzer.Model;
@@ -11,7 +5,10 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Serilog;
-using Serilog.Core;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace AwsCodeAnalyzer.CSharp
 {
@@ -21,14 +18,14 @@ namespace AwsCodeAnalyzer.CSharp
         protected SemanticModel SemanticModel { get => context.SemanticModel; }
         protected SyntaxTree SyntaxTree { get => context.SyntaxTree; }
         protected ILogger Logger { get => context.Logger; }
-        protected MetaDataSettings MetaDataSettings { get => context.AnalyzerConfiguration.MetaDataSettings; } 
+        protected MetaDataSettings MetaDataSettings { get => context.AnalyzerConfiguration.MetaDataSettings; }
         protected RootUstNode RootNode { get; set; }
 
         public CSharpRoslynProcessor(CodeContext context)
         {
             this.context = context;
         }
-        
+
         [return: MaybeNull]
         public override UstNode Visit(SyntaxNode node)
         {
@@ -36,7 +33,11 @@ namespace AwsCodeAnalyzer.CSharp
             {
                 return null;
             }
-                                    
+            if (RootNode == null)
+            {
+                RootNode = new RootUstNode();
+            }
+
             var children = new List<UstNode>();
             foreach (SyntaxNode child in node.ChildNodes())
             {
@@ -45,11 +46,6 @@ namespace AwsCodeAnalyzer.CSharp
                 {
                     children.Add(result);
                 }
-            }
-
-            if (RootNode == null)
-            {
-                RootNode = new RootUstNode();
             }
 
             RootNode.SetPaths(context.SourceFilePath, SyntaxTree.FilePath);
@@ -72,7 +68,7 @@ namespace AwsCodeAnalyzer.CSharp
                     members.Add(member);
                 }
             }
-            
+
             return members;
         }
         private UstNode HandleGenericVisit(SyntaxNode node)
@@ -111,6 +107,7 @@ namespace AwsCodeAnalyzer.CSharp
         public override UstNode VisitClassDeclaration(ClassDeclarationSyntax node)
         {
             ClassDeclarationHandler handler = new ClassDeclarationHandler(context, node);
+            HandleReferences(((ClassDeclaration)handler.UstNode).Reference );
             handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
 
             var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
@@ -204,7 +201,7 @@ namespace AwsCodeAnalyzer.CSharp
         public override UstNode VisitLiteralExpression(LiteralExpressionSyntax node)
         {
             if (!MetaDataSettings.LiteralExpressions) return null;
-            
+
             LiteralExpressionHandler handler = new LiteralExpressionHandler(context, node);
             return handler.UstNode;
         }
@@ -214,6 +211,7 @@ namespace AwsCodeAnalyzer.CSharp
             if (!MetaDataSettings.MethodInvocations) return null;
 
             InvocationExpressionHandler handler = new InvocationExpressionHandler(context, node);
+            HandleReferences(((InvocationExpression)handler.UstNode).Reference);
             return handler.UstNode;
         }
 
@@ -228,6 +226,7 @@ namespace AwsCodeAnalyzer.CSharp
             if (MetaDataSettings.Annotations)
             {
                 AttributeHandler handler = new AttributeHandler(context, node);
+                HandleReferences(((Annotation)handler.UstNode).Reference);
                 return handler.UstNode;
             }
             return null;
@@ -240,10 +239,29 @@ namespace AwsCodeAnalyzer.CSharp
                 IdentifierNameHandler handler = new IdentifierNameHandler(context, node);
                 if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
                 {
+                    HandleReferences(((DeclarationNode)handler.UstNode).Reference);
                     return handler.UstNode;
                 }
             }
             return null;
+        }
+        
+        private void HandleReferences(Reference reference)
+        {
+            if (MetaDataSettings.ReferenceData
+                && !RootNode.References.Contains(reference))
+            {
+                var rootReference = new Reference() { Assembly = reference.Assembly, Namespace = reference.Namespace };
+                if (reference.AssemblySymbol != null)
+                {
+                    var metaDataReference = SemanticModel.Compilation.GetMetadataReference(reference.AssemblySymbol);
+                    if (metaDataReference != null)
+                    {
+                        rootReference.AssemblyLocation = metaDataReference.Display;
+                    }
+                }
+                RootNode.References.Add(rootReference);
+            }
         }
     }
 

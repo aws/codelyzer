@@ -1,15 +1,18 @@
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using AwsCodeAnalyzer.Build;
 using AwsCodeAnalyzer.Common;
 using AwsCodeAnalyzer.CSharp;
 using AwsCodeAnalyzer.Model;
 using Serilog;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace AwsCodeAnalyzer
 {
+    /// <summary>
+    /// Code analyzer for CSharp
+    /// </summary>
     public class CSharpCodeAnalyzer : CodeAnalyzer
     {
         public CSharpCodeAnalyzer(AnalyzerConfiguration configuration, ILogger logger)
@@ -39,15 +42,15 @@ namespace AwsCodeAnalyzer
             var projectBuildResults = await builder.Build();
 
             List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
+            var analyzerResults = new List<AnalyzerResult>();
             foreach (var projectBuildResult in projectBuildResults)
             {
                 var workspaceResult =  await AnalyzeProject(projectBuildResult);
                 workspaceResults.Add(workspaceResult);
-            }
 
-            //Generate Output result
-            var analyzerResults = workspaceResults.Select(w => 
-                new AnalyzerResult() { ProjectResult = w }).ToList();
+                //Generate Output result
+                analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
+            }
 
             await GenerateOptionalOutput(analyzerResults);
 
@@ -81,6 +84,12 @@ namespace AwsCodeAnalyzer
                 BuildErrorsCount = projectResult.BuildErrors.Count
             };
 
+            if (AnalyzerConfiguration.MetaDataSettings.ReferenceData)
+            {
+                workspace.ExternalReferences = projectResult.ExternalReferences;
+            }
+            workspace.TargetFramework = projectResult.TargetFramework;
+
             foreach (var fileBuildResult in projectResult.SourceFileBuildResults)
             {
                 CodeContext codeContext = new CodeContext(fileBuildResult.SemanticModel,
@@ -91,7 +100,7 @@ namespace AwsCodeAnalyzer
                     Log.Logger);
 
                 Log.Logger.Debug("Analyzing: " + fileBuildResult.SourceFileFullPath);
-
+                
                 CSharpRoslynProcessor processor = new CSharpRoslynProcessor(codeContext);
                 var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
                 workspace.SourceFileResults.Add((RootUstNode)result);

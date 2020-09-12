@@ -42,6 +42,9 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("semantic-is-extension", Order = 20)]
         public bool IsExtension { get; set; }
 
+        [JsonProperty("references", Order = 99)]
+        public Reference Reference { get; set; }
+
         public InvocationExpression(NodeType type)
             : base(type)
         {
@@ -53,6 +56,7 @@ namespace AwsCodeAnalyzer.Model
         {
             SemanticProperties = new List<string>();
             Parameters = new List<Parameter>();
+            Reference = new Reference();
         }
     }
 }

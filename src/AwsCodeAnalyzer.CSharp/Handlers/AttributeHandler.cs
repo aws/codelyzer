@@ -9,7 +9,7 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
     {
         private Annotation Model { get => (Annotation)UstNode; }
 
-        public AttributeHandler(CodeContext context, 
+        public AttributeHandler(CodeContext context,
             AttributeSyntax syntaxNode)
             : base(context, syntaxNode, new Annotation())
         {
@@ -18,8 +18,20 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             var symbolInfo = SemanticModel.GetSymbolInfo(syntaxNode);
             if (symbolInfo.Symbol != null && symbolInfo.Symbol.ContainingNamespace != null)
             {
-                Model.SemanticNamespace = symbolInfo.Symbol.ContainingNamespace.ToString().Trim();
+                var symbol = symbolInfo.Symbol;
+
+                Model.Reference.Namespace = GetNamespace(symbol);
+                Model.Reference.Assembly = GetAssembly(symbol);
+                Model.Reference.AssemblySymbol = symbol.ContainingAssembly;
+
+                if (symbol.ContainingType != null)
+                {
+                    string classNameWithNamespace = symbol.ContainingType.ToString();
+                    Model.SemanticClassType = Model.Reference.Namespace == null ? classNameWithNamespace :
+                        SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.Reference.Namespace);
+                }
             }
         }
+
     }
 }

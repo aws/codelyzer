@@ -10,7 +10,7 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
     {
         private ClassDeclaration ClassDeclaration { get => (ClassDeclaration)UstNode; }
 
-        public ClassDeclarationHandler(CodeContext context, 
+        public ClassDeclarationHandler(CodeContext context,
             ClassDeclarationSyntax syntaxNode)
             : base(context, syntaxNode, new ClassDeclaration())
         {
@@ -21,6 +21,9 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             if (classSymbol != null && classSymbol.BaseType != null)
             {
                 ClassDeclaration.BaseType = classSymbol.BaseType.ToString();
+                ClassDeclaration.Reference.Namespace = GetNamespace(classSymbol);
+                ClassDeclaration.Reference.Assembly = GetAssembly(classSymbol);
+                ClassDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
             }
         }
     }

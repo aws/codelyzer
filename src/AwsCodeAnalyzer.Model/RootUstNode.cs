@@ -16,8 +16,12 @@ namespace AwsCodeAnalyzer.Model
         
         [JsonProperty("file-full-path", Order = 12)]
         public string FileFullPath { get; set; }
+
+        [JsonProperty("references", Order = 99)]
+        public UstList<Reference> References { get; set; }
         public RootUstNode() : base(TYPE.Name)
         {
+            References = new UstList<Reference>();
         }
 
         public void SetPaths(string filePath, string fileFullPath)

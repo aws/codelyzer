@@ -33,6 +33,17 @@ namespace AwsCodeAnalyzer.CSharp.Handlers
             ustNode.TextSpan = textSpan;
 
         }
+
+        protected string GetNamespace(ISymbol symbol)
+        {
+            return symbol.ContainingNamespace != null 
+                ? symbol.ContainingNamespace.ToString().Trim() : string.Empty;
+        }
+        protected string GetAssembly(ISymbol symbol)
+        {
+            return symbol.ContainingAssembly != null && symbol.ContainingNamespace.Name != null
+                ? symbol.ContainingAssembly.Name.ToString().Trim() : string.Empty;
+        }
     }
 
 }

@@ -6,8 +6,17 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace AwsCodeAnalyzer.CSharp
 {
+    /// <summary>
+    /// Helper class for getting semantic info
+    /// </summary>
     public static class SemanticHelper
     {
+        /// <summary>
+        /// Gets name of type from TypeSyntax
+        /// </summary>
+        /// <param name="parameter">The TypeSyntax parameter to get info about</param>
+        /// <param name="semanticModel">An instance of the semantic model</param>
+        /// <returns>Name of the type</returns>
         public static string GetSemanticType(TypeSyntax parameter, 
             SemanticModel semanticModel)
         {
@@ -23,7 +32,13 @@ namespace AwsCodeAnalyzer.CSharp
 
             return type;
         }
-        
+
+        /// <summary>
+        /// Gets name of type from ExpressionSyntax
+        /// </summary>
+        /// <param name="parameter">The ExpressionSyntax to get info about</param>
+        /// <param name="semanticModel">An instance of the semantic model</param>
+        /// <returns>Name of the type</returns>
         public static string GetSemanticType(ExpressionSyntax expressionSyntax, 
             SemanticModel semanticModel)
         {
@@ -40,6 +55,12 @@ namespace AwsCodeAnalyzer.CSharp
             return type;
         }
 
+        /// <summary>
+        /// Gets name of type from IdentifierNameSyntax
+        /// </summary>
+        /// <param name="parameter">The IdentifierNameSyntax to get info about</param>
+        /// <param name="semanticModel">An instance of the semantic model</param>
+        /// <returns>Name of the type</returns>
         public static string GetSemanticType(IdentifierNameSyntax identifierNameSyntax,
           SemanticModel semanticModel)
         {
@@ -56,6 +77,11 @@ namespace AwsCodeAnalyzer.CSharp
             return type;
         }
 
+        /// <summary>
+        /// Populates a List with all the method properties
+        /// </summary>
+        /// <param name="invokedSymbol">The method to analyze</param>
+        /// <param name="properties">The List to populate</param>
         public static void AddMethodProperties(IMethodSymbol invokedSymbol, List<string> properties)
         {
             //Set method properties
