@@ -1,0 +1,9 @@
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/bin/Release/netcoreapp3.1/AwsCodeAnalyzer.Model.deps.json
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/bin/Release/netcoreapp3.1/AwsCodeAnalyzer.Model.dll
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/bin/Release/netcoreapp3.1/AwsCodeAnalyzer.Model.pdb
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.Model.csprojAssemblyReference.cache
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.Model.AssemblyInfoInputs.cache
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.Model.AssemblyInfo.cs
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.Model.csproj.CoreCompileInputs.cache
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.Model.dll
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.Model.pdb

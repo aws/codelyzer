@@ -1,0 +1,14 @@
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/bin/Release/netcoreapp3.1/AwsCodeAnalyzer.CSharp.deps.json
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/bin/Release/netcoreapp3.1/AwsCodeAnalyzer.CSharp.dll
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/bin/Release/netcoreapp3.1/AwsCodeAnalyzer.CSharp.pdb
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/bin/Release/netcoreapp3.1/AwsCodeAnalyzer.Common.dll
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/bin/Release/netcoreapp3.1/AwsCodeAnalyzer.Model.dll
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/bin/Release/netcoreapp3.1/AwsCodeAnalyzer.Common.pdb
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/bin/Release/netcoreapp3.1/AwsCodeAnalyzer.Model.pdb
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.CSharp.csprojAssemblyReference.cache
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.CSharp.AssemblyInfoInputs.cache
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.CSharp.AssemblyInfo.cs
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.CSharp.csproj.CoreCompileInputs.cache
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.CSharp.csproj.CopyComplete
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.CSharp.dll
+/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/obj/Release/netcoreapp3.1/AwsCodeAnalyzer.CSharp.pdb

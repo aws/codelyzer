@@ -1,0 +1,8 @@
+{
+  "runtimeOptions": {
+    "additionalProbingPaths": [
+      "/Users/chellapr/.dotnet/store/|arch|/|tfm|",
+      "/Users/chellapr/.nuget/packages"
+    ]
+  }
+}

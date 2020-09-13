@@ -1,0 +1,382 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer/AwsCodeAnalyzer.csproj": {}
+  },
+  "projects": {
+    "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Build/AwsCodeAnalyzer.Build.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Build/AwsCodeAnalyzer.Build.csproj",
+        "projectName": "AwsCodeAnalyzer.Build",
+        "projectPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Build/AwsCodeAnalyzer.Build.csproj",
+        "packagesPath": "/Users/chellapr/workspace/pipelineintegration/src/Dotnetmod/scripts/TmpLocalFeed",
+        "outputPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Build/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/chellapr/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netcoreapp3.1"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netcoreapp3.1": {
+            "projectReferences": {
+              "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/AwsCodeAnalyzer.CSharp.csproj": {
+                "projectPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/AwsCodeAnalyzer.CSharp.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "dependencies": {
+            "Buildalyzer": {
+              "target": "Package",
+              "version": "[3.0.1, )"
+            },
+            "Buildalyzer.Logger": {
+              "target": "Package",
+              "version": "[3.0.1, )"
+            },
+            "Buildalyzer.Workspaces": {
+              "target": "Package",
+              "version": "[3.0.1, )"
+            },
+            "Microsoft.CodeAnalysis.CSharp": {
+              "target": "Package",
+              "version": "[3.6.0, )"
+            },
+            "Serilog": {
+              "target": "Package",
+              "version": "[2.9.0, )"
+            },
+            "Serilog.Sinks.Console": {
+              "target": "Package",
+              "version": "[3.1.1, )"
+            },
+            "Serilog.Sinks.File": {
+              "target": "Package",
+              "version": "[4.1.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/3.1.300/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Common/AwsCodeAnalyzer.Common.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Common/AwsCodeAnalyzer.Common.csproj",
+        "projectName": "AwsCodeAnalyzer.Common",
+        "projectPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Common/AwsCodeAnalyzer.Common.csproj",
+        "packagesPath": "/Users/chellapr/workspace/pipelineintegration/src/Dotnetmod/scripts/TmpLocalFeed",
+        "outputPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Common/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/chellapr/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netcoreapp3.1"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netcoreapp3.1": {
+            "projectReferences": {
+              "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/AwsCodeAnalyzer.Model.csproj": {
+                "projectPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/AwsCodeAnalyzer.Model.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "dependencies": {
+            "Microsoft.CodeAnalysis.Common": {
+              "target": "Package",
+              "version": "[3.6.0, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[12.0.3, )"
+            },
+            "Serilog": {
+              "target": "Package",
+              "version": "[2.9.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/3.1.300/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/AwsCodeAnalyzer.CSharp.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/AwsCodeAnalyzer.CSharp.csproj",
+        "projectName": "AwsCodeAnalyzer.CSharp",
+        "projectPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/AwsCodeAnalyzer.CSharp.csproj",
+        "packagesPath": "/Users/chellapr/workspace/pipelineintegration/src/Dotnetmod/scripts/TmpLocalFeed",
+        "outputPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/chellapr/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netcoreapp3.1"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netcoreapp3.1": {
+            "projectReferences": {
+              "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Common/AwsCodeAnalyzer.Common.csproj": {
+                "projectPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Common/AwsCodeAnalyzer.Common.csproj"
+              },
+              "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/AwsCodeAnalyzer.Model.csproj": {
+                "projectPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/AwsCodeAnalyzer.Model.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "dependencies": {
+            "Microsoft.CodeAnalysis.CSharp": {
+              "target": "Package",
+              "version": "[3.6.0, )"
+            },
+            "Serilog": {
+              "target": "Package",
+              "version": "[2.9.0, )"
+            },
+            "Serilog.Sinks.Console": {
+              "target": "Package",
+              "version": "[3.1.1, )"
+            },
+            "Serilog.Sinks.File": {
+              "target": "Package",
+              "version": "[4.1.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/3.1.300/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/AwsCodeAnalyzer.Model.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/AwsCodeAnalyzer.Model.csproj",
+        "projectName": "AwsCodeAnalyzer.Model",
+        "projectPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/AwsCodeAnalyzer.Model.csproj",
+        "packagesPath": "/Users/chellapr/workspace/pipelineintegration/src/Dotnetmod/scripts/TmpLocalFeed",
+        "outputPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Model/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/chellapr/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netcoreapp3.1"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netcoreapp3.1": {
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "dependencies": {
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[12.0.3, )"
+            },
+            "Serilog": {
+              "target": "Package",
+              "version": "[2.9.0, )"
+            },
+            "Serilog.Sinks.Console": {
+              "target": "Package",
+              "version": "[3.1.1, )"
+            },
+            "Serilog.Sinks.File": {
+              "target": "Package",
+              "version": "[4.1.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/3.1.300/RuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer/AwsCodeAnalyzer.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer/AwsCodeAnalyzer.csproj",
+        "projectName": "AwsCodeAnalyzer",
+        "projectPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer/AwsCodeAnalyzer.csproj",
+        "packagesPath": "/Users/chellapr/workspace/pipelineintegration/src/Dotnetmod/scripts/TmpLocalFeed",
+        "outputPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/chellapr/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "netcoreapp3.1"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netcoreapp3.1": {
+            "projectReferences": {
+              "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Build/AwsCodeAnalyzer.Build.csproj": {
+                "projectPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.Build/AwsCodeAnalyzer.Build.csproj"
+              },
+              "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/AwsCodeAnalyzer.CSharp.csproj": {
+                "projectPath": "/Users/chellapr/workspace/pipelineintegration/src/AwsCodeAnalyzerRoslyn/src/AwsCodeAnalyzer.CSharp/AwsCodeAnalyzer.CSharp.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp3.1": {
+          "dependencies": {
+            "CommandLineParser": {
+              "target": "Package",
+              "version": "[2.8.0, )"
+            },
+            "Microsoft.CodeAnalysis.CSharp": {
+              "target": "Package",
+              "version": "[3.6.0, )"
+            },
+            "Serilog": {
+              "target": "Package",
+              "version": "[2.9.0, )"
+            },
+            "Serilog.Sinks.Console": {
+              "target": "Package",
+              "version": "[3.1.1, )"
+            },
+            "Serilog.Sinks.File": {
+              "target": "Package",
+              "version": "[4.1.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/3.1.300/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
