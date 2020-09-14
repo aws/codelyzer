@@ -1,0 +1,12 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      echo 'install'
+  pre_build:
+    commands:
+      - echo 'prebuild'
+  build:
+    commands:
+      - dotnet build
