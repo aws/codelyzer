@@ -4,6 +4,7 @@ phases:
   install:
     commands:
       - Get-Childitem "$env"
+      - Get-Childitem "$env\.."
       - aws s3 cp "s3://$env:PRIVATE_NUGET_FEED_BUCKET" "$env:CODEBUILD_SRC_DIR\NugetFeed" --recursive
       - echo 'install phase'
   pre_build:
