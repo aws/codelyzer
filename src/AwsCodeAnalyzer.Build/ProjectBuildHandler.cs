@@ -158,32 +158,39 @@ namespace AwsCodeAnalyzer.Build
 
                 foreach (var externalReferenceMetaData in externalReferencesMetaData)
                 {
-                    var symbol = compilation.GetAssemblyOrModuleSymbol(externalReferenceMetaData) as IAssemblySymbol;
+                    try
+                    {
+                        var symbol = compilation.GetAssemblyOrModuleSymbol(externalReferenceMetaData) as IAssemblySymbol;
 
-                    var filePath = externalReferenceMetaData.Display;
-                    var externalReference = new ExternalReference()
-                    {
-                        AssemblyLocation = filePath
-                    };
+                        var filePath = externalReferenceMetaData.Display;
+                        var externalReference = new ExternalReference()
+                        {
+                            AssemblyLocation = filePath
+                        };
 
-                    if(symbol != null && symbol.Identity != null)
-                    {
-                        externalReference.Identity = symbol.Identity.Name;
-                        externalReference.Version = symbol.Identity.Version != null ? symbol.Identity.Version.ToString() : string.Empty;
-                    }
+                        if (symbol != null && symbol.Identity != null)
+                        {
+                            externalReference.Identity = symbol.Identity.Name;
+                            externalReference.Version = symbol.Identity.Version != null ? symbol.Identity.Version.ToString() : string.Empty;
+                        }
 
-                    var type = externalReferenceMetaData.ToString();
-                    if (type == Constants.ProjectReferenceType)
-                    {
-                        externalReferences.ProjectReferences.Add(externalReference);
+                        var type = externalReferenceMetaData.ToString();
+                        if (type == Constants.ProjectReferenceType)
+                        {
+                            externalReferences.ProjectReferences.Add(externalReference);
+                        }
+                        else if (filePath.Contains(Constants.PackagesDirectoryIdentifier, System.StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            externalReferences.NugetReferences.Add(externalReference);
+                        }
+                        else
+                        {
+                            externalReferences.SdkReferences.Add(externalReference);
+                        }
                     }
-                    else if (filePath.Contains(Constants.PackagesDirectoryIdentifier, System.StringComparison.CurrentCultureIgnoreCase))
+                    catch (Exception ex)
                     {
-                        externalReferences.NugetReferences.Add(externalReference);
-                    }
-                    else
-                    {
-                        externalReferences.SdkReferences.Add(externalReference);
+                        Logger.Error(ex, "Error while resolving reference {0}", externalReferenceMetaData);
                     }
                 }
             }
