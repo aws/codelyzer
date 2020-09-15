@@ -32,11 +32,13 @@ namespace AwsCodeAnalyzer.Build
         public Project Project { get; set; }
         public ExternalReferences ExternalReferences { get; set; }
         public string TargetFramework { get; set; }
+        public List<string> TargetFrameworks { get; set; }
 
         public ProjectBuildResult()
         {
             SourceFileBuildResults = new List<SourceFileBuildResult>();
             SourceFiles = new List<string>();
+            TargetFrameworks = new List<string>();
         }
 
         public bool IsBuildSuccess()

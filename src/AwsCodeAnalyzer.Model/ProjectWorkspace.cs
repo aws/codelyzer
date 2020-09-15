@@ -28,16 +28,19 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("target-framework", Order = 7)]
         public string TargetFramework { get; set; }
 
-        [JsonProperty("external-references", Order = 8)]
+        [JsonProperty("target-frameworks", Order = 8)]
+        public List<string> TargetFrameworks { get; set; }
+
+        [JsonProperty("external-references", Order = 9)]
         public ExternalReferences ExternalReferences { get; set; }
 
-        [JsonProperty("source-file-results", Order = 9)]
+        [JsonProperty("source-file-results", Order = 10)]
         public UstList<RootUstNode> SourceFileResults;
 
-        [JsonProperty("workspace-path", Order = 10)]
+        [JsonProperty("workspace-path", Order = 11)]
         public string ProjectFilePath { get; }
         
-        [JsonProperty("build-errors", Order = 11)]
+        [JsonProperty("build-errors", Order = 12)]
         public List<String> BuildErrors { get; set; }
 
         public ProjectWorkspace(string projectFilePath)

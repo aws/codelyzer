@@ -89,6 +89,7 @@ namespace AwsCodeAnalyzer
                 workspace.ExternalReferences = projectResult.ExternalReferences;
             }
             workspace.TargetFramework = projectResult.TargetFramework;
+            workspace.TargetFrameworks = projectResult.TargetFrameworks;
 
             foreach (var fileBuildResult in projectResult.SourceFileBuildResults)
             {

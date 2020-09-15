@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Serilog;
@@ -24,7 +25,9 @@ namespace AwsCodeAnalyzer.Build
             {
                 ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, project);
                 var result = await projectBuildHandler.Build();
-                result.TargetFramework = _builder.ProjectFrameworkVersions[project.Id.Id.ToString()];
+                Tuple<string, List<string>> targetFrameworks = _builder.ProjectFrameworkVersions[project.Id.Id.ToString()];
+                result.TargetFramework = targetFrameworks.Item1;
+                result.TargetFrameworks = targetFrameworks.Item2;
                 ProjectResults.Add(result);
             }
 
