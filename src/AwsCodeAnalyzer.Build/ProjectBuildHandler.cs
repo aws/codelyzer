@@ -143,6 +143,8 @@ namespace AwsCodeAnalyzer.Build
                 projectBuildResult.SourceFiles.Add(sourceFilePath);
             }
 
+            projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult);
+
             return projectBuildResult;
         }
 
@@ -161,10 +163,14 @@ namespace AwsCodeAnalyzer.Build
                     var filePath = externalReferenceMetaData.Display;
                     var externalReference = new ExternalReference()
                     {
-                        Identity = symbol.Identity.Name,
-                        Version = symbol.Identity.Version.ToString(),
                         AssemblyLocation = filePath
                     };
+
+                    if(symbol != null && symbol.Identity != null)
+                    {
+                        externalReference.Identity = symbol.Identity.Name;
+                        externalReference.Version = symbol.Identity.Version != null ? symbol.Identity.Version.ToString() : string.Empty;
+                    }
 
                     var type = externalReferenceMetaData.ToString();
                     if (type == Constants.ProjectReferenceType)
