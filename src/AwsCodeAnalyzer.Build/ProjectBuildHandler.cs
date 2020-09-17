@@ -212,9 +212,13 @@ namespace AwsCodeAnalyzer.Build
                         if (nugetRef != null)
                         {
                             //Nuget with more than one dll?
-                            nugetRef.AssemblyLocation = filePath;                         
+                            nugetRef.AssemblyLocation = filePath;
                         }
-                        else if(!projectReferenceNames.Any(n=>n.StartsWith(name)))
+                        else if (filePath.Contains(Constants.PackagesDirectoryIdentifier, System.StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            externalReferences.NugetDependencies.Add(externalReference);
+                        }
+                        else if (!projectReferenceNames.Any(n => n.StartsWith(name)))
                         {
                             externalReferences.SdkReferences.Add(externalReference);
                         }
