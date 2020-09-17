@@ -1,17 +1,16 @@
-﻿using System;
+﻿using AwsCodeAnalyzer.Common;
+using Buildalyzer;
+using Buildalyzer.Environment;
+using Buildalyzer.Workspaces;
+using Microsoft.CodeAnalysis;
+using Serilog;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
-using AwsCodeAnalyzer.Common;
-using Buildalyzer;
-using Buildalyzer.Construction;
-using Buildalyzer.Environment;
-using Buildalyzer.Workspaces;
-using Microsoft.CodeAnalysis;
-using Serilog;
 
 namespace AwsCodeAnalyzer.Build
 {
@@ -23,7 +22,8 @@ namespace AwsCodeAnalyzer.Build
 
 
         public readonly List<Project> Projects = null;
-        public readonly Dictionary<string, Tuple<string, List<string>>> ProjectFrameworkVersions = null;
+        public readonly Dictionary<string, IAnalyzerResult> ProjectAnalyzerResult = null;
+
         private ILogger Logger { get; set; }
         
         public WorkspaceBuilderHelper(ILogger logger, string workspacePath)
@@ -31,7 +31,7 @@ namespace AwsCodeAnalyzer.Build
             this.Logger = logger;
             this.WorkspacePath = workspacePath;
             this.Projects = new List<Project>();
-            this.ProjectFrameworkVersions = new Dictionary<string, Tuple<string,List<string>>>();
+            this.ProjectAnalyzerResult = new Dictionary<string, IAnalyzerResult>();
         }
 
         private string WorkspacePath { get; }
@@ -95,7 +95,8 @@ namespace AwsCodeAnalyzer.Build
                     IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions());
                     IAnalyzerResult analyzerResult = analyzerResults.First();
 
-                    AddTargetFramework(analyzerResult.ProjectGuid, analyzerResult.TargetFramework, analyzerResult.GetProperty(Constants.TargetFrameworks));
+                    //AddTargetFramework(analyzerResult.ProjectGuid, analyzerResult.TargetFramework, analyzerResult.GetProperty(Constants.TargetFrameworks));
+                    ProjectAnalyzerResult.Add(analyzerResult.ProjectGuid.ToString(), analyzerResult);
                     
                     analyzerResult.AddToWorkspace(workspace);
                     foreach (var pref in analyzerResult.ProjectReferences)
@@ -114,19 +115,6 @@ namespace AwsCodeAnalyzer.Build
 
             Logger.Debug(sb.ToString());
             writer.Close();
-        }
-
-        private void AddTargetFramework(Guid projectGuid, string targetFramework, string targetFrameworks)
-        {
-            if (projectGuid != null)
-            {
-                var targetFrameworksList = new List<string>();
-                if(!string.IsNullOrEmpty(targetFrameworks))
-                {
-                    targetFrameworksList = targetFrameworks.Split(';').ToList();
-                } 
-                ProjectFrameworkVersions[projectGuid.ToString()] = new Tuple<string, List<string>>(targetFramework, targetFrameworksList);
-            }
         }
 
         /*
@@ -150,7 +138,7 @@ namespace AwsCodeAnalyzer.Build
             AdhocWorkspace workspace = new AdhocWorkspace();
             foreach (IAnalyzerResult result in results)
             {
-                AddTargetFramework(result.ProjectGuid, result.TargetFramework, result.GetProperty(Constants.TargetFrameworks));
+                ProjectAnalyzerResult.Add(result.ProjectGuid.ToString(), result);
                 result.AddToWorkspace(workspace);
             }
             return workspace;

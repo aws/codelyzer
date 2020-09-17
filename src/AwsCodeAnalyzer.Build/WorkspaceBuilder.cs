@@ -1,7 +1,6 @@
-using System;
+using Serilog;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Serilog;
 
 namespace AwsCodeAnalyzer.Build
 {
@@ -24,14 +23,13 @@ namespace AwsCodeAnalyzer.Build
             foreach (var project in _builder.Projects)
             {
                 ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, project);
-                var result = await projectBuildHandler.Build();
-                Tuple<string, List<string>> targetFrameworks = _builder.ProjectFrameworkVersions[project.Id.Id.ToString()];
-                result.TargetFramework = targetFrameworks.Item1;
-                result.TargetFrameworks = targetFrameworks.Item2;
+                projectBuildHandler.AnalyzerResult = _builder.ProjectAnalyzerResult[project.Id.Id.ToString()];
+                var result = await projectBuildHandler.Build();    
                 ProjectResults.Add(result);
             }
 
             return ProjectResults;
         }
+
     }
 }

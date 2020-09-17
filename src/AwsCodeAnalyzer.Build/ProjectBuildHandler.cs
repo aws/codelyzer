@@ -1,16 +1,15 @@
+using AwsCodeAnalyzer.Common;
+using AwsCodeAnalyzer.Model;
+using Buildalyzer;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Editing;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using AwsCodeAnalyzer.Common;
-using AwsCodeAnalyzer.Model;
-using Buildalyzer.Construction;
-using Microsoft.Build.Construction;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Editing;
-using Serilog;
 
 namespace AwsCodeAnalyzer.Build
 {
@@ -60,6 +59,7 @@ namespace AwsCodeAnalyzer.Build
         private Compilation Compilation;
         private List<string> Errors { get; set; }
         private readonly ILogger Logger;
+        internal IAnalyzerResult AnalyzerResult;
 
         private async Task SetCompilation()
         {
@@ -130,6 +130,8 @@ namespace AwsCodeAnalyzer.Build
                 Project = Project
             };
 
+            GetTargetFrameworks(projectBuildResult, AnalyzerResult);
+
             foreach (var syntaxTree in Compilation.SyntaxTrees)
             {
                 var sourceFilePath = Path.GetRelativePath(projectBuildResult.ProjectRootPath, syntaxTree.FilePath);
@@ -150,6 +152,17 @@ namespace AwsCodeAnalyzer.Build
             return projectBuildResult;
         }
 
+
+        private void GetTargetFrameworks(ProjectBuildResult result, Buildalyzer.IAnalyzerResult analyzerResult)
+        {
+            result.TargetFramework = analyzerResult.TargetFramework;
+            var targetFrameworks = analyzerResult.GetProperty(Constants.TargetFrameworks);
+            if (!string.IsNullOrEmpty(targetFrameworks))
+            {
+                result.TargetFrameworks = targetFrameworks.Split(';').ToList();
+            }
+        }
+
         private ExternalReferences GetExternalReferences(ProjectBuildResult projectResult)
         {
             ExternalReferences externalReferences = new ExternalReferences();
@@ -164,6 +177,11 @@ namespace AwsCodeAnalyzer.Build
                     Identity = p.Name,
                     AssemblyLocation = p.FilePath,
                     Version = p.Version.ToString()
+                }));
+
+                externalReferences.NugetReferences.AddRange(AnalyzerResult.PackageReferences.Select(n=> new ExternalReference() { 
+                    Identity = n.Key,
+                    Version = n.Value.GetValueOrDefault(Constants.Version)
                 }));
 
                 var compilation = projectResult.SourceFileBuildResults[0].SemanticModel.Compilation;
@@ -189,9 +207,12 @@ namespace AwsCodeAnalyzer.Build
                             name = symbol.Identity.Name;
                         }
 
-                        if (filePath.Contains(Constants.PackagesDirectoryIdentifier, System.StringComparison.CurrentCultureIgnoreCase))
+                        var nugetRef = externalReferences.NugetReferences.FirstOrDefault(n => filePath.ToLower().Contains(string.Concat(Constants.PackagesDirectoryIdentifier, n.Identity.ToLower(), Path.DirectorySeparatorChar, n.Version)));
+
+                        if (nugetRef != null)
                         {
-                            externalReferences.NugetReferences.Add(externalReference);
+                            //Nuget with more than one dll?
+                            nugetRef.AssemblyLocation = filePath;                         
                         }
                         else if(!projectReferenceNames.Any(n=>n.StartsWith(name)))
                         {

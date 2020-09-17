@@ -15,6 +15,7 @@ namespace AwsCodeAnalyzer.Common
         public const string ProjectReferenceType = "Microsoft.CodeAnalysis.CSharp.CSharpCompilationReference";
 
         public const string TargetFrameworks = "TargetFrameworks";
+        public const string Version = "Version";
 
         public static string PackagesDirectoryIdentifier
         {
