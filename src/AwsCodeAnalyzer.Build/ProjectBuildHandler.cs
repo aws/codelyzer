@@ -59,6 +59,7 @@ namespace AwsCodeAnalyzer.Build
         private Compilation Compilation;
         private List<string> Errors { get; set; }
         private readonly ILogger Logger;
+        private readonly AnalyzerConfiguration _analyzerConfiguration;
         internal IAnalyzerResult AnalyzerResult;
 
         private async Task SetCompilation()
@@ -98,10 +99,11 @@ namespace AwsCodeAnalyzer.Build
             Console.WriteLine();
         }
 
-        public ProjectBuildHandler(ILogger logger, Project project)
+        public ProjectBuildHandler(ILogger logger, Project project, AnalyzerConfiguration analyzerConfiguration = null)
         {
             Logger = logger;
-            
+            _analyzerConfiguration = analyzerConfiguration;
+
             CompilationOptions options = project.CompilationOptions;
 
             if (project.CompilationOptions is CSharpCompilationOptions)
@@ -147,7 +149,10 @@ namespace AwsCodeAnalyzer.Build
                 projectBuildResult.SourceFiles.Add(sourceFilePath);
             }
 
-            projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult);
+            if (_analyzerConfiguration != null && _analyzerConfiguration.MetaDataSettings.ReferenceData)
+            {
+                projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult);
+            }
 
             return projectBuildResult;
         }

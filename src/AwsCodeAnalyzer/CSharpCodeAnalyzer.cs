@@ -38,7 +38,7 @@ namespace AwsCodeAnalyzer
                 throw new FileNotFoundException(path);
             }
             
-            WorkspaceBuilder builder = new WorkspaceBuilder(Log.Logger, path);
+            WorkspaceBuilder builder = new WorkspaceBuilder(Log.Logger, path, AnalyzerConfiguration);
             var projectBuildResults = await builder.Build();
 
             List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
