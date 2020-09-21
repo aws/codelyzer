@@ -166,7 +166,7 @@ namespace AwsCodeAnalyzer.Build
         private ExternalReferences GetExternalReferences(ProjectBuildResult projectResult)
         {
             ExternalReferences externalReferences = new ExternalReferences();
-            if (projectResult != null && projectResult.SourceFileBuildResults.Count > 0)
+            if (projectResult != null && projectResult.SourceFileBuildResults != null && projectResult.SourceFileBuildResults.Count > 0)
             {
                 var project = projectResult.Project;
                 var projectReferencesIds = project.ProjectReferences != null ? project.ProjectReferences.Select(pr => pr.ProjectId).ToList() : null;
