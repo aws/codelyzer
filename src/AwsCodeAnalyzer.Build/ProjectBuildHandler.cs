@@ -31,6 +31,7 @@ namespace AwsCodeAnalyzer.Build
         public List<SourceFileBuildResult> SourceFileBuildResults { get; private set; }
         public List<string> BuildErrors { get; set; }
         public Project Project { get; set; }
+        public Compilation Compilation { get; set; }
         public ExternalReferences ExternalReferences { get; set; }
         public string TargetFramework { get; set; }
         public List<string> TargetFrameworks { get; set; }
@@ -126,10 +127,11 @@ namespace AwsCodeAnalyzer.Build
 
             ProjectBuildResult projectBuildResult = new ProjectBuildResult
             {
-                BuildErrors = Errors, 
+                BuildErrors = Errors,
                 ProjectPath = Project.FilePath,
                 ProjectRootPath = Path.GetDirectoryName(Project.FilePath),
-                Project = Project
+                Project = Project,
+                Compilation = Compilation
             };
 
             GetTargetFrameworks(projectBuildResult, AnalyzerResult);
@@ -171,7 +173,7 @@ namespace AwsCodeAnalyzer.Build
         private ExternalReferences GetExternalReferences(ProjectBuildResult projectResult)
         {
             ExternalReferences externalReferences = new ExternalReferences();
-            if (projectResult != null && projectResult.SourceFileBuildResults != null && projectResult.SourceFileBuildResults.Count > 0)
+            if (projectResult != null && projectResult.Compilation != null)
             {
                 var project = projectResult.Project;
                 var projectReferencesIds = project.ProjectReferences != null ? project.ProjectReferences.Select(pr => pr.ProjectId).ToList() : null;
@@ -189,7 +191,7 @@ namespace AwsCodeAnalyzer.Build
                     Version = n.Value.GetValueOrDefault(Constants.Version)
                 }));
 
-                var compilation = projectResult.SourceFileBuildResults[0].SemanticModel.Compilation;
+                var compilation = projectResult.Compilation;
                 var externalReferencesMetaData = compilation.ExternalReferences;
 
                 foreach (var externalReferenceMetaData in externalReferencesMetaData)
