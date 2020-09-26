@@ -1,15 +1,17 @@
-using AwsCodeAnalyzer.Common;
 using AwsCodeAnalyzer.Model;
 using Buildalyzer;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Editing;
-using Serilog;
+using NuGet.Packaging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Constants = AwsCodeAnalyzer.Common.Constants;
+using ILogger = Serilog.ILogger;
 
 namespace AwsCodeAnalyzer.Build
 {
@@ -186,10 +188,7 @@ namespace AwsCodeAnalyzer.Build
                     Version = p.Version.ToString()
                 }));
 
-                externalReferences.NugetReferences.AddRange(AnalyzerResult.PackageReferences.Select(n=> new ExternalReference() { 
-                    Identity = n.Key,
-                    Version = n.Value.GetValueOrDefault(Constants.Version)
-                }));
+                LoadProjectPackages(externalReferences, Directory.GetParent(project.FilePath).FullName);                
 
                 var compilation = projectResult.Compilation;
                 var externalReferencesMetaData = compilation.ExternalReferences;
@@ -214,14 +213,25 @@ namespace AwsCodeAnalyzer.Build
                             name = symbol.Identity.Name;
                         }
 
-                        var nugetRef = externalReferences.NugetReferences.FirstOrDefault(n => filePath.ToLower().Contains(string.Concat(Constants.PackagesDirectoryIdentifier, n.Identity.ToLower(), Path.DirectorySeparatorChar, n.Version)));
+                        var nugetRef = externalReferences.NugetReferences.FirstOrDefault(n => n.Identity == name);
+
+                        if (nugetRef == null)
+                        {
+                            nugetRef = externalReferences.NugetReferences.FirstOrDefault(n => filePath.ToLower().Contains(string.Concat(Constants.PackagesDirectoryIdentifier, n.Identity.ToLower(), ".", n.Version)));
+                        }
 
                         if (nugetRef != null)
                         {
                             //Nuget with more than one dll?
                             nugetRef.AssemblyLocation = filePath;
+
+                            //If version isn't resolved, get from external reference
+                            if (string.IsNullOrEmpty(nugetRef.Version) || !Regex.IsMatch(nugetRef.Version, @"([0-9])+(\.)([0-9])+(\.)([0-9])+"))
+                            {
+                                nugetRef.Version = externalReference.Version;
+                            }
                         }
-                        else if (filePath.Contains(Constants.PackagesDirectoryIdentifier, System.StringComparison.CurrentCultureIgnoreCase))
+                        else if (filePath.Contains(Common.Constants.PackagesDirectoryIdentifier, System.StringComparison.CurrentCultureIgnoreCase))
                         {
                             externalReferences.NugetDependencies.Add(externalReference);
                         }
@@ -237,6 +247,49 @@ namespace AwsCodeAnalyzer.Build
                 }
             }
             return externalReferences;
+        }
+
+        private void LoadProjectPackages(ExternalReferences externalReferences , string projectDir)
+        {
+            //Buildalyzer was able to get the packages, use that:
+            if(AnalyzerResult.PackageReferences != null && AnalyzerResult.PackageReferences.Count > 0)
+            {
+                externalReferences.NugetReferences.AddRange(AnalyzerResult.PackageReferences.Select(n => new ExternalReference()
+                {
+                    Identity = n.Key,
+                    Version = n.Value.GetValueOrDefault(Constants.Version)
+                }));
+
+            //Buildalyzer wasn't able to get the packages (old format). Use packages.config to load
+            } else
+            {
+                var nugets = LoadPackages(projectDir);
+                externalReferences.NugetReferences.AddRange(nugets.Select(n => new ExternalReference() { Identity = n.PackageIdentity.Id,Version = n.PackageIdentity.Version.OriginalVersion }));
+            }
+        }
+
+        private IEnumerable<PackageReference> LoadPackages(string projectDir)
+        {
+            IEnumerable<PackageReference> packageReferences = new List<PackageReference>();
+
+            string packagesFile = Path.Combine(projectDir, "packages.config");
+
+            if (File.Exists(packagesFile))
+            {
+                try
+                {
+                    using (var stream = new FileStream(packagesFile, FileMode.Open))
+                    {
+                        PackagesConfigReader packagesConfigReader = new PackagesConfigReader(stream);
+                        packageReferences = packagesConfigReader.GetPackages();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "Error while parsing {0}", packagesFile);
+                }
+            }
+            return packageReferences;
         }
     }
 }
