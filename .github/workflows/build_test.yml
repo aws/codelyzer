@@ -2,7 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [ mainline ]
+    branches: 
+    - mainline 
+    - release/*
   pull_request:
     branches: [ mainline ]
 
@@ -11,6 +13,8 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
@@ -21,3 +25,21 @@ jobs:
       run: dotnet build --configuration Release --no-restore
     - name: Test
       run: dotnet test --no-restore --verbosity normal
+    - name: Pack
+      if: ${{ github.event_name == 'push' }}
+      run: dotnet pack --configuration Release --no-restore -o dist
+    - name: Install Sleet
+      if: ${{ github.event_name == 'push' }}
+      run: |
+        dotnet tool install -g sleet
+    - name: "Configure AWS Credentials"
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+    - name: Publish
+      if: ${{ github.event_name == 'push' }}
+      run: |
+        sleet push dist --source s3Feed
+      
+  
