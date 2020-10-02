@@ -45,11 +45,18 @@ namespace AwsCodeAnalyzer
             var analyzerResults = new List<AnalyzerResult>();
             foreach (var projectBuildResult in projectBuildResults)
             {
-                var workspaceResult =  await AnalyzeProject(projectBuildResult);
+                var workspaceResult = await AnalyzeProject(projectBuildResult);
                 workspaceResults.Add(workspaceResult);
 
                 //Generate Output result
-                analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
+                if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+                {
+                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
+                }
+                else
+                {
+                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult });
+                }
             }
 
             await GenerateOptionalOutput(analyzerResults);

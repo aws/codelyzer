@@ -43,5 +43,6 @@ namespace AwsCodeAnalyzer
         public bool Annotations;
         public bool LocationData = true;
         public bool ReferenceData;
+        public bool LoadBuildData = false;
     }
 }
