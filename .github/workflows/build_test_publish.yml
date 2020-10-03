@@ -40,6 +40,6 @@ jobs:
         aws-region: us-west-2
     - name: Publish
       if: ${{ github.event_name == 'push' }}
-      run: sleet push dist --source s3Feed
+      run: sleet push dist --source s3Feed -v
       
   
