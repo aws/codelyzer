@@ -3,7 +3,7 @@
     {
       "name": "s3Feed",
       "type": "s3",
-      "path": "http://encore-nuget.sierra.aws.dev/",
+      "path": "https://encore-nuget.sierra.aws.dev/",
       "bucketName": "encore-nuget.sierra.aws.dev",
       "region": "us-west-2"
     }
