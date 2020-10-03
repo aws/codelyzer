@@ -1,3 +1,5 @@
+![Build Test Publish](https://github.com/aws/codename-codelyzer/workflows/Build%20Test%20Publish/badge.svg?branch=mainline&event=push)
+
 ## AwsCodeAnalyzer
 The AwsCodeAnalyzer is  a framework that provides interfaces to build and analyze the source code in various languages, and generates the platform-independent representation of artifacts – UAST or Code Graph or both. It offers fine-grained controls on what kind of metadata – properties of classes, methods, etc., - and how deep in the hierarchy of the source code to gather information while generating the artifacts.
 
