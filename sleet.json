@@ -3,8 +3,8 @@
     {
       "name": "s3Feed",
       "type": "s3",
-      "path": "https://s3.us-west-2.amazonaws.com/porting.assistant.client.nuget.beta/",
-      "bucketName": "porting.assistant.client.nuget.beta",
+      "path": "http://encore-nuget.sierra.aws.dev/",
+      "bucketName": "porting.assistant.client.nuget",
       "region": "us-west-2"
     }
   ]
