@@ -3,7 +3,7 @@
     {
       "name": "s3Feed",
       "type": "s3",
-      "path": "https://s3.amazonaws.com/porting.assistant.client.nuget.beta/",
+      "path": "https://s3.us-west-2.amazonaws.com/porting.assistant.client.nuget.beta/",
       "bucketName": "porting.assistant.client.nuget.beta",
       "region": "us-west-2"
     }
