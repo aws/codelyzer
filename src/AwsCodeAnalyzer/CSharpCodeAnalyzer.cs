@@ -3,9 +3,12 @@ using AwsCodeAnalyzer.Common;
 using AwsCodeAnalyzer.CSharp;
 using AwsCodeAnalyzer.Model;
 using Serilog;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
 using System.Threading.Tasks;
 
 namespace AwsCodeAnalyzer
@@ -37,31 +40,105 @@ namespace AwsCodeAnalyzer
             {
                 throw new FileNotFoundException(path);
             }
-            
-            WorkspaceBuilder builder = new WorkspaceBuilder(Log.Logger, path, AnalyzerConfiguration);
-            var projectBuildResults = await builder.Build();
 
-            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
             var analyzerResults = new List<AnalyzerResult>();
-            foreach (var projectBuildResult in projectBuildResults)
-            {
-                var workspaceResult = await AnalyzeProject(projectBuildResult);
-                workspaceResults.Add(workspaceResult);
+            var projectBuildResults = new List<ProjectBuildResult>();
 
-                //Generate Output result
-                if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+            try
+            {
+                WorkspaceBuilder builder = new WorkspaceBuilder(Log.Logger, path, AnalyzerConfiguration);
+                projectBuildResults = await builder.Build();
+
+                List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
+
+                foreach (var projectBuildResult in projectBuildResults)
                 {
-                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
+                    var workspaceResult = await AnalyzeProject(projectBuildResult);
+                    workspaceResults.Add(workspaceResult);
+
+                    //Generate Output result
+                    if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+                    {
+                        analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
+                    }
+                    else
+                    {
+                        analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult });
+                    }
                 }
-                else
+
+                await GenerateOptionalOutput(analyzerResults);
+            }
+            finally
+            {
+                /* 
+                 * Cleanup
+                 * https://stackoverflow.com/questions/53360075/csharpscript-memory-leaks-in-asp-net-core-api
+                 * https://github.com/dotnet/roslyn/issues/5482
+                 */
+
+                if (!AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
                 {
-                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult });
+                    Cleanup(projectBuildResults);
                 }
+
+                Logger.Debug("Memory used before collection:       {0:N0}",
+                       GC.GetTotalMemory(false));
+
+                // Collect all generations of memory.
+                RunGarbageCollection();
+                Logger.Debug("Memory used after full collection:   {0:N0}",
+                       GC.GetTotalMemory(true));
             }
 
-            await GenerateOptionalOutput(analyzerResults);
-
             return analyzerResults;
+        }
+
+        private void RunGarbageCollection()
+        {
+            try
+            {
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
+            catch (System.Exception)
+            {
+                //sometimes GC.Collet/WaitForPendingFinalizers crashes
+            }
+        }
+
+        private void Cleanup(List<ProjectBuildResult> projectBuildResults)
+        {
+            try
+            {
+                Logger.Debug("Cleaning up ProjectBuildResults");
+                foreach (var projectBuildResult in projectBuildResults)
+                {
+                    if (projectBuildResult.Compilation != null)
+                    {  
+                        projectBuildResult.Compilation.RemoveAllReferences();
+                        projectBuildResult.Compilation.RemoveAllSyntaxTrees();
+                        projectBuildResult.ExternalReferences = null;
+                        projectBuildResult.Compilation = null;
+                    
+                        projectBuildResult.Project = null;
+
+                        foreach ( var sfr in projectBuildResult.SourceFileBuildResults)
+                        {
+                            sfr.SyntaxTree = null;
+                            sfr.SemanticModel = null;
+                        }
+
+                        projectBuildResult.SourceFileBuildResults.Clear();
+
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                
+            }
         }
 
         private async Task GenerateOptionalOutput(List<AnalyzerResult> analyzerResults)
