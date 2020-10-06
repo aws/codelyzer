@@ -27,9 +27,9 @@ namespace AwsCodeAnalyzer
 
     public class ExportSettings
     {
-        public bool GenerateJsonOutput;
-        public bool GenerateGremlinOutput;
-        public bool GenerateRDFOutput;
+        public bool GenerateJsonOutput = false;
+        public bool GenerateGremlinOutput = false;
+        public bool GenerateRDFOutput = false;
         public string OutputPath;
     }
     
