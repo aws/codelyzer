@@ -12,7 +12,7 @@ using System.Linq;
 
 namespace AwsCodeAnalyzer.CSharp
 {
-    public class CSharpRoslynProcessor : CSharpSyntaxVisitor<UstNode>
+    public class CSharpRoslynProcessor : CSharpSyntaxVisitor<UstNode>, IDisposable
     {
         private CodeContext context;
         protected SemanticModel SemanticModel { get => context.SemanticModel; }
@@ -263,6 +263,13 @@ namespace AwsCodeAnalyzer.CSharp
                 RootNode.References.Add(rootReference);
             }
         }
+
+        public void Dispose()
+        {
+            context?.Dispose();
+            RootNode = null;
+        }
+
     }
 
 }

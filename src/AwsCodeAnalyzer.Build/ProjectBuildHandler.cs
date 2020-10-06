@@ -24,7 +24,7 @@ namespace AwsCodeAnalyzer.Build
         public SyntaxGenerator SyntaxGenerator { get; set; }
     }
     
-    public  class ProjectBuildResult
+    public  class ProjectBuildResult : IDisposable
     { 
         public string ProjectPath { get; set; }
         
@@ -55,13 +55,18 @@ namespace AwsCodeAnalyzer.Build
             var wsPath = Path.GetRelativePath(ProjectRootPath, filePath);
             SourceFiles.Add(wsPath);
         }
+
+        public void Dispose()
+        {
+            Compilation = null;
+        }
     }
-    public class ProjectBuildHandler
+    public class ProjectBuildHandler : IDisposable
     {
-        private readonly Project Project;
+        private Project Project;
         private Compilation Compilation;
         private List<string> Errors { get; set; }
-        private readonly ILogger Logger;
+        private ILogger Logger;
         private readonly AnalyzerConfiguration _analyzerConfiguration;
         internal IAnalyzerResult AnalyzerResult;
 
@@ -86,7 +91,6 @@ namespace AwsCodeAnalyzer.Build
                 Logger.Information($"Project {Project.Name} compiled with no errors");
             }
         }
-
         private static void DisplayProjectProperties(Project project)
         {
             Console.WriteLine($" Project: {project.Name}");
@@ -101,7 +105,6 @@ namespace AwsCodeAnalyzer.Build
             Console.WriteLine($" Project references: {String.Join("\n", project.ProjectReferences)}");
             Console.WriteLine();
         }
-
         public ProjectBuildHandler(ILogger logger, Project project, AnalyzerConfiguration analyzerConfiguration = null)
         {
             Logger = logger;
@@ -122,7 +125,6 @@ namespace AwsCodeAnalyzer.Build
             this.Project = project.WithCompilationOptions(options);
             Errors = new List<string>();
         }
-
         public async Task<ProjectBuildResult> Build()
         {
             await SetCompilation();
@@ -160,8 +162,6 @@ namespace AwsCodeAnalyzer.Build
 
             return projectBuildResult;
         }
-
-
         private void GetTargetFrameworks(ProjectBuildResult result, Buildalyzer.IAnalyzerResult analyzerResult)
         {
             result.TargetFramework = analyzerResult.TargetFramework;
@@ -171,7 +171,6 @@ namespace AwsCodeAnalyzer.Build
                 result.TargetFrameworks = targetFrameworks.Split(';').ToList();
             }
         }
-
         private ExternalReferences GetExternalReferences(ProjectBuildResult projectResult)
         {
             ExternalReferences externalReferences = new ExternalReferences();
@@ -248,7 +247,6 @@ namespace AwsCodeAnalyzer.Build
             }
             return externalReferences;
         }
-
         private void LoadProjectPackages(ExternalReferences externalReferences , string projectDir)
         {
             //Buildalyzer was able to get the packages, use that:
@@ -267,7 +265,6 @@ namespace AwsCodeAnalyzer.Build
                 externalReferences.NugetReferences.AddRange(nugets.Select(n => new ExternalReference() { Identity = n.PackageIdentity.Id,Version = n.PackageIdentity.Version.OriginalVersion }));
             }
         }
-
         private IEnumerable<PackageReference> LoadPackages(string projectDir)
         {
             IEnumerable<PackageReference> packageReferences = new List<PackageReference>();
@@ -290,6 +287,14 @@ namespace AwsCodeAnalyzer.Build
                 }
             }
             return packageReferences;
+        }
+
+        public void Dispose()
+        {
+            Compilation = null;
+            AnalyzerResult = null;
+            Project = null;
+            Logger = null;
         }
     }
 }

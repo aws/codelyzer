@@ -5,10 +5,7 @@ using Newtonsoft.Json;
 namespace AwsCodeAnalyzer.Model
 {
     public class InvocationExpression : ExpressionStatement
-    {
-        public static readonly NodeType TYPE = new NodeType(IdConstants.InvocationId, 
-            IdConstants.InvocationIdName);
-        
+    {        
         [JsonProperty("method-name", Order = 10)]
         public string MethodName { get; set; }
         
@@ -52,7 +49,7 @@ namespace AwsCodeAnalyzer.Model
         }
         
         public InvocationExpression()
-            : base(TYPE)
+            : base(new NodeType(IdConstants.InvocationId, IdConstants.InvocationIdName))
         {
             SemanticProperties = new List<string>();
             Parameters = new List<Parameter>();

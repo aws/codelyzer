@@ -108,10 +108,12 @@ namespace AwsCodeAnalyzer
                     Log.Logger);
 
                 Log.Logger.Debug("Analyzing: " + fileBuildResult.SourceFileFullPath);
-                
-                CSharpRoslynProcessor processor = new CSharpRoslynProcessor(codeContext);
-                var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
-                workspace.SourceFileResults.Add((RootUstNode)result);
+
+                using (CSharpRoslynProcessor processor = new CSharpRoslynProcessor(codeContext))
+                {
+                    var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
+                    workspace.SourceFileResults.Add((RootUstNode)result);
+                }
             }
             
             return workspace;

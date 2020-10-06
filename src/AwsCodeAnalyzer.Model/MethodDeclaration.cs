@@ -5,9 +5,6 @@ namespace AwsCodeAnalyzer.Model
 {
     public class MethodDeclaration : UstNode
     {
-        public static readonly NodeType TYPE = new NodeType(IdConstants.MethodId, 
-            IdConstants.MethodIdName);
-        
         [JsonProperty("modifiers", Order = 10)]
         public string Modifiers { get; set; }
 
@@ -23,7 +20,8 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("semantic-properties", Order = 14)]
         public UstList<string> SemanticProperties { get; set; }
         public MethodDeclaration()
-            : base(TYPE.Name)
+            : base(IdConstants.MethodId,
+            IdConstants.MethodIdName)
         {
             Parameters = new UstList<Parameter>();
             SemanticProperties = new UstList<string>();

@@ -5,6 +5,7 @@ using Buildalyzer.Workspaces;
 using Microsoft.CodeAnalysis;
 using Serilog;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -14,15 +15,14 @@ using System.Text.RegularExpressions;
 
 namespace AwsCodeAnalyzer.Build
 {
-    public class WorkspaceBuilderHelper
+    public class WorkspaceBuilderHelper : IDisposable
     {
         private const string TargetFramework = nameof(TargetFramework);
         private const string TargetFrameworkVersion = nameof(TargetFrameworkVersion);
         private const string Configuration = nameof(Configuration);
 
 
-        public readonly List<Project> Projects = null;
-        public readonly Dictionary<string, IAnalyzerResult> ProjectAnalyzerResult = null;
+        internal Dictionary<Project, IAnalyzerResult> Projects;
 
         private ILogger Logger { get; set; }
         
@@ -30,8 +30,7 @@ namespace AwsCodeAnalyzer.Build
         {
             this.Logger = logger;
             this.WorkspacePath = workspacePath;
-            this.Projects = new List<Project>();
-            this.ProjectAnalyzerResult = new Dictionary<string, IAnalyzerResult>();
+            this.Projects = new Dictionary<Project, IAnalyzerResult>();
         }
 
         private string WorkspacePath { get; }
@@ -67,50 +66,48 @@ namespace AwsCodeAnalyzer.Build
 
                 // AnalyzerManager builds the projects based on their dependencies
                 // After this, code does not depend on Buildalyzer
-                var projects = BuildSolution(analyzerManager).CurrentSolution.Projects;
-                Projects.AddRange(projects);
+                BuildSolution(analyzerManager);
             } else
             {
                 AnalyzerManager analyzerManager = new AnalyzerManager(new AnalyzerManagerOptions
                 {
                     LogWriter = writer
                 });
-                AdhocWorkspace workspace = new AdhocWorkspace();
-                Queue<string> queue = new Queue<string>();
-                ISet<string> existing = new HashSet<string>();
-                
-                queue.Enqueue(WorkspacePath);
-                existing.Add(WorkspacePath);
-
-                /*
-                 * We need to resolve all the project dependencies to avoid compilation errors.
-                 * If we have compilation errors, we might miss some of the semantic values.
-                 */
-                while (queue.Count > 0)
+                using (AdhocWorkspace workspace = new AdhocWorkspace())
                 {
-                    var path = queue.Dequeue();
-                    Logger.Information("Building: " + path);
-                    
-                    IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(path);
-                    IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions());
-                    IAnalyzerResult analyzerResult = analyzerResults.First();
+                    Queue<string> queue = new Queue<string>();
+                    ISet<string> existing = new HashSet<string>();
 
-                    //AddTargetFramework(analyzerResult.ProjectGuid, analyzerResult.TargetFramework, analyzerResult.GetProperty(Constants.TargetFrameworks));
-                    ProjectAnalyzerResult.Add(analyzerResult.ProjectGuid.ToString(), analyzerResult);
-                    
-                    analyzerResult.AddToWorkspace(workspace);
-                    foreach (var pref in analyzerResult.ProjectReferences)
+                    queue.Enqueue(WorkspacePath);
+                    existing.Add(WorkspacePath);
+
+                    /*
+                     * We need to resolve all the project dependencies to avoid compilation errors.
+                     * If we have compilation errors, we might miss some of the semantic values.
+                     */
+                    while (queue.Count > 0)
                     {
-                        if (!existing.Contains(pref))
+                        var path = queue.Dequeue();
+                        Logger.Information("Building: " + path);
+
+                        IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(path);
+                        IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions());
+                        IAnalyzerResult analyzerResult = analyzerResults.First();
+
+                        analyzerResult.AddToWorkspace(workspace);
+                        foreach (var pref in analyzerResult.ProjectReferences)
                         {
-                            existing.Add(pref);
-                            queue.Enqueue(pref);
+                            if (!existing.Contains(pref))
+                            {
+                                existing.Add(pref);
+                                queue.Enqueue(pref);
+                            }
                         }
+
+                        var project = workspace.CurrentSolution.Projects.First(p => p.FilePath.Equals(path));
+                        Projects.Add(project, analyzerResult);
                     }
                 }
-                
-                var project = workspace.CurrentSolution.Projects.First(p => p.FilePath.Equals(WorkspacePath));
-                Projects.Add(project);
             }
 
             Logger.Debug(sb.ToString());
@@ -122,26 +119,27 @@ namespace AwsCodeAnalyzer.Build
          *   TODO: Need to handle different type of projects like VB, CSharp, etc.,
          *   TODO: Fix needed from Buildalyzer: https://github.com/daveaglick/Buildalyzer/issues/113
          * */
-        private AdhocWorkspace BuildSolution(IAnalyzerManager manager)
+        private void BuildSolution(IAnalyzerManager manager)
         {
-            // Run builds in parallel
             List<IAnalyzerResult> results = manager.Projects.Values
-                .AsParallel()
-                .Select(p => {
-                    Logger.Debug("Building the project : " + p.ProjectFile.Path);
-                    return BuildProject(p);
-                })
-                .Where(x => x != null)
-                .ToList();
+                    .AsParallel()
+                    .Select(p => {
+                        Logger.Debug("Building the project : " + p.ProjectFile.Path);
+                        return BuildProject(p);
+                    })
+                    .Where(x => x != null)
+                    .ToList();
 
             // Add each result to a new workspace
-            AdhocWorkspace workspace = new AdhocWorkspace();
-            foreach (IAnalyzerResult result in results)
+            using (AdhocWorkspace workspace = new AdhocWorkspace())
             {
-                ProjectAnalyzerResult.Add(result.ProjectGuid.ToString(), result);
-                result.AddToWorkspace(workspace);
+                foreach(var result in results)
+                {
+                    result.AddToWorkspace(workspace);
+                    var project = workspace.CurrentSolution.GetProject(ProjectId.CreateFromSerialized(result.ProjectGuid));
+                    Projects.Add(project, result);
+                }
             }
-            return workspace;
         }
 
         private IAnalyzerResult BuildProject(IProjectAnalyzer projectAnalyzer)
@@ -149,7 +147,8 @@ namespace AwsCodeAnalyzer.Build
             try
             {
                 return projectAnalyzer.Build(GetEnvironmentOptions()).FirstOrDefault();
-            }catch(Exception e)
+            }
+            catch (Exception e)
             {
                 Logger.Debug("Exception : " + projectAnalyzer.ProjectFile.Path);
                 Logger.Debug(e.StackTrace);
@@ -160,7 +159,6 @@ namespace AwsCodeAnalyzer.Build
                     throw;
                 }
             }
-
             return null;
         }
 
@@ -250,6 +248,13 @@ namespace AwsCodeAnalyzer.Build
                 return OSPlatform.FreeBSD;
             }
             return OSPlatform.Create("None");
+        }
+
+        public void Dispose()
+        {
+            Projects?.Values.ToList().ForEach(a => a = null);
+            Projects?.Clear();
+            Projects = null;
         }
     }
 }

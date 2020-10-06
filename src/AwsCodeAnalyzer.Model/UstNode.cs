@@ -8,8 +8,11 @@ namespace AwsCodeAnalyzer.Model
 {   
     public partial class UstNode
     {
+        [JsonIgnore]
+        public readonly NodeType TYPE;
+
         [JsonProperty("type", Order = 1)]
-        public string NodeType { get; set; }
+        public string NodeType { get => TYPE.Name; }
         
         [JsonProperty("identifier", Order = 2)]
         public string Identifier { get; set; }
@@ -23,9 +26,9 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("children", Order = 100)]
         public UstList<UstNode> Children { get; set; }
 
-        public UstNode(string nodeType)
+        public UstNode(int nodeId, string nodeType)
         {
-            NodeType = nodeType;
+            TYPE = new NodeType(nodeId, nodeType);
             Children = new UstList<UstNode>();
         }
     }
@@ -33,7 +36,7 @@ namespace AwsCodeAnalyzer.Model
     public partial class NodeType
     {
         [JsonProperty("id")]
-        public long Id { get; set; }
+        public int Id { get; set; }
 
         [JsonProperty("name")]
         public string Name { get; set; }

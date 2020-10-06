@@ -4,10 +4,7 @@ using Newtonsoft.Json;
 namespace AwsCodeAnalyzer.Model
 {
     public class RootUstNode : UstNode
-    {
-        public static readonly NodeType TYPE = new NodeType(IdConstants.RootId, 
-            IdConstants.RootIdName);
-        
+    {        
         [JsonProperty("language", Order = 10)]
         public string Language { get; set; }
         
@@ -19,7 +16,8 @@ namespace AwsCodeAnalyzer.Model
 
         [JsonProperty("references", Order = 99)]
         public UstList<Reference> References { get; set; }
-        public RootUstNode() : base(TYPE.Name)
+        public RootUstNode() : base(IdConstants.RootId,
+            IdConstants.RootIdName)
         {
             References = new UstList<Reference>();
         }

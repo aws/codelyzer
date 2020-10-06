@@ -1,9 +1,10 @@
 using Microsoft.CodeAnalysis;
 using Serilog;
+using System;
 
 namespace AwsCodeAnalyzer.Common
 {
-    public class CodeContext
+    public class CodeContext : IDisposable
     {
         public CodeContext(SemanticModel semanticModel, 
             SyntaxTree syntaxTree,
@@ -30,5 +31,13 @@ namespace AwsCodeAnalyzer.Common
         public AnalyzerConfiguration AnalyzerConfiguration { get; private set; }
         
         public ILogger Logger { get; private set; }
+
+        public void Dispose()
+        {
+            SemanticModel = null;
+            SyntaxTree = null;
+            Logger = null;
+            AnalyzerConfiguration = null;
+        }
     }
 }

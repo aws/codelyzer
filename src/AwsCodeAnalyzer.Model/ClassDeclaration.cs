@@ -4,9 +4,6 @@ namespace AwsCodeAnalyzer.Model
 {
     public class ClassDeclaration : UstNode
     {
-        public static readonly NodeType TYPE = new NodeType(IdConstants.ClassId, 
-            IdConstants.ClassIdName);
-
         [JsonProperty("base-type", Order = 10)]
         public string BaseType { get; set; }
 
@@ -14,7 +11,8 @@ namespace AwsCodeAnalyzer.Model
         public Reference Reference { get; set; }
         public string SemanticAssembly { get; set; }
         public ClassDeclaration()
-            : base(TYPE.Name)
+            : base(IdConstants.ClassId,
+            IdConstants.ClassIdName)
         {
             Reference = new Reference();
         }
