@@ -7,8 +7,7 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("references", Order = 99)]
         public Reference Reference { get; set; }
         public DeclarationNode()
-            : base(IdConstants.DeclarationNodeId,
-            IdConstants.DeclarationNodeIdName)
+            : base(IdConstants.DeclarationNodeIdName)
         {
             Reference = new Reference();
         }

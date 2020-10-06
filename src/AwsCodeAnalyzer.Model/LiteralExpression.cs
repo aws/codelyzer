@@ -10,8 +10,7 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("semantic-type")]
         public string SemanticType { get; set; }
         public LiteralExpression()
-            : base(new NodeType(IdConstants.LiteralId,
-            IdConstants.LiteralIdName))
+            : base(IdConstants.LiteralIdName)
         {
         }
     }

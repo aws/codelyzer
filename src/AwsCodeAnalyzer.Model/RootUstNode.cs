@@ -16,8 +16,7 @@ namespace AwsCodeAnalyzer.Model
 
         [JsonProperty("references", Order = 99)]
         public UstList<Reference> References { get; set; }
-        public RootUstNode() : base(IdConstants.RootId,
-            IdConstants.RootIdName)
+        public RootUstNode() : base(IdConstants.RootIdName)
         {
             References = new UstList<Reference>();
         }

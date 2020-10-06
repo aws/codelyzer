@@ -3,7 +3,7 @@ namespace AwsCodeAnalyzer.Model
     public class NamespaceDeclaration : UstNode
     {
         public NamespaceDeclaration()
-            : base(IdConstants.NamespaceId,IdConstants.NamespaceIdName)
+            : base(IdConstants.NamespaceIdName)
         {
         }
     }

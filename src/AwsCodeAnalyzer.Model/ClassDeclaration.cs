@@ -11,8 +11,7 @@ namespace AwsCodeAnalyzer.Model
         public Reference Reference { get; set; }
         public string SemanticAssembly { get; set; }
         public ClassDeclaration()
-            : base(IdConstants.ClassId,
-            IdConstants.ClassIdName)
+            : base(IdConstants.ClassIdName)
         {
             Reference = new Reference();
         }

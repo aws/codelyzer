@@ -9,8 +9,7 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("references", Order = 99)]
         public Reference Reference { get; set; }
         public Annotation()
-            : base(IdConstants.AnnotationId,
-            IdConstants.AnnotationIdName)
+            : base(IdConstants.AnnotationIdName)
         {
             Reference = new Reference();
         }

@@ -42,14 +42,14 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("references", Order = 99)]
         public Reference Reference { get; set; }
 
-        public InvocationExpression(NodeType type)
-            : base(type)
+        public InvocationExpression(string typeName)
+            : base(typeName)
         {
             SemanticProperties = new List<string>();
         }
         
         public InvocationExpression()
-            : base(new NodeType(IdConstants.InvocationId, IdConstants.InvocationIdName))
+            : base(IdConstants.InvocationIdName)
         {
             SemanticProperties = new List<string>();
             Parameters = new List<Parameter>();

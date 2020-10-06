@@ -135,9 +135,16 @@ namespace AwsCodeAnalyzer.Build
             {
                 foreach(var result in results)
                 {
-                    result.AddToWorkspace(workspace);
-                    var project = workspace.CurrentSolution.GetProject(ProjectId.CreateFromSerialized(result.ProjectGuid));
-                    Projects.Add(project, result);
+                    try
+                    {
+                        result.AddToWorkspace(workspace);
+                        var project = workspace.CurrentSolution.GetProject(ProjectId.CreateFromSerialized(result.ProjectGuid));
+                        Projects.Add(project, result);
+                    }catch(Exception ex)
+                    {
+                        Logger.Debug("Exception : " + result.ProjectFilePath);
+                        Logger.Debug(ex.StackTrace);
+                    }
                 }
             }
         }

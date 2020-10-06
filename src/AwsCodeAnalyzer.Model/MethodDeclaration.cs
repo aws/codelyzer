@@ -20,8 +20,7 @@ namespace AwsCodeAnalyzer.Model
         [JsonProperty("semantic-properties", Order = 14)]
         public UstList<string> SemanticProperties { get; set; }
         public MethodDeclaration()
-            : base(IdConstants.MethodId,
-            IdConstants.MethodIdName)
+            : base(IdConstants.MethodIdName)
         {
             Parameters = new UstList<Parameter>();
             SemanticProperties = new UstList<string>();
