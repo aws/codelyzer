@@ -1,4 +1,7 @@
 using System;
+using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Runtime;
 using Serilog;
 
@@ -26,6 +29,26 @@ namespace AwsCodeAnalyzer.Common
                 logger.Debug("Memory used after full collection:   {0:N0}",
                     GC.GetTotalMemory(false));
             }
+        }
+
+
+        public static byte[] DownloadFromGitHub(string owner, string repo, string tag)
+        {
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Add(HttpRequestHeader.Authorization.ToString(), string.Concat("token ", GithubInfo.TestGithubToken));
+                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/vnd.github.v3.raw"));
+                client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("TestApp", "1.0.0.0"));
+
+                var content = client.GetByteArrayAsync(string.Concat("https://api.github.com/repos/", owner, "/", repo, "/zipball/", tag)).Result;
+                return content;
+            }
+        }
+
+        public static void SaveFileFromGitHub(string destination, string owner, string repo, string tag)
+        {
+            var content = CommonUtils.DownloadFromGitHub(owner, repo, tag);
+            File.WriteAllBytes(destination, content);
         }
     }
 }

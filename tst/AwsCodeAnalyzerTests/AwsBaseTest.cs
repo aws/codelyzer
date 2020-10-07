@@ -6,15 +6,17 @@ namespace AwsCodeAnalyzer.Tests
     public class AwsBaseTest
     {
         private System.Type systemType;
-        private string rootPath;
+        private string tstPath;
+        private string srcPath;
 
         protected void Setup(System.Type type)
         {
             this.systemType = type;
-            this.rootPath = GetRootPath(type);
+            this.tstPath = GetTstPath(type);
+            this.srcPath = GetSrcPath(type);
         }
 
-        private string GetRootPath(System.Type type)
+        private string GetTstPath(System.Type type)
         {
             // The path will get normalized inside the .GetProject() call below
             string projectPath = Path.GetFullPath(
@@ -24,14 +26,23 @@ namespace AwsCodeAnalyzer.Tests
             return projectPath;
         }
 
-        public string GetPath(String path)
+        private string GetSrcPath(System.Type type)
         {
-            return Path.Combine(rootPath, path);
+            // The path will get normalized inside the .GetProject() call below
+            string projectPath = Path.GetFullPath(
+                Path.Combine(
+                    Path.GetDirectoryName(type.Assembly.Location),
+                    Path.Combine(new string[] { "..", "..", "..", "..", "..", "src" })));
+            return projectPath;
         }
 
-        protected string GetPath(string[] pathStrings)
+        public string GetTstPath(string path)
         {
-            return Path.Combine(rootPath, Path.Combine(pathStrings));
+            return Path.Combine(tstPath, path);
+        }
+        public string GetSrcPath(string path)
+        {
+            return Path.Combine(srcPath, path);
         }
     }
     

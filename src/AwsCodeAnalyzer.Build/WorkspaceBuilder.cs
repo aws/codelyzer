@@ -29,9 +29,10 @@ namespace AwsCodeAnalyzer.Build
                 builder.Build();
                 foreach(var projectResult in builder.Projects)
                 {
-                    using (ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, projectResult.Key, _analyzerConfiguration))
+                    using (ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, projectResult.Project, _analyzerConfiguration))
                     {
-                        projectBuildHandler.AnalyzerResult = projectResult.Value;
+                        projectBuildHandler.AnalyzerResult = projectResult.AnalyzerResult;
+                        projectBuildHandler.ProjectAnalyzer = projectResult.ProjectAnalyzer;
                         var result = await projectBuildHandler.Build();
                         ProjectResults.Add(result);
                     }

@@ -21,8 +21,7 @@ namespace AwsCodeAnalyzer.Build
         private const string TargetFrameworkVersion = nameof(TargetFrameworkVersion);
         private const string Configuration = nameof(Configuration);
 
-
-        internal Dictionary<Project, IAnalyzerResult> Projects;
+        internal List<ProjectAnalysisResult> Projects;
 
         private ILogger Logger { get; set; }
         
@@ -30,7 +29,7 @@ namespace AwsCodeAnalyzer.Build
         {
             this.Logger = logger;
             this.WorkspacePath = workspacePath;
-            this.Projects = new Dictionary<Project, IAnalyzerResult>();
+            this.Projects = new List<ProjectAnalysisResult>();
         }
 
         private string WorkspacePath { get; }
@@ -93,6 +92,7 @@ namespace AwsCodeAnalyzer.Build
                         IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(path);
                         IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions());
                         IAnalyzerResult analyzerResult = analyzerResults.First();
+                        
 
                         analyzerResult.AddToWorkspace(workspace);
                         foreach (var pref in analyzerResult.ProjectReferences)
@@ -105,7 +105,7 @@ namespace AwsCodeAnalyzer.Build
                         }
 
                         var project = workspace.CurrentSolution.Projects.First(p => p.FilePath.Equals(path));
-                        Projects.Add(project, analyzerResult);
+                        Projects.Add(new ProjectAnalysisResult() { Project = project, AnalyzerResult = analyzerResult, ProjectAnalyzer = projectAnalyzer });
                     }
                 }
             }
@@ -139,7 +139,8 @@ namespace AwsCodeAnalyzer.Build
                     {
                         result.AddToWorkspace(workspace);
                         var project = workspace.CurrentSolution.GetProject(ProjectId.CreateFromSerialized(result.ProjectGuid));
-                        Projects.Add(project, result);
+                        var projectAnalyzer = manager.Projects.Values.FirstOrDefault(p => p.ProjectGuid.Equals(result.ProjectGuid));
+                        Projects.Add(new ProjectAnalysisResult() { Project = project, AnalyzerResult = result, ProjectAnalyzer = projectAnalyzer });
                     }catch(Exception ex)
                     {
                         Logger.Debug("Exception : " + result.ProjectFilePath);
@@ -259,8 +260,7 @@ namespace AwsCodeAnalyzer.Build
 
         public void Dispose()
         {
-            Projects?.Values.ToList().ForEach(a => a = null);
-            Projects?.Clear();
+            Projects?.ForEach(p => p.Dispose());
             Projects = null;
         }
     }
