@@ -218,6 +218,16 @@ namespace AwsCodeAnalyzer.CSharp
         public override UstNode VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
         {
             ObjectCreationExpressionHandler handler = new ObjectCreationExpressionHandler(context, node);
+
+            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
+            foreach (var identifierName in identifierNames)
+            {
+                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
+                if (identifier != null)
+                {
+                    handler.UstNode.Children.Add(identifier);
+                }
+            }
             return handler.UstNode;
         }
 
