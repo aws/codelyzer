@@ -1,5 +1,4 @@
 # Codelyzer
-[![nuget](https://img.shields.io/nuget/v/Codelyzer.Analysis.svg)](https://www.nuget.org/packages/Codelyzer.Analysis/)
 ![Build Test Publish](https://github.com/aws/codename-codelyzer/workflows/Build%20Test%20Publish/badge.svg?branch=mainline&event=push)
 
 Codelyzer is a framework that provides interfaces to build and analyze source code in various languages and generates a platform-independent representation as a universal abstract syntax tree (UAST) model or a JSON file. It offers fine-grained controls to specify the kind of metadata (properties of classes, methods, etc.) to gather and how deep in the hierarchy of the code to search while generating these artifacts. Currently, the framework only supports the C# language.
@@ -10,7 +9,9 @@ By generating the output as a JSON file, this framework allows you to develop an
 
 Codelyzer-Net is an analyzer engine for languages based on the Roslyn compiler platform, like C# and VB. The CSharpRoslynProcessor walks an AST to collect metadata of source file components (e.g. solution, projects, namespaces, classes, methods, method invocations, literal expressions, etc). It uses semantic information from a design-time build to collect properties with fully qualified names.
 
-[Codelyzer.Analysis](https://www.nuget.org/packages/Codelyzer.Analysis/) package available to consume from nuget.org.
+1. Add the Codelyzer Nuget package soure into your Nuget configuration. 
+   * [https://s3-us-west-2.amazonaws.com/aws.portingassistant.dotnet.download/nuget/index.json](https://s3-us-west-2.amazonaws.com/aws.portingassistant.dotnet.download/nuget/index.json)
+2. Add Codelyzer.Analysis to your project as a Nuget Package.
 
 ## Getting Started
 
