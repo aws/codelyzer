@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <IsTestProject>false</IsTestProject>
+        <RootNamespace>Codelyzer.Analysis.Build</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Buildalyzer" Version="3.0.1" />
+      <PackageReference Include="Buildalyzer.Logger" Version="3.0.1" />
+      <PackageReference Include="Buildalyzer.Workspaces" Version="3.0.1" />
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.6.0" />
+      <PackageReference Include="NuGet.Packaging" Version="5.7.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.8" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Codelyzer.Analysis.CSharp\Codelyzer.Analysis.CSharp.csproj" />
+    </ItemGroup>
+
+</Project>

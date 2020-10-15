@@ -1,0 +1,14 @@
+.DS_Store
+# Intellij
+**/.idea/
+
+# generated files
+**/obj/
+**/bin/
+
+# Log files
+*.log
+
+# OS X
+.DS_Store
+._*

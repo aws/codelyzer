@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <IsTestProject>false</IsTestProject>
+        <RootNamespace>Codelyzer.Analysis.CSharp</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.6.0" />
+      <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.8" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Codelyzer.Analysis.Common\Codelyzer.Analysis.Common.csproj" />
+      <ProjectReference Include="..\Codelyzer.Analysis.Model\Codelyzer.Analysis.Model.csproj" />
+    </ItemGroup>
+
+</Project>
