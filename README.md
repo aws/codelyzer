@@ -9,7 +9,7 @@ By generating the output as a JSON file, this framework allows you to develop an
 
 Codelyzer-Net is an analyzer engine for languages based on the Roslyn compiler platform, like C# and VB. The CSharpRoslynProcessor walks an AST to collect metadata of source file components (e.g. solution, projects, namespaces, classes, methods, method invocations, literal expressions, etc). It uses semantic information from a design-time build to collect properties with fully qualified names.
 
-1. Add the Codelyzer Nuget package soure into your Nuget configuration. 
+1. Add the Codelyzer NuGet package source into your Nuget configuration. 
    * [https://s3-us-west-2.amazonaws.com/aws.portingassistant.dotnet.download/nuget/index.json](https://s3-us-west-2.amazonaws.com/aws.portingassistant.dotnet.download/nuget/index.json)
 2. Add Codelyzer.Analysis to your project as a Nuget Package.
 
