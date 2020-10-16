@@ -3,7 +3,9 @@
 ** Buildalyzer.Workspaces; version 3.0.1 -- https://github.com/daveaglick/Buildalyzer
 ** NuGet.Packaging; version 5.7.0 -- https://github.com/NuGet/Home
 ** Microsoft.Extensions.Logging.Abstractions; version 3.1.7 --
+** Microsoft.Extensions.Logging.Console 3.1.8 --
 ** Microsoft.CodeAnalysis.CSharp 3.6.0 -- https://github.com/dotnet/roslyn
+** CommandLineParser 2.8.0 --
 
 Apache License
 
