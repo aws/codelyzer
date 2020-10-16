@@ -74,7 +74,7 @@ environment and submit code.
 ## Thank you
 * [The .NET Compiler Platform ("Roslyn")](https://github.com/dotnet/roslyn) - Roslyn provides open-source C# and Visual Basic compilers with rich code analysis APIs.   
 * [Buildalyzer](https://github.com/daveaglick/Buildalyzer) - Buildalyzer lets you run MSBuild from your own code and returns information about the project.  
-* [THIRD-PARTY](./THIRD-PARTY.md) - We also leveraged many other dependencies listed in [THIRD-PARTY](./THIRD-PARTY.md).
+* [THIRD-PARTY](./THIRD-PARTY.md) - We also benefits many other dependencies listed in [THIRD-PARTY](./THIRD-PARTY.md).
   
 # License
 
