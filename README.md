@@ -1,6 +1,5 @@
 # Codelyzer
-[![nuget](https://img.shields.io/nuget/v/Codelyzer.Analysis.svg)](https://www.nuget.org/packages/Codelyzer.Analysis/)
-![Build Test Publish](https://github.com/aws/codename-codelyzer/workflows/Build%20Test%20Publish/badge.svg?branch=mainline&event=push)
+![Build Test](https://github.com/aws/codename-codelyzer/workflows/Build%20Test/badge.svg)
 
 Codelyzer is a framework that provides interfaces to build and analyze source code in various languages and generates a platform-independent representation as a universal abstract syntax tree (UAST) model or a JSON file. It offers fine-grained controls to specify the kind of metadata (properties of classes, methods, etc.) to gather and how deep in the hierarchy of the code to search while generating these artifacts. Currently, the framework only supports the C# language.
 
