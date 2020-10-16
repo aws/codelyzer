@@ -70,6 +70,11 @@ for tracking bugs and feature requests.
 We welcome community contributions and pull requests. See
 [CONTRIBUTING](./CONTRIBUTING.md) for information on how to set up a development
 environment and submit code.
+
+## Thank you
+* [The .NET Compiler Platform ("Roslyn")](https://github.com/dotnet/roslyn) - Roslyn provides open-source C# and Visual Basic compilers with rich code analysis APIs.   
+* [Buildalyzer](https://github.com/daveaglick/Buildalyzer) - Buildalyzer lets you run MSBuild from your own code and returns information about the project.  
+* [THIRD-PARTY](./THIRD-PARTY) - This project would not be possible without additional dependencies listed in [THIRD-PARTY](./THIRD-PARTY).
   
 # License
 
