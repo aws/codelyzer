@@ -56,6 +56,11 @@ namespace Codelyzer.Analysis.Model
             return GetNodes<UsingDirective>(node);
         }
 
+        public static UstList<DeclarationNode> AllDeclarationNodes(this UstNode node)
+        {
+            return GetNodes<DeclarationNode>(node);
+        }
+
         private static UstList<T> GetNodes<T>(UstNode node) where T : UstNode
         {
             UstList<T> nodes = new UstList<T>();

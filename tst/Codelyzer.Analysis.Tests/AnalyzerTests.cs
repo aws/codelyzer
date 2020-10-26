@@ -46,8 +46,8 @@ namespace Codelyzer.Analysis.Tests
             //    Directory.Delete(destDir, true);
             //}
 
-            DownloadFromGitHub(@"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/master.zip", "ASPNET-WebAPI-Sample-master");
-            DownloadFromGitHub(@"https://github.com/Duikmeester/MvcMusicStore/archive/master.zip", "MvcMusicStore-master");
+            DownloadFromGitHub(@"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/671a629cab0382ecd6dec4833b3868f96f89da50.zip", "ASPNET-WebAPI-Sample-671a629cab0382ecd6dec4833b3868f96f89da50");
+            DownloadFromGitHub(@"https://github.com/Duikmeester/MvcMusicStore/archive/e274968f2827c04cfefbe6493f0a784473f83f80.zip", "MvcMusicStore-e274968f2827c04cfefbe6493f0a784473f83f80");
 
             //Directory.Move(dirs, Path.Combine(tempDirectory.FullName, "TestProjects"));
         }
@@ -71,7 +71,7 @@ namespace Codelyzer.Analysis.Tests
         {
             string mvcMusicStorePath = Directory.EnumerateFiles(tempDir, "MvcMusicStore.sln", SearchOption.AllDirectories).FirstOrDefault();
             var sampleFilePath = GetSrcPath(Path.Combine("Analysis", "Codelyzer.Analysis", "sample_input.json"));
-            string[] args = new string[] { "-o  ", sampleFilePath, "-s", mvcMusicStorePath };
+            string[] args = new string[] { "-p", mvcMusicStorePath };
             AnalyzerCLI cli = new AnalyzerCLI();
             cli.HandleCommand(args);
             Assert.NotNull(cli);
@@ -167,7 +167,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(classDeclarations.Count, 1);
             Assert.AreEqual(expressionStatements.Count, 51);
             Assert.AreEqual(invocationExpressions.Count, 41);
-            Assert.AreEqual(literalExpressions.Count,10);
+            Assert.AreEqual(literalExpressions.Count, 10);
             Assert.AreEqual(namespaceDeclarations.Count, 1);
             Assert.AreEqual(objectCreationExpressions.Count, 0);
             Assert.AreEqual(usingDirectives.Count, 10);
