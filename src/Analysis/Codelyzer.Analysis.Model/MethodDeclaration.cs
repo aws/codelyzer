@@ -25,5 +25,11 @@ namespace Codelyzer.Analysis.Model
             Parameters = new UstList<Parameter>();
             SemanticProperties = new UstList<string>();
         }
+        public MethodDeclaration(string idName)
+            : base(idName)
+        {
+            Parameters = new UstList<Parameter>();
+            SemanticProperties = new UstList<string>();
+        }
     }
 }
