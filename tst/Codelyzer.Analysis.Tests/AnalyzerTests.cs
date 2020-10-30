@@ -1,9 +1,6 @@
-using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
-using NUnit.Framework.Internal;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -111,8 +108,6 @@ namespace Codelyzer.Analysis.Tests
             Assert.True(result != null);
         }
 
-
-
         [Test]
         public async Task TestSampleWebApi()
         {
@@ -163,7 +158,7 @@ namespace Codelyzer.Analysis.Tests
             var usingDirectives = houseController.AllUsingDirectives();
 
 
-            Assert.AreEqual(blockStatements.Count, 6);
+            Assert.AreEqual(blockStatements.Count, 7);
             Assert.AreEqual(classDeclarations.Count, 1);
             Assert.AreEqual(expressionStatements.Count, 51);
             Assert.AreEqual(invocationExpressions.Count, 41);
@@ -224,6 +219,51 @@ namespace Codelyzer.Analysis.Tests
 
             //It has 2 method declarations
             Assert.AreEqual(methodDeclarations.Count(), 2);
+        }
+
+        [Test]
+        public async Task TestAnalysis()
+        {
+            string projectPath = string.Concat(GetTstPath(Path.Combine(new string[] { "Projects", "CodelyzerDummy", "CodelyzerDummy" })), ".csproj");
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    LambdaMethods = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    LoadBuildData = true
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
+
+            Assert.True(result != null);
+
+            // Extract the subject node
+            var testClassRootNode = result.ProjectResult.SourceFileResults
+                    .First(s => s.FileFullPath.EndsWith("Class2.cs"))
+                as UstNode;
+
+            // Nested class is found
+            Assert.AreEqual(1, testClassRootNode.AllClasses().Count(c => c.Identifier == "NestedClass"));
+
+            // Chained method is found
+            Assert.AreEqual(1, testClassRootNode.AllInvocationExpressions().Count(c => c.MethodName == "ChainedMethod"));
+
+            // Constructor is found
+            Assert.AreEqual(1, testClassRootNode.AllConstructors().Count);
         }
 
         [TearDown]

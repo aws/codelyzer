@@ -137,6 +137,24 @@ namespace Codelyzer.Analysis.CSharp
             return handler.UstNode;
         }
 
+        public override UstNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
+        {
+            ConstructorDeclarationHandler handler = new ConstructorDeclarationHandler(context, node);
+            handler.UstNode.Children.Add(VisitBlock(node.Body));
+
+            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
+            foreach (var identifierName in identifierNames)
+            {
+                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
+                if (identifier != null)
+                {
+                    handler.UstNode.Children.Add(identifier);
+                }
+            }
+
+            return handler.UstNode;
+        }
+
         public override UstNode VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
             MethodDeclarationHandler handler = new MethodDeclarationHandler(context, node);
