@@ -12,7 +12,7 @@ namespace Codelyzer.Analysis.Tests
 {
     //Implementations
 
-    [TestFixture()]
+    [TestFixture]
     [NonParallelizable]
     public class AwsAnalyzerTests : AwsBaseTest
     {
@@ -21,8 +21,8 @@ namespace Codelyzer.Analysis.Tests
         [SetUp]
         public void Setup()
         {
-            Setup(this.GetType());
-            tempDir = GetTstPath(Path.Combine(new string[] { "Projects", "Temp" }));
+            Setup(GetType());
+            tempDir = GetTstPath(Path.Combine(new [] { "Projects", "Temp" }));
             DownloadTestProjects();
         }
 
@@ -64,11 +64,10 @@ namespace Codelyzer.Analysis.Tests
         }
 
         [Test]
-        public async Task TestCli()
+        public void TestCli()
         {
             string mvcMusicStorePath = Directory.EnumerateFiles(tempDir, "MvcMusicStore.sln", SearchOption.AllDirectories).FirstOrDefault();
-            var sampleFilePath = GetSrcPath(Path.Combine("Analysis", "Codelyzer.Analysis", "sample_input.json"));
-            string[] args = new string[] { "-p", mvcMusicStorePath };
+            string[] args = { "-p", mvcMusicStorePath };
             AnalyzerCLI cli = new AnalyzerCLI();
             cli.HandleCommand(args);
             Assert.NotNull(cli);
@@ -80,7 +79,7 @@ namespace Codelyzer.Analysis.Tests
         [Test]
         public async Task TestAnalyzer()
         {
-            string projectPath = string.Concat(GetTstPath(Path.Combine(new string[] { "Projects", "CodelyzerDummy", "CodelyzerDummy" })), ".csproj");
+            string projectPath = string.Concat(GetTstPath(Path.Combine(new [] { "Projects", "CodelyzerDummy", "CodelyzerDummy" })), ".csproj");
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
             {
@@ -163,6 +162,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(expressionStatements.Count, 51);
             Assert.AreEqual(invocationExpressions.Count, 41);
             Assert.AreEqual(literalExpressions.Count, 10);
+            Assert.AreEqual(methodDeclarations.Count, 6);
             Assert.AreEqual(namespaceDeclarations.Count, 1);
             Assert.AreEqual(objectCreationExpressions.Count, 0);
             Assert.AreEqual(usingDirectives.Count, 10);
