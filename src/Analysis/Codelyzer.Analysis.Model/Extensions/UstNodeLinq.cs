@@ -46,6 +46,11 @@ namespace Codelyzer.Analysis.Model
             return GetNodes<MethodDeclaration>(node);
         }
 
+        public static UstList<ConstructorDeclaration> AllConstructors(this UstNode node)
+        {
+            return GetNodes<ConstructorDeclaration>(node);
+        }
+
         public static UstList<NamespaceDeclaration> AllNamespaces(this UstNode node)
         {
             return GetNodes<NamespaceDeclaration>(node);
@@ -73,15 +78,11 @@ namespace Codelyzer.Analysis.Model
                     {
                         nodes.Add((T)child);
                     }
-                    else
-                    {
-                        nodes.AddRange(GetNodes<T>(child));
-                    }
+                    nodes.AddRange(GetNodes<T>(child));
                 }
             }
 
             return nodes;
         }
-        
     }
 }

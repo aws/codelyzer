@@ -67,7 +67,7 @@ namespace Codelyzer.Analysis.Build
             }
         }
 
-        private async void FallbackCompilation()
+        private void FallbackCompilation()
         {
             var options = (CSharpCompilationOptions) this.Project.CompilationOptions;
             var meta = this.Project.MetadataReferences;

@@ -57,7 +57,7 @@ namespace Codelyzer.Analysis
 
             foreach (var projectBuildResult in projectBuildResults)
             {
-                var workspaceResult = await AnalyzeProject(projectBuildResult);
+                var workspaceResult = await Task.Run(() => AnalyzeProject(projectBuildResult));
                 workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
                 workspaceResult.ProjectType = projectBuildResult.ProjectType;
                 workspaceResults.Add(workspaceResult);
@@ -95,7 +95,7 @@ namespace Codelyzer.Analysis
             }
         }
 
-        private async Task<ProjectWorkspace> AnalyzeProject(ProjectBuildResult projectResult)
+        private ProjectWorkspace AnalyzeProject(ProjectBuildResult projectResult)
         {
             Logger.LogDebug("Analyzing the project: " + projectResult.ProjectPath);
             ProjectWorkspace workspace = new ProjectWorkspace(projectResult.ProjectPath)

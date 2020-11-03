@@ -59,8 +59,7 @@ namespace Codelyzer.Analysis
                         FilePath = o.SolutionPath;
                     }
 
-                    String jsonData;
-                    if (o.JsonFilePath != null && o.JsonFilePath.Length != 0)
+                    if (!string.IsNullOrEmpty(o.JsonFilePath))
                     {
                         Configuration.ExportSettings.GenerateJsonOutput = true;
                         Configuration.ExportSettings.OutputPath = o.JsonFilePath;

@@ -44,6 +44,10 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             return symbol.ContainingAssembly != null && symbol.ContainingNamespace.Name != null
                 ? symbol.ContainingAssembly.Name.ToString().Trim() : string.Empty;
         }
+        protected string GetBaseTypOriginalDefinition(INamedTypeSymbol symbol)
+        {
+            return symbol.BaseType?.OriginalDefinition.ToString();
+        }
     }
 
 }

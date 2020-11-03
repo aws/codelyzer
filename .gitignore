@@ -12,3 +12,6 @@
 # OS X
 .DS_Store
 ._*
+
+.vs/
+.vshistory/
