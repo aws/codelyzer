@@ -1,12 +1,10 @@
 ﻿namespace Codelyzer.Analysis.Model
 {
-    public class ConstructorDeclaration : MethodDeclaration
+    public class ConstructorDeclaration : BaseMethodDeclaration
     {
         public ConstructorDeclaration()
             : base(IdConstants.ConstructorIdName)
         {
-            Parameters = new UstList<Parameter>();
-            SemanticProperties = new UstList<string>();
         }
     }
 }
