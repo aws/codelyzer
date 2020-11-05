@@ -13,7 +13,9 @@ namespace Codelyzer.Analysis.Model
         public const string NamespaceIdName = "namespace";
         
         public const string ClassIdName = "class";
-        
+
+        public const string InterfaceIdName = "interface";
+
         public const string MethodIdName = "method";
         
         public const string BodyIdName = "body";
