@@ -131,7 +131,7 @@ namespace Codelyzer.Analysis.Tests
                     DeclarationNodes = true,
                     LocationData = false,
                     ReferenceData = true,
-                    LoadInterfaces = true
+                    InterfaceDeclarations = true
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);

@@ -139,27 +139,36 @@ namespace Codelyzer.Analysis.CSharp
 
         public override UstNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
         {
-            InterfaceDeclarationHandler handler = new InterfaceDeclarationHandler(context, node);
-            HandleReferences(((InterfaceDeclaration)handler.UstNode).Reference);
-            handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
-
-            var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
-            foreach (var attribute in attributes)
+            if (MetaDataSettings.InterfaceDeclarations)
             {
-                handler.UstNode.Children.Add(VisitAttribute((AttributeSyntax)attribute));
-            }
-
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
+                InterfaceDeclarationHandler handler = new InterfaceDeclarationHandler(context, node);
+                if (MetaDataSettings.InterfaceDeclarations)
                 {
-                    handler.UstNode.Children.Add(identifier);
-                }
-            }
+                    HandleReferences(((InterfaceDeclaration)handler.UstNode).Reference);
+                    handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
 
-            return handler.UstNode;
+                    var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
+                    foreach (var attribute in attributes)
+                    {
+                        handler.UstNode.Children.Add(VisitAttribute((AttributeSyntax)attribute));
+                    }
+
+                    var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
+                    foreach (var identifierName in identifierNames)
+                    {
+                        var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
+                        if (identifier != null)
+                        {
+                            handler.UstNode.Children.Add(identifier);
+                        }
+                    }
+                }
+                return handler.UstNode;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public override UstNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)

@@ -44,6 +44,6 @@ namespace Codelyzer.Analysis
         public bool LocationData = true;
         public bool ReferenceData;
         public bool LoadBuildData = false;
-        public bool LoadInterfaces = false;
+        public bool InterfaceDeclarations = false;
     }
 }
