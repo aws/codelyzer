@@ -130,7 +130,8 @@ namespace Codelyzer.Analysis.Tests
                     Annotations = true,
                     DeclarationNodes = true,
                     LocationData = false,
-                    ReferenceData = true
+                    ReferenceData = true,
+                    InterfaceDeclarations = true
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
@@ -146,6 +147,9 @@ namespace Codelyzer.Analysis.Tests
             var houseController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HouseController.cs")).FirstOrDefault();
             Assert.NotNull(houseController);
 
+            var ihouseRepository = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("IHouseRepository.cs")).FirstOrDefault();
+            Assert.NotNull(ihouseRepository);
+
             var blockStatements = houseController.AllBlockStatements();
             var classDeclarations = houseController.AllClasses();
             var expressionStatements = houseController.AllExpressions();
@@ -155,6 +159,7 @@ namespace Codelyzer.Analysis.Tests
             var namespaceDeclarations = houseController.AllNamespaces();
             var objectCreationExpressions = houseController.AllObjectCreationExpressions();
             var usingDirectives = houseController.AllUsingDirectives();
+            var interfaces = ihouseRepository.AllInterfaces();
 
 
             Assert.AreEqual(blockStatements.Count, 7);
@@ -166,6 +171,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(namespaceDeclarations.Count, 1);
             Assert.AreEqual(objectCreationExpressions.Count, 0);
             Assert.AreEqual(usingDirectives.Count, 10);
+            Assert.AreEqual(interfaces.Count, 1);
         }
 
         [Test]

@@ -11,23 +11,27 @@ namespace Codelyzer.Analysis.Model
                 case IdConstants.RootIdName:
                     ustNode = new RootUstNode();
                     break;
-                
+
                 case IdConstants.UsingDirectiveIdName:
                     ustNode = new UsingDirective();
                     break;
-                
+
                 case IdConstants.NamespaceIdName:
                     ustNode = new NamespaceDeclaration();
                     break;
-                
+
                 case IdConstants.ClassIdName:
                     ustNode = new ClassDeclaration();
                     break;
-                
+
+                case IdConstants.InterfaceIdName:
+                    ustNode = new InterfaceDeclaration();
+                    break;
+
                 case IdConstants.BodyIdName:
                     ustNode = new BlockStatement();
                     break;
-                
+
                 case IdConstants.ObjectCreationIdName:
                     ustNode = new ObjectCreationExpression();
                     break;
@@ -35,11 +39,11 @@ namespace Codelyzer.Analysis.Model
                 case IdConstants.InvocationIdName:
                     ustNode = new InvocationExpression();
                     break;
-                
+
                 case IdConstants.LiteralIdName:
                     ustNode = new LiteralExpression();
                     break;
-                
+
                 case IdConstants.MethodIdName:
                     ustNode = new MethodDeclaration();
                     break;

@@ -14,6 +14,11 @@ namespace Codelyzer.Analysis.Model
             return GetNodes<ClassDeclaration>(node);
         }
 
+        public static UstList<InterfaceDeclaration> AllInterfaces(this UstNode node)
+        {
+            return GetNodes<InterfaceDeclaration>(node);
+        }
+
         public static UstList<ExpressionStatement> AllExpressions(this UstNode node)
         {
             return GetNodes<ExpressionStatement>(node);
