@@ -1,16 +1,17 @@
-﻿using System;
+﻿using Buildalyzer;
+using Buildalyzer.Environment;
+using Buildalyzer.Workspaces;
+using Codelyzer.Analysis.Common;
+using Microsoft.CodeAnalysis;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
-using Codelyzer.Analysis.Common;
-using Buildalyzer;
-using Buildalyzer.Environment;
-using Buildalyzer.Workspaces;
-using Microsoft.CodeAnalysis;
-using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace Codelyzer.Analysis.Build
 {
@@ -19,16 +20,18 @@ namespace Codelyzer.Analysis.Build
         private const string TargetFramework = nameof(TargetFramework);
         private const string TargetFrameworkVersion = nameof(TargetFrameworkVersion);
         private const string Configuration = nameof(Configuration);
+        private readonly AnalyzerConfiguration _analyzerConfiguration;
 
         internal List<ProjectAnalysisResult> Projects;
 
         private ILogger Logger { get; set; }
 
-        public WorkspaceBuilderHelper(ILogger logger, string workspacePath)
+        public WorkspaceBuilderHelper(ILogger logger, string workspacePath, AnalyzerConfiguration analyzerConfiguration = null)
         {
             this.Logger = logger;
             this.WorkspacePath = workspacePath;
             this.Projects = new List<ProjectAnalysisResult>();
+            _analyzerConfiguration = analyzerConfiguration;
         }
 
         private string WorkspacePath { get; }
@@ -72,7 +75,7 @@ namespace Codelyzer.Analysis.Build
                 {
                     LogWriter = writer
                 });
-                
+
                 var dict = new Dictionary<Guid, IAnalyzerResult>();
                 using (AdhocWorkspace workspace = new AdhocWorkspace())
                 {
@@ -92,13 +95,13 @@ namespace Codelyzer.Analysis.Build
                         Logger.LogInformation("Building: " + path);
 
                         IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(path);
-                        IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions());
+                        IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile.RequiresNetFramework));
                         IAnalyzerResult analyzerResult = analyzerResults.First();
 
 
                         dict[analyzerResult.ProjectGuid] = analyzerResult;
                         analyzerResult.AddToWorkspace(workspace);
-                        
+
                         foreach (var pref in analyzerResult.ProjectReferences)
                         {
                             if (!existing.Contains(pref))
@@ -108,21 +111,21 @@ namespace Codelyzer.Analysis.Build
                             }
                         }
                     }
-                    
+
                     foreach (var project in workspace.CurrentSolution.Projects)
                     {
                         try
                         {
                             var result = dict[project.Id.Id];
-                            
+
                             var projectAnalyzer = analyzerManager.Projects.Values.FirstOrDefault(p =>
                                 p.ProjectGuid.Equals(project.Id.Id));
-                            
-                            Projects.Add(new ProjectAnalysisResult() 
-                            {   
+
+                            Projects.Add(new ProjectAnalysisResult()
+                            {
                                 Project = project,
-                                AnalyzerResult = result, 
-                                ProjectAnalyzer = projectAnalyzer 
+                                AnalyzerResult = result,
+                                ProjectAnalyzer = projectAnalyzer
                             });
                         }
                         catch (Exception ex)
@@ -144,15 +147,25 @@ namespace Codelyzer.Analysis.Build
          * */
         private void BuildSolution(IAnalyzerManager manager)
         {
-            List<IAnalyzerResult> results = manager.Projects.Values
-                    .AsParallel()
-                    .Select(p =>
-                    {
-                        Logger.LogDebug("Building the project : " + p.ProjectFile.Path);
-                        return BuildProject(p);
-                    })
-                    .Where(x => x != null)
-                    .ToList();
+            var options = new ParallelOptions() { MaxDegreeOfParallelism = _analyzerConfiguration.ConcurrentThreads };
+
+            BlockingCollection<IAnalyzerResult> concurrentResults = new BlockingCollection<IAnalyzerResult>();
+            Parallel.ForEach(manager.Projects.Values, options, p =>
+            {
+                Logger.LogDebug("Building the project : " + p.ProjectFile.Path);
+                var buildResult = BuildProject(p);
+                if (buildResult != null)
+                {
+                    concurrentResults.Add(buildResult);
+                    Logger.LogDebug("Building complete for {0} - {1}" + p.ProjectFile.Path, buildResult.Succeeded ? "Success" : "Fail");
+                }
+                else
+                {
+                    Logger.LogDebug("Building complete for {0} - {1}" + p.ProjectFile.Path, "Fail");
+                }
+            });
+
+            List<IAnalyzerResult> results = concurrentResults.ToList();
 
             var dict = new Dictionary<Guid, IAnalyzerResult>();
             // Add each result to a new workspace
@@ -177,16 +190,16 @@ namespace Codelyzer.Analysis.Build
                     try
                     {
                         var result = dict[project.Id.Id];
-                        
-                        var projectAnalyzer = manager.Projects.Values.FirstOrDefault(p => 
+
+                        var projectAnalyzer = manager.Projects.Values.FirstOrDefault(p =>
                             p.ProjectGuid.Equals(project.Id.Id));
-                        
-                        Projects.Add(new ProjectAnalysisResult() 
-                            {  
-                                Project = project,
-                                AnalyzerResult = result, 
-                                ProjectAnalyzer = projectAnalyzer 
-                            });
+
+                        Projects.Add(new ProjectAnalysisResult()
+                        {
+                            Project = project,
+                            AnalyzerResult = result,
+                            ProjectAnalyzer = projectAnalyzer
+                        });
                     }
                     catch (Exception ex)
                     {
@@ -200,7 +213,7 @@ namespace Codelyzer.Analysis.Build
         {
             try
             {
-                return projectAnalyzer.Build(GetEnvironmentOptions()).FirstOrDefault();
+                return projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile.RequiresNetFramework)).FirstOrDefault();
             }
             catch (Exception e)
             {
@@ -273,20 +286,34 @@ namespace Codelyzer.Analysis.Build
             analyzerManager.SetGlobalProperty(Configuration, "Release");
         }
         */
-        private EnvironmentOptions GetEnvironmentOptions()
+        private EnvironmentOptions GetEnvironmentOptions(bool requiresNetFramework)
         {
             var os = DetermineOSPlatform();
             EnvironmentOptions options = new EnvironmentOptions();
 
             if (os == OSPlatform.Linux || os == OSPlatform.OSX)
             {
-                options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, Constants.MsBuildCommandName);
+                if (requiresNetFramework)
+                {
+                    options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, Constants.MsBuildCommandName);
+
+                }
             }
-            
+
             options.EnvironmentVariables.Add(Constants.EnableNuGetPackageRestore, Boolean.TrueString.ToLower());
 
             options.Arguments.Add(Constants.RestorePackagesConfigArgument);
             options.Arguments.Add(Constants.LanguageVersionArgument);
+
+            if (_analyzerConfiguration.MetaDataSettings.GenerateBinFiles)
+            {
+                options.GlobalProperties.Add(MsBuildProperties.CopyBuildOutputToOutputDirectory, "true");
+                options.GlobalProperties.Add(MsBuildProperties.CopyOutputSymbolsToOutputDirectory, "true");
+                options.GlobalProperties.Add(MsBuildProperties.UseCommonOutputDirectory, "false");
+                options.GlobalProperties.Add(MsBuildProperties.SkipCopyBuildProduct, "false");
+                options.GlobalProperties.Add(MsBuildProperties.SkipCompilerExecution, "false");
+            }
+
             return options;
         }
 

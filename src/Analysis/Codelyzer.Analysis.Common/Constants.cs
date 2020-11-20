@@ -9,6 +9,7 @@ namespace Codelyzer.Analysis.Common
     {
         private static string _packagesDirectoryIdentifier;
 
+        public const int DefaultConcurrentThreads = 4;
         public const string MsBuildCommandName = "msbuild";
         public const string RestorePackagesConfigArgument = "/p:RestorePackagesConfig=true";
         public const string LanguageVersionArgument = "/p:langversion=latest";

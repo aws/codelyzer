@@ -23,7 +23,7 @@ namespace Codelyzer.Analysis.Build
 
         public async Task<List<ProjectBuildResult>> Build()
         {
-            using(var builder = new WorkspaceBuilderHelper(Logger, _workspacePath))
+            using(var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
             {
                 builder.Build();
                 foreach(var projectResult in builder.Projects)

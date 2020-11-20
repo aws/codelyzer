@@ -1,3 +1,4 @@
+using Codelyzer.Analysis.Common;
 using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
@@ -7,6 +8,7 @@ namespace Codelyzer.Analysis
     public class AnalyzerConfiguration
     {
         public string Language;
+        public int ConcurrentThreads = Constants.DefaultConcurrentThreads;
 
         public AnalyzerConfiguration(string language)
         {
@@ -45,5 +47,6 @@ namespace Codelyzer.Analysis
         public bool ReferenceData;
         public bool LoadBuildData = false;
         public bool InterfaceDeclarations = false;
+        public bool GenerateBinFiles = false;
     }
 }
