@@ -17,6 +17,12 @@ namespace Codelyzer.Analysis
 
         [Option('o', "json-output-path", Required = false, HelpText = "Json output file path")]
         public string JsonFilePath { get; set; }
+
+        [Option('b', "bin-files", Required = false, HelpText = "Generate Bin Files")]
+        public string GenerateBinFiles { get; set; }
+
+        [Option('t', "max-threads", Required = false, HelpText = "Number of concurrent threads")]
+        public string ConcurrentThreads { get; set; }
     }
     
     public class AnalyzerCLI
@@ -63,6 +69,17 @@ namespace Codelyzer.Analysis
                     {
                         Configuration.ExportSettings.GenerateJsonOutput = true;
                         Configuration.ExportSettings.OutputPath = o.JsonFilePath;
+                    }
+
+                    if (!string.IsNullOrEmpty(o.GenerateBinFiles))
+                    {
+                        Configuration.MetaDataSettings.GenerateBinFiles = o.GenerateBinFiles.ToLower() == bool.TrueString.ToLower();
+                    }
+
+                    if (!string.IsNullOrEmpty(o.ConcurrentThreads))
+                    {
+                        int.TryParse(o.ConcurrentThreads, out int concurrentThreads);
+                        Configuration.ConcurrentThreads = concurrentThreads > 0 ? concurrentThreads : Constants.DefaultConcurrentThreads;
                     }
                 });
 
