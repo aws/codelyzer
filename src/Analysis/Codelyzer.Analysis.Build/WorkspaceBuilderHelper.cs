@@ -157,11 +157,11 @@ namespace Codelyzer.Analysis.Build
                 if (buildResult != null)
                 {
                     concurrentResults.Add(buildResult);
-                    Logger.LogDebug("Building complete for {0} - {1}" + p.ProjectFile.Path, buildResult.Succeeded ? "Success" : "Fail");
+                    Logger.LogDebug("Building complete for {0} - {1}", p.ProjectFile.Path, buildResult.Succeeded ? "Success" : "Fail");
                 }
                 else
                 {
-                    Logger.LogDebug("Building complete for {0} - {1}" + p.ProjectFile.Path, "Fail");
+                    Logger.LogDebug("Building complete for {0} - {1}", p.ProjectFile.Path, "Fail");
                 }
             });
 
