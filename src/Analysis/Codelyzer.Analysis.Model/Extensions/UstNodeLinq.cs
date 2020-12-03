@@ -71,6 +71,16 @@ namespace Codelyzer.Analysis.Model
             return GetNodes<DeclarationNode>(node);
         }
 
+        public static UstList<EnumDeclaration> AllEnumDeclarations(this UstNode node)
+        {
+            return GetNodes<EnumDeclaration>(node);
+        }
+
+        public static UstList<StructDeclaration> AllStructDeclarations(this UstNode node)
+        {
+            return GetNodes<StructDeclaration>(node);
+        }
+
         private static UstList<T> GetNodes<T>(UstNode node) where T : UstNode
         {
             UstList<T> nodes = new UstList<T>();

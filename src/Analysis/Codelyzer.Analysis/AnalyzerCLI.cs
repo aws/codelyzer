@@ -23,6 +23,15 @@ namespace Codelyzer.Analysis
 
         [Option('t', "max-threads", Required = false, HelpText = "Number of concurrent threads")]
         public string ConcurrentThreads { get; set; }
+
+        [Option('l', "location-data", Required = false, HelpText = "Add location data to the result")]
+        public string LocationData { get; set; }
+
+        [Option('r', "reference-data", Required = false, HelpText = "Add reference data to the result")]
+        public string ReferenceData { get; set; }
+
+        [Option('d', "detailed-analysis", Required = false, HelpText = "Run detailed analysis that includes enums, structs, interfaces, annotations, and declaration nodes")]
+        public string DetailedAnalysis { get; set; }
     }
     
     public class AnalyzerCLI
@@ -74,6 +83,27 @@ namespace Codelyzer.Analysis
                     if (!string.IsNullOrEmpty(o.GenerateBinFiles))
                     {
                         Configuration.MetaDataSettings.GenerateBinFiles = o.GenerateBinFiles.ToLower() == bool.TrueString.ToLower();
+                    }
+
+                    if (!string.IsNullOrEmpty(o.ReferenceData))
+                    {
+                        Configuration.MetaDataSettings.ReferenceData = o.ReferenceData.ToLower() == bool.TrueString.ToLower();
+                    }
+
+                    if (!string.IsNullOrEmpty(o.LocationData))
+                    {
+                        Configuration.MetaDataSettings.LocationData = o.LocationData.ToLower() == bool.TrueString.ToLower();
+                    }
+
+                    if (!string.IsNullOrEmpty(o.DetailedAnalysis))
+                    {
+                        var result = o.DetailedAnalysis.ToLower() == bool.TrueString.ToLower();
+
+                        Configuration.MetaDataSettings.EnumDeclarations = result;
+                        Configuration.MetaDataSettings.StructDeclarations = result;
+                        Configuration.MetaDataSettings.InterfaceDeclarations = result;
+                        Configuration.MetaDataSettings.DeclarationNodes = result;
+                        Configuration.MetaDataSettings.Annotations = result;
                     }
 
                     if (!string.IsNullOrEmpty(o.ConcurrentThreads))

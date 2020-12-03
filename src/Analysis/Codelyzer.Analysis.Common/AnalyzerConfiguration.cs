@@ -47,6 +47,8 @@ namespace Codelyzer.Analysis
         public bool ReferenceData;
         public bool LoadBuildData = false;
         public bool InterfaceDeclarations = false;
+        public bool EnumDeclarations = false;
+        public bool StructDeclarations = false;
         public bool GenerateBinFiles = false;
     }
 }

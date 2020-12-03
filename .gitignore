@@ -15,8 +15,7 @@
 
 .vs/
 .vshistory/
-
-*[/\]Properties[/\]launchSettings.json
+launchSettings.json
 
 # User-specific files
 *.suo

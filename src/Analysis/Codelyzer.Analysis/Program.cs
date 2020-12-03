@@ -35,6 +35,7 @@ namespace Codelyzer.Analysis
                 }
             };*/
             cli.Configuration.MetaDataSettings.DeclarationNodes = true;
+
             /* 3. Get Analyzer instance based on language */
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(cli.Configuration, 
                 loggerFactory.CreateLogger("Analyzer"));
