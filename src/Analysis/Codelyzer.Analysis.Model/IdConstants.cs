@@ -31,5 +31,9 @@ namespace Codelyzer.Analysis.Model
         public const string AnnotationIdName = "annotation";
 
         public const string ConstructorIdName = "constructor";
+
+        public const string EnumIdName = "enum";
+
+        public const string StructIdName = "struct";
     }
 }

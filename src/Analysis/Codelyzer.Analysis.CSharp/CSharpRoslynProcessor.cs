@@ -134,6 +134,16 @@ namespace Codelyzer.Analysis.CSharp
                 }
             }
 
+            var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
+            foreach (var expression in objCreations)
+            {
+                var objectCreation = VisitObjectCreationExpression((ObjectCreationExpressionSyntax)expression);
+                if (objectCreation != null)
+                {
+                    handler.UstNode.Children.Add(objectCreation);
+                }
+            }
+
             return handler.UstNode;
         }
 
@@ -228,7 +238,11 @@ namespace Codelyzer.Analysis.CSharp
             var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
             foreach (var expression in objCreations)
             {
-                result.Children.Add(VisitObjectCreationExpression((ObjectCreationExpressionSyntax)expression));
+                var objectCreation = VisitObjectCreationExpression((ObjectCreationExpressionSyntax)expression);
+                if (objectCreation != null)
+                {
+                    result.Children.Add(objectCreation);
+                }
             }
 
             if (MetaDataSettings.LiteralExpressions)
@@ -315,7 +329,54 @@ namespace Codelyzer.Analysis.CSharp
             }
             return null;
         }
-        
+
+        public override UstNode VisitEnumDeclaration(EnumDeclarationSyntax node)
+        {
+            if (MetaDataSettings.EnumDeclarations)
+            {
+                EnumDeclarationHandler handler = new EnumDeclarationHandler(context, node);
+                if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
+                {
+                    HandleReferences(((EnumDeclaration)handler.UstNode).Reference);
+                    return handler.UstNode;
+                }
+            }
+            return null;
+        }
+
+        public override UstNode VisitStructDeclaration(StructDeclarationSyntax node)
+        {
+            if (MetaDataSettings.StructDeclarations)
+            {
+                StructDeclarationHandler handler = new StructDeclarationHandler(context, node);
+                if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
+                {
+                    HandleReferences(((StructDeclaration)handler.UstNode).Reference);
+                }
+
+                handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
+
+                var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
+                foreach (var attribute in attributes)
+                {
+                    handler.UstNode.Children.Add(VisitAttribute((AttributeSyntax)attribute));
+                }
+
+                var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
+                foreach (var identifierName in identifierNames)
+                {
+                    var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
+                    if (identifier != null)
+                    {
+                        handler.UstNode.Children.Add(identifier);
+                    }
+                }
+
+                return handler.UstNode;
+            }
+            return null;
+        }
+
         private void HandleReferences(Reference reference)
         {
             if (MetaDataSettings.ReferenceData
