@@ -13,6 +13,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Text;
 using Constants = Codelyzer.Analysis.Common.Constants;
+using System.Xml.Linq;
+using System.Xml;
 
 namespace Codelyzer.Analysis.Build
 {    
@@ -284,15 +286,17 @@ namespace Codelyzer.Analysis.Build
             {
                 try
                 {
-                    using (var stream = new FileStream(packagesFile, FileMode.Open))
-                    {
-                        PackagesConfigReader packagesConfigReader = new PackagesConfigReader(stream);
-                        packageReferences = packagesConfigReader.GetPackages();
-                    }
+                    XDocument xDocument = NuGet.Common.XmlUtility.Load(packagesFile);
+                    var reader = new PackagesConfigReader(xDocument);
+                    packageReferences = reader.GetPackages();
                 }
-                catch (Exception ex)
+                catch (XmlException ex)
                 {
-                    Logger.LogError(ex, "Error while parsing {0}", packagesFile);
+                    Logger.LogError(ex, "Error while parsing xml for file {0}", packagesFile);
+                }
+                catch(Exception ex)
+                {
+                    Logger.LogError(ex, "Error while parsing file {0}", packagesFile);
                 }
             }
             return packageReferences;

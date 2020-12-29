@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Codelyzer.Analysis.Model;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
-using Codelyzer.Analysis.Common;
-using Codelyzer.Analysis.Model;
-using Microsoft.Extensions.Logging;
 
 namespace Codelyzer.Analysis
 {
+    [ExcludeFromCodeCoverage]
     class Program
     {
         static async Task Main(string[] args)

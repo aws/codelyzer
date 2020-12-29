@@ -184,7 +184,15 @@ namespace Codelyzer.Analysis.CSharp
         public override UstNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
         {
             ConstructorDeclarationHandler handler = new ConstructorDeclarationHandler(context, node);
-            handler.UstNode.Children.Add(VisitBlock(node.Body));
+
+            if (node.Body != null)
+            {
+                handler.UstNode.Children.Add(VisitBlock(node.Body));
+            }
+            else if (node.ExpressionBody != null)
+            {
+                handler.UstNode.Children.Add(VisitArrowExpressionClause(node.ExpressionBody));
+            }
 
             var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
             foreach (var identifierName in identifierNames)
@@ -202,10 +210,14 @@ namespace Codelyzer.Analysis.CSharp
         public override UstNode VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
             MethodDeclarationHandler handler = new MethodDeclarationHandler(context, node);
-            //For abstract methods, it will not have any body
+
             if (node.Body != null)
             {
                 handler.UstNode.Children.Add(VisitBlock(node.Body));
+            }
+            else if (node.ExpressionBody != null)
+            {
+                handler.UstNode.Children.Add(VisitArrowExpressionClause(node.ExpressionBody));
             }
 
             var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
@@ -224,6 +236,53 @@ namespace Codelyzer.Analysis.CSharp
         public override UstNode VisitBlock(BlockSyntax node)
         {
             BlockStatementHandler handler = new BlockStatementHandler(context, node);
+            var result = handler.UstNode;
+
+            if (MetaDataSettings.MethodInvocations)
+            {
+                var expressions = node.DescendantNodes().OfType<InvocationExpressionSyntax>();
+                foreach (var expression in expressions)
+                {
+                    result.Children.Add(VisitInvocationExpression((InvocationExpressionSyntax)expression));
+                }
+            }
+
+            var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
+            foreach (var expression in objCreations)
+            {
+                var objectCreation = VisitObjectCreationExpression((ObjectCreationExpressionSyntax)expression);
+                if (objectCreation != null)
+                {
+                    result.Children.Add(objectCreation);
+                }
+            }
+
+            if (MetaDataSettings.LiteralExpressions)
+            {
+                var literalExpressions = node.DescendantNodes().OfType<LiteralExpressionSyntax>();
+                foreach (var expression in literalExpressions)
+                {
+                    result.Children.Add(VisitLiteralExpression((LiteralExpressionSyntax)expression));
+                }
+            }
+
+            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
+            foreach (var identifierName in identifierNames)
+            {
+                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
+                if (identifier != null)
+                {
+                    result.Children.Add(identifier);
+                }
+            }
+
+            return result;
+        }
+
+
+        public override UstNode VisitArrowExpressionClause(ArrowExpressionClauseSyntax node)
+        {
+            ArrowExpressionClauseHandler handler = new ArrowExpressionClauseHandler(context, node);
             var result = handler.UstNode;
 
             if (MetaDataSettings.MethodInvocations)
