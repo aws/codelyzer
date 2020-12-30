@@ -19,7 +19,9 @@ namespace Codelyzer.Analysis.Model
         public const string MethodIdName = "method";
         
         public const string BodyIdName = "body";
-        
+
+        public const string ArrowExpressionIdName = "arrow-expression";
+
         public const string LiteralIdName = "literal";
         
         public const string InvocationIdName = "invocation";

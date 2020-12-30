@@ -45,6 +45,7 @@ namespace Codelyzer.Analysis.Tests
 
             DownloadFromGitHub(@"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/671a629cab0382ecd6dec4833b3868f96f89da50.zip", "ASPNET-WebAPI-Sample-671a629cab0382ecd6dec4833b3868f96f89da50");
             DownloadFromGitHub(@"https://github.com/Duikmeester/MvcMusicStore/archive/e274968f2827c04cfefbe6493f0a784473f83f80.zip", "MvcMusicStore-e274968f2827c04cfefbe6493f0a784473f83f80");
+            DownloadFromGitHub(@"https://github.com/nopSolutions/nopCommerce/archive/73567858b3e3ef281d1433d7ac79295ebed47ee6.zip", "nopCommerce-73567858b3e3ef281d1433d7ac79295ebed47ee6");
 
             //Directory.Move(dirs, Path.Combine(tempDirectory.FullName, "TestProjects"));
         }
@@ -274,6 +275,49 @@ namespace Codelyzer.Analysis.Tests
 
             // Constructor is found
             Assert.AreEqual(1, testClassRootNode.AllConstructors().Count);
+        }
+
+
+        [Test]
+        public async Task TestNopCommerce()
+        {
+            string solutionPath = Directory.EnumerateFiles(tempDir, "nopCommerce.sln", SearchOption.AllDirectories).FirstOrDefault();
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true
+                }
+            };
+
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            var results = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
+
+            var enumDeclarations = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllEnumDeclarations().Count > 0).Sum(s => s.AllEnumDeclarations().Count));
+            var structDeclarations = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllStructDeclarations().Count > 0).Sum(s => s.AllStructDeclarations().Count));
+            var arrowClauseStatements = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllArrowExpressionClauses().Count > 0).Sum(s => s.AllArrowExpressionClauses().Count));
+
+            Assert.AreEqual(enumDeclarations, 80);
+            Assert.AreEqual(structDeclarations, 1);
+            Assert.AreEqual(arrowClauseStatements, 2);
+
+            results.ForEach(r => r.Dispose());
         }
 
         [TearDown]

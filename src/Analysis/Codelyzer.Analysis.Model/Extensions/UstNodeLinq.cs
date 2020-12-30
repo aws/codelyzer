@@ -80,6 +80,10 @@ namespace Codelyzer.Analysis.Model
         {
             return GetNodes<StructDeclaration>(node);
         }
+        public static UstList<ArrowExpressionClause> AllArrowExpressionClauses(this UstNode node)
+        {
+            return GetNodes<ArrowExpressionClause>(node);
+        }
 
         private static UstList<T> GetNodes<T>(UstNode node) where T : UstNode
         {
