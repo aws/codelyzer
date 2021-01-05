@@ -14,17 +14,17 @@ namespace Codelyzer.Analysis.CSharp
         /// <summary>
         /// Gets name of type from TypeSyntax
         /// </summary>
-        /// <param name="parameter">The TypeSyntax parameter to get info about</param>
+        /// <param name="typeSyntax">The TypeSyntax parameter to get info about</param>
         /// <param name="semanticModel">An instance of the semantic model</param>
         /// <returns>Name of the type</returns>
-        public static string GetSemanticType(TypeSyntax parameter, 
+        public static string GetSemanticType(TypeSyntax typeSyntax, 
             SemanticModel semanticModel)
         {
             if (semanticModel == null) return null;
             
             string type = null;
 
-            var typeInfo = semanticModel.GetTypeInfo(parameter);
+            var typeInfo = semanticModel.GetTypeInfo(typeSyntax);
             if (typeInfo.Type != null)
             {
                 type = typeInfo.Type.Name;
@@ -36,7 +36,7 @@ namespace Codelyzer.Analysis.CSharp
         /// <summary>
         /// Gets name of type from ExpressionSyntax
         /// </summary>
-        /// <param name="parameter">The ExpressionSyntax to get info about</param>
+        /// <param name="expressionSyntax">The ExpressionSyntax to get info about</param>
         /// <param name="semanticModel">An instance of the semantic model</param>
         /// <returns>Name of the type</returns>
         public static string GetSemanticType(ExpressionSyntax expressionSyntax, 
@@ -58,7 +58,7 @@ namespace Codelyzer.Analysis.CSharp
         /// <summary>
         /// Gets name of type from IdentifierNameSyntax
         /// </summary>
-        /// <param name="parameter">The IdentifierNameSyntax to get info about</param>
+        /// <param name="identifierNameSyntax">The IdentifierNameSyntax to get info about</param>
         /// <param name="semanticModel">An instance of the semantic model</param>
         /// <returns>Name of the type</returns>
         public static string GetSemanticType(IdentifierNameSyntax identifierNameSyntax,
