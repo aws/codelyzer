@@ -12,14 +12,11 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             ReturnStatementSyntax syntaxNode)
             : base(context, syntaxNode, new ReturnStatement())
         {
-            Model.Identifier = null;
-            SetMetaData(syntaxNode);
-        }
-
-        private void SetMetaData(ReturnStatementSyntax syntaxNode)
-        {
             if (syntaxNode.Expression != null)
+            {
+                Model.Identifier = syntaxNode.Expression.ToString();
                 Model.SemanticReturnType = SemanticHelper.GetSemanticType(syntaxNode.Expression, SemanticModel);
+            }
         }
     }
 }
