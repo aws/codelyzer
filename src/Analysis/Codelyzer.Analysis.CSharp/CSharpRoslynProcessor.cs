@@ -254,13 +254,16 @@ namespace Codelyzer.Analysis.CSharp
                 }
             }
 
-            var returnStatements = node.DescendantNodes().OfType<ReturnStatementSyntax>();
-            foreach (var returnStatement in returnStatements)
+            if (MetaDataSettings.ReturnStatements)
             {
-                var r = VisitReturnStatement((ReturnStatementSyntax)returnStatement);
-                if (r != null)
+                var returnStatements = node.DescendantNodes().OfType<ReturnStatementSyntax>();
+                foreach (var returnStatement in returnStatements)
                 {
-                    handler.UstNode.Children.Add(r);
+                    var r = VisitReturnStatement((ReturnStatementSyntax)returnStatement);
+                    if (r != null)
+                    {
+                        handler.UstNode.Children.Add(r);
+                    }
                 }
             }
 
@@ -311,13 +314,16 @@ namespace Codelyzer.Analysis.CSharp
                 }
             }
 
-            var returnStatements = node.DescendantNodes().OfType<ReturnStatementSyntax>();
-            foreach (var returnStatement in returnStatements)
+            if (MetaDataSettings.ReturnStatements)
             {
-                var r = VisitReturnStatement((ReturnStatementSyntax)returnStatement);
-                if (r != null)
+                var returnStatements = node.DescendantNodes().OfType<ReturnStatementSyntax>();
+                foreach (var returnStatement in returnStatements)
                 {
-                    handler.UstNode.Children.Add(r);
+                    var r = VisitReturnStatement((ReturnStatementSyntax)returnStatement);
+                    if (r != null)
+                    {
+                        handler.UstNode.Children.Add(r);
+                    }
                 }
             }
 
