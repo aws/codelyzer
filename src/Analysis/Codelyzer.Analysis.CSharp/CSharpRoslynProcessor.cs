@@ -314,19 +314,6 @@ namespace Codelyzer.Analysis.CSharp
                 }
             }
 
-            if (MetaDataSettings.ReturnStatements)
-            {
-                var returnStatements = node.DescendantNodes().OfType<ReturnStatementSyntax>();
-                foreach (var returnStatement in returnStatements)
-                {
-                    var r = VisitReturnStatement((ReturnStatementSyntax)returnStatement);
-                    if (r != null)
-                    {
-                        handler.UstNode.Children.Add(r);
-                    }
-                }
-            }
-
             var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
             foreach (var expression in objCreations)
             {
