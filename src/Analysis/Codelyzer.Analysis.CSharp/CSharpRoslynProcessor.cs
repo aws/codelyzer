@@ -233,6 +233,13 @@ namespace Codelyzer.Analysis.CSharp
             return handler.UstNode;
         }
 
+        public override UstNode VisitReturnStatement(ReturnStatementSyntax node)
+        {
+            ReturnStatementHandler handler = new ReturnStatementHandler(context, node);
+
+            return handler.UstNode;
+        }
+
         public override UstNode VisitBlock(BlockSyntax node)
         {
             BlockStatementHandler handler = new BlockStatementHandler(context, node);
@@ -244,6 +251,19 @@ namespace Codelyzer.Analysis.CSharp
                 foreach (var expression in expressions)
                 {
                     result.Children.Add(VisitInvocationExpression((InvocationExpressionSyntax)expression));
+                }
+            }
+
+            if (MetaDataSettings.ReturnStatements)
+            {
+                var returnStatements = node.DescendantNodes().OfType<ReturnStatementSyntax>();
+                foreach (var returnStatement in returnStatements)
+                {
+                    var r = VisitReturnStatement((ReturnStatementSyntax)returnStatement);
+                    if (r != null)
+                    {
+                        handler.UstNode.Children.Add(r);
+                    }
                 }
             }
 

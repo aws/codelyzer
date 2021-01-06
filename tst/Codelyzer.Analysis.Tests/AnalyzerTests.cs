@@ -133,7 +133,8 @@ namespace Codelyzer.Analysis.Tests
                     LocationData = false,
                     ReferenceData = true,
                     InterfaceDeclarations = true,
-                    GenerateBinFiles = true
+                    GenerateBinFiles = true,
+                    ReturnStatements = true
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
@@ -141,10 +142,10 @@ namespace Codelyzer.Analysis.Tests
             Assert.True(result != null);
 
             //Project has 16 nuget references and 19 framework/dll references:
-            Assert.AreEqual(result.ProjectResult.ExternalReferences.NugetReferences.Count, 16);
-            Assert.AreEqual(result.ProjectResult.ExternalReferences.SdkReferences.Count, 19);
+            Assert.AreEqual(16, result.ProjectResult.ExternalReferences.NugetReferences.Count);
+            Assert.AreEqual(19, result.ProjectResult.ExternalReferences.SdkReferences.Count);
 
-            Assert.AreEqual(result.ProjectResult.SourceFiles.Count, 10);
+            Assert.AreEqual(10, result.ProjectResult.SourceFiles.Count);
 
             var houseController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HouseController.cs")).FirstOrDefault();
             Assert.NotNull(houseController);
@@ -158,22 +159,26 @@ namespace Codelyzer.Analysis.Tests
             var invocationExpressions = houseController.AllInvocationExpressions();
             var literalExpressions = houseController.AllLiterals();
             var methodDeclarations = houseController.AllMethods();
+            var returnStatements = houseController.AllReturnStatements();
+            var annotations = houseController.AllAnnotations();
             var namespaceDeclarations = houseController.AllNamespaces();
             var objectCreationExpressions = houseController.AllObjectCreationExpressions();
             var usingDirectives = houseController.AllUsingDirectives();
             var interfaces = ihouseRepository.AllInterfaces();
 
 
-            Assert.AreEqual(blockStatements.Count, 7);
-            Assert.AreEqual(classDeclarations.Count, 1);
-            Assert.AreEqual(expressionStatements.Count, 51);
-            Assert.AreEqual(invocationExpressions.Count, 41);
-            Assert.AreEqual(literalExpressions.Count, 10);
-            Assert.AreEqual(methodDeclarations.Count, 6);
-            Assert.AreEqual(namespaceDeclarations.Count, 1);
-            Assert.AreEqual(objectCreationExpressions.Count, 0);
-            Assert.AreEqual(usingDirectives.Count, 10);
-            Assert.AreEqual(interfaces.Count, 1);
+            Assert.AreEqual(7, blockStatements.Count);
+            Assert.AreEqual(1, classDeclarations.Count);
+            Assert.AreEqual(51, expressionStatements.Count);
+            Assert.AreEqual(41, invocationExpressions.Count);
+            Assert.AreEqual(10, literalExpressions.Count);
+            Assert.AreEqual(6, methodDeclarations.Count);
+            Assert.AreEqual(16, returnStatements.Count);
+            Assert.AreEqual(17, annotations.Count);
+            Assert.AreEqual(1, namespaceDeclarations.Count);
+            Assert.AreEqual(0, objectCreationExpressions.Count);
+            Assert.AreEqual(10, usingDirectives.Count);
+            Assert.AreEqual(1, interfaces.Count);
 
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(dllFiles.Count(), 16);
@@ -207,11 +212,11 @@ namespace Codelyzer.Analysis.Tests
             using var result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
             Assert.True(result != null);
 
-            Assert.AreEqual(result.ProjectResult.SourceFiles.Count, 28);
+            Assert.AreEqual(28, result.ProjectResult.SourceFiles.Count);
 
             //Project has 16 nuget references and 19 framework/dll references:
-            Assert.AreEqual(result.ProjectResult.ExternalReferences.NugetReferences.Count, 29);
-            Assert.AreEqual(result.ProjectResult.ExternalReferences.SdkReferences.Count, 24);
+            Assert.AreEqual(29, result.ProjectResult.ExternalReferences.NugetReferences.Count);
+            Assert.AreEqual(24, result.ProjectResult.ExternalReferences.SdkReferences.Count);
 
             var homeController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.cs")).FirstOrDefault();
             Assert.NotNull(homeController);
@@ -226,10 +231,10 @@ namespace Codelyzer.Analysis.Tests
             var methodDeclarations = classDeclaration.Children.OfType<Model.MethodDeclaration>();
 
             //HouseController has 3 identifiers declared within the class declaration:
-            Assert.AreEqual(declarationNodes.Count(), 4);
+            Assert.AreEqual(4, declarationNodes.Count());
 
             //It has 2 method declarations
-            Assert.AreEqual(methodDeclarations.Count(), 2);
+            Assert.AreEqual(2, methodDeclarations.Count());
         }
 
         [Test]
@@ -313,9 +318,9 @@ namespace Codelyzer.Analysis.Tests
             var structDeclarations = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllStructDeclarations().Count > 0).Sum(s => s.AllStructDeclarations().Count));
             var arrowClauseStatements = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllArrowExpressionClauses().Count > 0).Sum(s => s.AllArrowExpressionClauses().Count));
 
-            Assert.AreEqual(enumDeclarations, 80);
-            Assert.AreEqual(structDeclarations, 1);
-            Assert.AreEqual(arrowClauseStatements, 2);
+            Assert.AreEqual(80, enumDeclarations);
+            Assert.AreEqual(1, structDeclarations);
+            Assert.AreEqual(2, arrowClauseStatements);
 
             results.ForEach(r => r.Dispose());
         }
