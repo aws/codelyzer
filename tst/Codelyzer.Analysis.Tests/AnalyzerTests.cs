@@ -133,7 +133,8 @@ namespace Codelyzer.Analysis.Tests
                     LocationData = false,
                     ReferenceData = true,
                     InterfaceDeclarations = true,
-                    GenerateBinFiles = true
+                    GenerateBinFiles = true,
+                    ReturnStatements = true
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);

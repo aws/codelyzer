@@ -49,7 +49,7 @@ namespace Codelyzer.Analysis
         public bool InterfaceDeclarations = false;
         public bool EnumDeclarations = false;
         public bool StructDeclarations = false;
-        public bool ReturnStatements = true;
+        public bool ReturnStatements = false;
         public bool GenerateBinFiles = false;
     }
 }
