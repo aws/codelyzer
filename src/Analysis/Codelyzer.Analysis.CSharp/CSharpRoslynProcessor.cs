@@ -90,21 +90,8 @@ namespace Codelyzer.Analysis.CSharp
             HandleReferences(((ClassDeclaration)handler.UstNode).Reference );
             handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
 
-            var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
-            foreach (var attribute in attributes)
-            {
-                handler.UstNode.Children.Add(VisitAttribute((AttributeSyntax)attribute));
-            }
-
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
-                {
-                    handler.UstNode.Children.Add(identifier);
-                }
-            }
+            AddAttributeNodesToList(node, handler.UstNode.Children);
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
 
             var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
             foreach (var expression in objCreations)
@@ -129,21 +116,8 @@ namespace Codelyzer.Analysis.CSharp
                     HandleReferences(((InterfaceDeclaration)handler.UstNode).Reference);
                     handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
 
-                    var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
-                    foreach (var attribute in attributes)
-                    {
-                        handler.UstNode.Children.Add(VisitAttribute((AttributeSyntax)attribute));
-                    }
-
-                    var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-                    foreach (var identifierName in identifierNames)
-                    {
-                        var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                        if (identifier != null)
-                        {
-                            handler.UstNode.Children.Add(identifier);
-                        }
-                    }
+                    AddAttributeNodesToList(node, handler.UstNode.Children);
+                    AddIdentifierNameNodesToList(node, handler.UstNode.Children);
                 }
                 return handler.UstNode;
             }
@@ -166,15 +140,7 @@ namespace Codelyzer.Analysis.CSharp
                 handler.UstNode.Children.Add(VisitArrowExpressionClause(node.ExpressionBody));
             }
 
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
-                {
-                    handler.UstNode.Children.Add(identifier);
-                }
-            }
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
 
             return handler.UstNode;
         }
@@ -192,15 +158,7 @@ namespace Codelyzer.Analysis.CSharp
                 handler.UstNode.Children.Add(VisitArrowExpressionClause(node.ExpressionBody));
             }
 
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
-                {
-                    handler.UstNode.Children.Add(identifier);
-                }
-            }
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
 
             return handler.UstNode;
         }
@@ -249,24 +207,8 @@ namespace Codelyzer.Analysis.CSharp
                 }
             }
 
-            if (MetaDataSettings.LiteralExpressions)
-            {
-                var literalExpressions = node.DescendantNodes().OfType<LiteralExpressionSyntax>();
-                foreach (var expression in literalExpressions)
-                {
-                    result.Children.Add(VisitLiteralExpression((LiteralExpressionSyntax)expression));
-                }
-            }
-
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
-                {
-                    result.Children.Add(identifier);
-                }
-            }
+            AddLiteralExpressionNodesToList(node, result.Children);
+            AddIdentifierNameNodesToList(node, result.Children);
 
             return result;
         }
@@ -296,24 +238,8 @@ namespace Codelyzer.Analysis.CSharp
                 }
             }
 
-            if (MetaDataSettings.LiteralExpressions)
-            {
-                var literalExpressions = node.DescendantNodes().OfType<LiteralExpressionSyntax>();
-                foreach (var expression in literalExpressions)
-                {
-                    result.Children.Add(VisitLiteralExpression((LiteralExpressionSyntax)expression));
-                }
-            }
-
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
-                {
-                    result.Children.Add(identifier);
-                }
-            }
+            AddLiteralExpressionNodesToList(node, result.Children);
+            AddIdentifierNameNodesToList(node, result.Children);
 
             return result;
         }
@@ -344,15 +270,8 @@ namespace Codelyzer.Analysis.CSharp
         {
             ObjectCreationExpressionHandler handler = new ObjectCreationExpressionHandler(context, node);
 
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
-                {
-                    handler.UstNode.Children.Add(identifier);
-                }
-            }
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
+
             return handler.UstNode;
         }
 
@@ -407,21 +326,8 @@ namespace Codelyzer.Analysis.CSharp
 
                 handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
 
-                var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
-                foreach (var attribute in attributes)
-                {
-                    handler.UstNode.Children.Add(VisitAttribute((AttributeSyntax)attribute));
-                }
-
-                var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-                foreach (var identifierName in identifierNames)
-                {
-                    var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                    if (identifier != null)
-                    {
-                        handler.UstNode.Children.Add(identifier);
-                    }
-                }
+                AddAttributeNodesToList(node, handler.UstNode.Children);
+                AddIdentifierNameNodesToList(node, handler.UstNode.Children);
 
                 return handler.UstNode;
             }
@@ -443,6 +349,19 @@ namespace Codelyzer.Analysis.CSharp
                 if (identifier != null)
                 {
                     nodeList.Add(identifier);
+                }
+            }
+        }
+
+        private void AddLiteralExpressionNodesToList(SyntaxNode node, List<UstNode> nodeList)
+        {
+
+            if (MetaDataSettings.LiteralExpressions)
+            {
+                var literalExpressions = node.DescendantNodes().OfType<LiteralExpressionSyntax>();
+                foreach (var expression in literalExpressions)
+                {
+                    nodeList.Add(VisitLiteralExpression(expression));
                 }
             }
         }
