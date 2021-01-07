@@ -64,34 +64,6 @@ namespace Codelyzer.Analysis.CSharp
             return RootNode;
         }
 
-        private List<UstNode> HandleGenericMembers(in SyntaxList<SyntaxNode> nodeMembers)
-        {
-            List<UstNode> members = new List<UstNode>();
-
-            foreach (var nodeMember in nodeMembers)
-            {
-                var member = HandleGenericVisit(nodeMember);
-                if (null != member)
-                {
-                    members.Add(member);
-                }
-            }
-
-            return members;
-        }
-        private UstNode HandleGenericVisit(SyntaxNode node)
-        {
-            try
-            {
-                return base.Visit(node);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, node.ToString());
-                return null;
-            }
-        }
-
         [return: MaybeNull]
         public override UstNode DefaultVisit(SyntaxNode node)
         {
@@ -456,6 +428,34 @@ namespace Codelyzer.Analysis.CSharp
             return null;
         }
 
+        public void Dispose()
+        {
+            context?.Dispose();
+            RootNode = null;
+        }
+
+        private void AddIdentifierNameNodesToList(SyntaxNode node, List<UstNode> nodeList)
+        {
+            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
+            foreach (var identifierName in identifierNames)
+            {
+                var identifier = VisitIdentifierName(identifierName);
+                if (identifier != null)
+                {
+                    nodeList.Add(identifier);
+                }
+            }
+        }
+
+        private void AddAttributeNodesToList(SyntaxNode node, List<UstNode> nodeList)
+        {
+            var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
+            foreach (var attribute in attributes)
+            {
+                nodeList.Add(VisitAttribute(attribute));
+            }
+        }
+
         private void HandleReferences(Reference reference)
         {
             if (MetaDataSettings.ReferenceData
@@ -474,12 +474,33 @@ namespace Codelyzer.Analysis.CSharp
             }
         }
 
-        public void Dispose()
+        private List<UstNode> HandleGenericMembers(in SyntaxList<SyntaxNode> nodeMembers)
         {
-            context?.Dispose();
-            RootNode = null;
+            List<UstNode> members = new List<UstNode>();
+
+            foreach (var nodeMember in nodeMembers)
+            {
+                var member = HandleGenericVisit(nodeMember);
+                if (null != member)
+                {
+                    members.Add(member);
+                }
+            }
+
+            return members;
         }
 
+        private UstNode HandleGenericVisit(SyntaxNode node)
+        {
+            try
+            {
+                return base.Visit(node);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, node.ToString());
+                return null;
+            }
+        }
     }
-
 }
