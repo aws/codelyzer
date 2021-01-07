@@ -92,16 +92,7 @@ namespace Codelyzer.Analysis.CSharp
 
             AddAttributeNodesToList(node, handler.UstNode.Children);
             AddIdentifierNameNodesToList(node, handler.UstNode.Children);
-
-            var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
-            foreach (var expression in objCreations)
-            {
-                var objectCreation = VisitObjectCreationExpression((ObjectCreationExpressionSyntax)expression);
-                if (objectCreation != null)
-                {
-                    handler.UstNode.Children.Add(objectCreation);
-                }
-            }
+            AddObjectCreationNodesToList(node, handler.UstNode.Children);
 
             return handler.UstNode;
         }
@@ -175,38 +166,9 @@ namespace Codelyzer.Analysis.CSharp
             BlockStatementHandler handler = new BlockStatementHandler(context, node);
             var result = handler.UstNode;
 
-            if (MetaDataSettings.MethodInvocations)
-            {
-                var expressions = node.DescendantNodes().OfType<InvocationExpressionSyntax>();
-                foreach (var expression in expressions)
-                {
-                    result.Children.Add(VisitInvocationExpression((InvocationExpressionSyntax)expression));
-                }
-            }
-
-            if (MetaDataSettings.ReturnStatements)
-            {
-                var returnStatements = node.DescendantNodes().OfType<ReturnStatementSyntax>();
-                foreach (var returnStatement in returnStatements)
-                {
-                    var r = VisitReturnStatement((ReturnStatementSyntax)returnStatement);
-                    if (r != null)
-                    {
-                        handler.UstNode.Children.Add(r);
-                    }
-                }
-            }
-
-            var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
-            foreach (var expression in objCreations)
-            {
-                var objectCreation = VisitObjectCreationExpression((ObjectCreationExpressionSyntax)expression);
-                if (objectCreation != null)
-                {
-                    result.Children.Add(objectCreation);
-                }
-            }
-
+            AddInvocationExpressionNodesToList(node, result.Children);
+            AddReturnStatementNodesToList(node, result.Children);
+            AddObjectCreationNodesToList(node, result.Children);
             AddLiteralExpressionNodesToList(node, result.Children);
             AddIdentifierNameNodesToList(node, result.Children);
 
@@ -219,25 +181,8 @@ namespace Codelyzer.Analysis.CSharp
             ArrowExpressionClauseHandler handler = new ArrowExpressionClauseHandler(context, node);
             var result = handler.UstNode;
 
-            if (MetaDataSettings.MethodInvocations)
-            {
-                var expressions = node.DescendantNodes().OfType<InvocationExpressionSyntax>();
-                foreach (var expression in expressions)
-                {
-                    result.Children.Add(VisitInvocationExpression((InvocationExpressionSyntax)expression));
-                }
-            }
-
-            var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
-            foreach (var expression in objCreations)
-            {
-                var objectCreation = VisitObjectCreationExpression((ObjectCreationExpressionSyntax)expression);
-                if (objectCreation != null)
-                {
-                    result.Children.Add(objectCreation);
-                }
-            }
-
+            AddInvocationExpressionNodesToList(node, result.Children);
+            AddObjectCreationNodesToList(node, result.Children);
             AddLiteralExpressionNodesToList(node, result.Children);
             AddIdentifierNameNodesToList(node, result.Children);
 
@@ -254,6 +199,7 @@ namespace Codelyzer.Analysis.CSharp
             if (!MetaDataSettings.LiteralExpressions) return null;
 
             LiteralExpressionHandler handler = new LiteralExpressionHandler(context, node);
+
             return handler.UstNode;
         }
 
@@ -263,6 +209,7 @@ namespace Codelyzer.Analysis.CSharp
 
             InvocationExpressionHandler handler = new InvocationExpressionHandler(context, node);
             HandleReferences(((InvocationExpression)handler.UstNode).Reference);
+
             return handler.UstNode;
         }
 
@@ -355,13 +302,53 @@ namespace Codelyzer.Analysis.CSharp
 
         private void AddLiteralExpressionNodesToList(SyntaxNode node, List<UstNode> nodeList)
         {
-
             if (MetaDataSettings.LiteralExpressions)
             {
                 var literalExpressions = node.DescendantNodes().OfType<LiteralExpressionSyntax>();
                 foreach (var expression in literalExpressions)
                 {
                     nodeList.Add(VisitLiteralExpression(expression));
+                }
+            }
+        }
+
+        private void AddInvocationExpressionNodesToList(SyntaxNode node, List<UstNode> nodeList)
+        {
+            if (MetaDataSettings.MethodInvocations)
+            {
+                var expressions = node.DescendantNodes().OfType<InvocationExpressionSyntax>();
+                foreach (var expression in expressions)
+                {
+                    nodeList.Add(VisitInvocationExpression(expression));
+                }
+            }
+        }
+
+        private void AddObjectCreationNodesToList(SyntaxNode node, List<UstNode> nodeList)
+        {
+            var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
+            foreach (var expression in objCreations)
+            {
+                var objectCreation = VisitObjectCreationExpression(expression);
+                if (objectCreation != null)
+                { 
+                    nodeList.Add(objectCreation);
+                }
+            }
+        }
+
+        private void AddReturnStatementNodesToList(SyntaxNode node, List<UstNode> nodeList)
+        {
+            if (MetaDataSettings.ReturnStatements)
+            {
+                var returnStatements = node.DescendantNodes().OfType<ReturnStatementSyntax>();
+                foreach (var returnStatement in returnStatements)
+                {
+                    var returnStatementNode = VisitReturnStatement(returnStatement);
+                    if (returnStatementNode != null)
+                    {
+                        nodeList.Add(returnStatementNode);
+                    }
                 }
             }
         }
