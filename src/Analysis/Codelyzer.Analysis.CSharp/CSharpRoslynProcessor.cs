@@ -99,23 +99,16 @@ namespace Codelyzer.Analysis.CSharp
 
         public override UstNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
         {
-            if (MetaDataSettings.InterfaceDeclarations)
-            {
-                InterfaceDeclarationHandler handler = new InterfaceDeclarationHandler(_context, node);
-                if (MetaDataSettings.InterfaceDeclarations)
-                {
-                    HandleReferences(((InterfaceDeclaration)handler.UstNode).Reference);
-                    handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
+            if (!MetaDataSettings.LiteralExpressions) return null;
 
-                    AddAttributeNodesToList(node, handler.UstNode.Children);
-                    AddIdentifierNameNodesToList(node, handler.UstNode.Children);
-                }
-                return handler.UstNode;
-            }
-            else
-            {
-                return null;
-            }
+            InterfaceDeclarationHandler handler = new InterfaceDeclarationHandler(_context, node);
+            HandleReferences(((InterfaceDeclaration)handler.UstNode).Reference);
+            handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
+
+            AddAttributeNodesToList(node, handler.UstNode.Children);
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
+        
+            return handler.UstNode;
         }
 
         public override UstNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
