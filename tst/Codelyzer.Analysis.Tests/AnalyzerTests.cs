@@ -169,9 +169,9 @@ namespace Codelyzer.Analysis.Tests
 
             Assert.AreEqual(7, blockStatements.Count);
             Assert.AreEqual(1, classDeclarations.Count);
-            Assert.AreEqual(51, expressionStatements.Count);
-            Assert.AreEqual(41, invocationExpressions.Count);
-            Assert.AreEqual(10, literalExpressions.Count);
+            Assert.AreEqual(74, expressionStatements.Count);
+            Assert.AreEqual(63, invocationExpressions.Count);
+            Assert.AreEqual(11, literalExpressions.Count);
             Assert.AreEqual(6, methodDeclarations.Count);
             Assert.AreEqual(16, returnStatements.Count);
             Assert.AreEqual(17, annotations.Count);

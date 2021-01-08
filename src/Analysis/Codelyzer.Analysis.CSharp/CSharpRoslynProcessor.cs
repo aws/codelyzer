@@ -99,7 +99,7 @@ namespace Codelyzer.Analysis.CSharp
 
         public override UstNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
         {
-            if (!MetaDataSettings.LiteralExpressions) return null;
+            if (!MetaDataSettings.InterfaceDeclarations) return null;
 
             InterfaceDeclarationHandler handler = new InterfaceDeclarationHandler(_context, node);
             HandleReferences(((InterfaceDeclaration)handler.UstNode).Reference);
@@ -134,6 +134,10 @@ namespace Codelyzer.Analysis.CSharp
         public override UstNode VisitReturnStatement(ReturnStatementSyntax node)
         {
             ReturnStatementHandler handler = new ReturnStatementHandler(_context, node);
+            AddInvocationExpressionNodesToList(node, handler.UstNode.Children);
+            AddObjectCreationNodesToList(node, handler.UstNode.Children);
+            AddLiteralExpressionNodesToList(node, handler.UstNode.Children);
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
 
             return handler.UstNode;
         }
