@@ -201,13 +201,11 @@ namespace Codelyzer.Analysis.CSharp
 
         public override UstNode VisitAttribute(AttributeSyntax node)
         {
-            if (MetaDataSettings.Annotations)
-            {
-                AttributeHandler handler = new AttributeHandler(_context, node);
-                HandleReferences(((Annotation)handler.UstNode).Reference);
-                return handler.UstNode;
-            }
-            return null;
+            if (!MetaDataSettings.Annotations) return null;
+
+            AttributeHandler handler = new AttributeHandler(_context, node);
+            HandleReferences(((Annotation)handler.UstNode).Reference);
+            return handler.UstNode;
         }
 
         public override UstNode VisitIdentifierName(IdentifierNameSyntax node)
@@ -240,22 +238,20 @@ namespace Codelyzer.Analysis.CSharp
 
         public override UstNode VisitStructDeclaration(StructDeclarationSyntax node)
         {
-            if (MetaDataSettings.StructDeclarations)
+            if (!MetaDataSettings.StructDeclarations) return null;
+            
+            StructDeclarationHandler handler = new StructDeclarationHandler(_context, node);
+            if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
             {
-                StructDeclarationHandler handler = new StructDeclarationHandler(_context, node);
-                if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
-                {
-                    HandleReferences(((StructDeclaration)handler.UstNode).Reference);
-                }
-
-                handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
-
-                AddAttributeNodesToList(node, handler.UstNode.Children);
-                AddIdentifierNameNodesToList(node, handler.UstNode.Children);
-
-                return handler.UstNode;
+                HandleReferences(((StructDeclaration)handler.UstNode).Reference);
             }
-            return null;
+
+            handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
+
+            AddAttributeNodesToList(node, handler.UstNode.Children);
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
+
+            return handler.UstNode;
         }
 
         public void Dispose()
