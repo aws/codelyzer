@@ -17,16 +17,16 @@ namespace Codelyzer.Analysis.CSharp
     /// </summary>
     public class CSharpRoslynProcessor : CSharpSyntaxVisitor<UstNode>, IDisposable
     {
-        private CodeContext context;
-        protected SemanticModel SemanticModel { get => context.SemanticModel; }
-        protected SyntaxTree SyntaxTree { get => context.SyntaxTree; }
-        protected ILogger Logger { get => context.Logger; }
-        protected MetaDataSettings MetaDataSettings { get => context.AnalyzerConfiguration.MetaDataSettings; }
+        private CodeContext _context;
+        protected SemanticModel SemanticModel { get => _context.SemanticModel; }
+        protected SyntaxTree SyntaxTree { get => _context.SyntaxTree; }
+        protected ILogger Logger { get => _context.Logger; }
+        protected MetaDataSettings MetaDataSettings { get => _context.AnalyzerConfiguration.MetaDataSettings; }
         protected RootUstNode RootNode { get; set; }
 
         public CSharpRoslynProcessor(CodeContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
         /// <summary>
@@ -56,7 +56,7 @@ namespace Codelyzer.Analysis.CSharp
                 }
             }
 
-            RootNode.SetPaths(context.SourceFilePath, SyntaxTree.FilePath);
+            RootNode.SetPaths(_context.SourceFilePath, SyntaxTree.FilePath);
             RootNode.Language = node.Language;
 
             RootNode.Children.AddRange(children);
@@ -73,20 +73,20 @@ namespace Codelyzer.Analysis.CSharp
         /* ---- Overrides ----------------------*/
         public override UstNode VisitUsingDirective(UsingDirectiveSyntax node)
         {
-            UsingDirectiveHandler handler = new UsingDirectiveHandler(context, node);
+            UsingDirectiveHandler handler = new UsingDirectiveHandler(_context, node);
             return handler.UstNode;
         }
 
         public override UstNode VisitNamespaceDeclaration(NamespaceDeclarationSyntax node)
         {
-            NamespaceDeclarationHandler handler = new NamespaceDeclarationHandler(context, node);
+            NamespaceDeclarationHandler handler = new NamespaceDeclarationHandler(_context, node);
             handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
             return handler.UstNode;
         }
 
         public override UstNode VisitClassDeclaration(ClassDeclarationSyntax node)
         {
-            ClassDeclarationHandler handler = new ClassDeclarationHandler(context, node);
+            ClassDeclarationHandler handler = new ClassDeclarationHandler(_context, node);
             HandleReferences(((ClassDeclaration)handler.UstNode).Reference );
             handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
 
@@ -101,7 +101,7 @@ namespace Codelyzer.Analysis.CSharp
         {
             if (MetaDataSettings.InterfaceDeclarations)
             {
-                InterfaceDeclarationHandler handler = new InterfaceDeclarationHandler(context, node);
+                InterfaceDeclarationHandler handler = new InterfaceDeclarationHandler(_context, node);
                 if (MetaDataSettings.InterfaceDeclarations)
                 {
                     HandleReferences(((InterfaceDeclaration)handler.UstNode).Reference);
@@ -120,7 +120,7 @@ namespace Codelyzer.Analysis.CSharp
 
         public override UstNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
         {
-            ConstructorDeclarationHandler handler = new ConstructorDeclarationHandler(context, node);
+            ConstructorDeclarationHandler handler = new ConstructorDeclarationHandler(_context, node);
             
             AddMethodBodyNodesToList(node, handler.UstNode.Children);
             AddIdentifierNameNodesToList(node, handler.UstNode.Children);
@@ -130,7 +130,7 @@ namespace Codelyzer.Analysis.CSharp
 
         public override UstNode VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
-            MethodDeclarationHandler handler = new MethodDeclarationHandler(context, node);
+            MethodDeclarationHandler handler = new MethodDeclarationHandler(_context, node);
 
             AddMethodBodyNodesToList(node, handler.UstNode.Children);
             AddIdentifierNameNodesToList(node, handler.UstNode.Children);
@@ -140,14 +140,14 @@ namespace Codelyzer.Analysis.CSharp
 
         public override UstNode VisitReturnStatement(ReturnStatementSyntax node)
         {
-            ReturnStatementHandler handler = new ReturnStatementHandler(context, node);
+            ReturnStatementHandler handler = new ReturnStatementHandler(_context, node);
 
             return handler.UstNode;
         }
 
         public override UstNode VisitBlock(BlockSyntax node)
         {
-            BlockStatementHandler handler = new BlockStatementHandler(context, node);
+            BlockStatementHandler handler = new BlockStatementHandler(_context, node);
             var result = handler.UstNode;
 
             AddInvocationExpressionNodesToList(node, result.Children);
@@ -162,7 +162,7 @@ namespace Codelyzer.Analysis.CSharp
 
         public override UstNode VisitArrowExpressionClause(ArrowExpressionClauseSyntax node)
         {
-            ArrowExpressionClauseHandler handler = new ArrowExpressionClauseHandler(context, node);
+            ArrowExpressionClauseHandler handler = new ArrowExpressionClauseHandler(_context, node);
             var result = handler.UstNode;
 
             AddInvocationExpressionNodesToList(node, result.Children);
@@ -182,7 +182,7 @@ namespace Codelyzer.Analysis.CSharp
         {
             if (!MetaDataSettings.LiteralExpressions) return null;
 
-            LiteralExpressionHandler handler = new LiteralExpressionHandler(context, node);
+            LiteralExpressionHandler handler = new LiteralExpressionHandler(_context, node);
 
             return handler.UstNode;
         }
@@ -191,7 +191,7 @@ namespace Codelyzer.Analysis.CSharp
         {
             if (!MetaDataSettings.MethodInvocations) return null;
 
-            InvocationExpressionHandler handler = new InvocationExpressionHandler(context, node);
+            InvocationExpressionHandler handler = new InvocationExpressionHandler(_context, node);
             HandleReferences(((InvocationExpression)handler.UstNode).Reference);
 
             return handler.UstNode;
@@ -199,7 +199,7 @@ namespace Codelyzer.Analysis.CSharp
 
         public override UstNode VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
         {
-            ObjectCreationExpressionHandler handler = new ObjectCreationExpressionHandler(context, node);
+            ObjectCreationExpressionHandler handler = new ObjectCreationExpressionHandler(_context, node);
 
             AddIdentifierNameNodesToList(node, handler.UstNode.Children);
 
@@ -210,7 +210,7 @@ namespace Codelyzer.Analysis.CSharp
         {
             if (MetaDataSettings.Annotations)
             {
-                AttributeHandler handler = new AttributeHandler(context, node);
+                AttributeHandler handler = new AttributeHandler(_context, node);
                 HandleReferences(((Annotation)handler.UstNode).Reference);
                 return handler.UstNode;
             }
@@ -221,7 +221,7 @@ namespace Codelyzer.Analysis.CSharp
         {
             if (MetaDataSettings.DeclarationNodes)
             {
-                IdentifierNameHandler handler = new IdentifierNameHandler(context, node);
+                IdentifierNameHandler handler = new IdentifierNameHandler(_context, node);
                 if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
                 {
                     HandleReferences(((DeclarationNode)handler.UstNode).Reference);
@@ -235,7 +235,7 @@ namespace Codelyzer.Analysis.CSharp
         {
             if (MetaDataSettings.EnumDeclarations)
             {
-                EnumDeclarationHandler handler = new EnumDeclarationHandler(context, node);
+                EnumDeclarationHandler handler = new EnumDeclarationHandler(_context, node);
                 if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
                 {
                     HandleReferences(((EnumDeclaration)handler.UstNode).Reference);
@@ -249,7 +249,7 @@ namespace Codelyzer.Analysis.CSharp
         {
             if (MetaDataSettings.StructDeclarations)
             {
-                StructDeclarationHandler handler = new StructDeclarationHandler(context, node);
+                StructDeclarationHandler handler = new StructDeclarationHandler(_context, node);
                 if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
                 {
                     HandleReferences(((StructDeclaration)handler.UstNode).Reference);
@@ -267,7 +267,7 @@ namespace Codelyzer.Analysis.CSharp
 
         public void Dispose()
         {
-            context?.Dispose();
+            _context?.Dispose();
             RootNode = null;
         }
 
