@@ -38,18 +38,18 @@ namespace Codelyzer.Analysis
     /* By default, it captures Namespaces, directives, classes and methods. */
     public class MetaDataSettings
     {
-        public bool MethodInvocations;
-        public bool LiteralExpressions;
-        public bool LambdaMethods;
-        public bool DeclarationNodes;
-        public bool Annotations;
-        public bool LocationData = true;
-        public bool ReferenceData;
-        public bool LoadBuildData = false;
-        public bool InterfaceDeclarations = false;
-        public bool EnumDeclarations = false;
-        public bool StructDeclarations = false;
-        public bool ReturnStatements = false;
-        public bool GenerateBinFiles = false;
+        public bool MethodInvocations { get; set; }
+        public bool LiteralExpressions { get; set; }
+        public bool LambdaMethods { get; set; }
+        public bool DeclarationNodes { get; set; }
+        public bool Annotations { get; set; }
+        public bool LocationData { get; set; } = true;
+        public bool ReferenceData { get; set; }
+        public bool LoadBuildData { get; set; } = false;
+        public bool InterfaceDeclarations { get; set; } = false;
+        public bool EnumDeclarations { get; set; } = false;
+        public bool StructDeclarations { get; set; } = false;
+        public bool ReturnStatements { get; set; } = false;
+        public bool GenerateBinFiles { get; set; } = false;
     }
 }
