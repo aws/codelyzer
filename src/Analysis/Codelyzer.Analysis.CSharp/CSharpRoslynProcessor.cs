@@ -121,16 +121,8 @@ namespace Codelyzer.Analysis.CSharp
         public override UstNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
         {
             ConstructorDeclarationHandler handler = new ConstructorDeclarationHandler(context, node);
-
-            if (node.Body != null)
-            {
-                handler.UstNode.Children.Add(VisitBlock(node.Body));
-            }
-            else if (node.ExpressionBody != null)
-            {
-                handler.UstNode.Children.Add(VisitArrowExpressionClause(node.ExpressionBody));
-            }
-
+            
+            AddMethodBodyNodesToList(node, handler.UstNode.Children);
             AddIdentifierNameNodesToList(node, handler.UstNode.Children);
 
             return handler.UstNode;
@@ -140,15 +132,7 @@ namespace Codelyzer.Analysis.CSharp
         {
             MethodDeclarationHandler handler = new MethodDeclarationHandler(context, node);
 
-            if (node.Body != null)
-            {
-                handler.UstNode.Children.Add(VisitBlock(node.Body));
-            }
-            else if (node.ExpressionBody != null)
-            {
-                handler.UstNode.Children.Add(VisitArrowExpressionClause(node.ExpressionBody));
-            }
-
+            AddMethodBodyNodesToList(node, handler.UstNode.Children);
             AddIdentifierNameNodesToList(node, handler.UstNode.Children);
 
             return handler.UstNode;
@@ -321,6 +305,18 @@ namespace Codelyzer.Analysis.CSharp
                 {
                     nodeList.Add(VisitInvocationExpression(expression));
                 }
+            }
+        }
+
+        private void AddMethodBodyNodesToList(BaseMethodDeclarationSyntax node, List<UstNode> nodeList)
+        {
+            if (node.Body != null)
+            {
+                nodeList.Add(VisitBlock(node.Body));
+            }
+            else if (node.ExpressionBody != null)
+            {
+                nodeList.Add(VisitArrowExpressionClause(node.ExpressionBody));
             }
         }
 
