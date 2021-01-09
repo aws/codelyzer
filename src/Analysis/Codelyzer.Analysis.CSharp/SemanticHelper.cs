@@ -12,6 +12,18 @@ namespace Codelyzer.Analysis.CSharp
     public static class SemanticHelper
     {
         /// <summary>
+        /// Gets SymbolInfo for a syntax node
+        /// </summary>
+        /// <param name="syntaxNode">The node to get symbol info for</param>
+        /// <param name="semanticModel">An instance of the semantic model</param>
+        /// <returns>Name of the type</returns>
+        public static SymbolInfo? GetSymbolInfo(SyntaxNode syntaxNode, 
+            SemanticModel semanticModel)
+        {
+            return semanticModel?.GetSymbolInfo(syntaxNode);
+        }
+
+        /// <summary>
         /// Gets name of type from TypeSyntax
         /// </summary>
         /// <param name="typeSyntax">The TypeSyntax parameter to get info about</param>

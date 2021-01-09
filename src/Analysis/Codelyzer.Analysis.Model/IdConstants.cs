@@ -24,6 +24,10 @@ namespace Codelyzer.Analysis.Model
 
         public const string ArrowExpressionIdName = "arrow-expression";
 
+        public const string ParenthesizedLambdaExpressionIdName = "parenthesized-lambda-expression";
+
+        public const string SimpleLambdaExpressionIdName = "simple-lambda-expression";
+
         public const string LiteralIdName = "literal";
         
         public const string InvocationIdName = "invocation";

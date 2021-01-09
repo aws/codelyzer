@@ -17,7 +17,8 @@ namespace Codelyzer.Analysis.CSharp
     /// </summary>
     public class CSharpRoslynProcessor : CSharpSyntaxVisitor<UstNode>, IDisposable
     {
-        private CodeContext _context;
+        private readonly Dictionary<string, Func<ExpressionSyntax, UstNode>> _expressionSyntaxToVisitMethodMap;
+        private readonly CodeContext _context;
         protected SemanticModel SemanticModel { get => _context.SemanticModel; }
         protected SyntaxTree SyntaxTree { get => _context.SyntaxTree; }
         protected ILogger Logger { get => _context.Logger; }
@@ -27,6 +28,7 @@ namespace Codelyzer.Analysis.CSharp
         public CSharpRoslynProcessor(CodeContext context)
         {
             _context = context;
+            _expressionSyntaxToVisitMethodMap = GetSyntaxNodeToVisitMethodMap();
         }
 
         /// <summary>
@@ -156,7 +158,6 @@ namespace Codelyzer.Analysis.CSharp
             return result;
         }
 
-
         public override UstNode VisitArrowExpressionClause(ArrowExpressionClauseSyntax node)
         {
             ArrowExpressionClauseHandler handler = new ArrowExpressionClauseHandler(_context, node);
@@ -166,6 +167,26 @@ namespace Codelyzer.Analysis.CSharp
             AddObjectCreationNodesToList(node, result.Children);
             AddLiteralExpressionNodesToList(node, result.Children);
             AddIdentifierNameNodesToList(node, result.Children);
+
+            return result;
+        }
+
+        public override UstNode VisitParenthesizedLambdaExpression(ParenthesizedLambdaExpressionSyntax node)
+        {
+            ParenthesizedLambdaExpressionHandler handler = new ParenthesizedLambdaExpressionHandler(_context, node);
+            var result = handler.UstNode;
+
+            AddLambdaExpressionBodyNodesToList(node, result.Children);
+
+            return result;
+        }
+
+        public override UstNode VisitSimpleLambdaExpression(SimpleLambdaExpressionSyntax node)
+        {
+            SimpleLambdaExpressionHandler handler = new SimpleLambdaExpressionHandler(_context, node);
+            var result = handler.UstNode;
+
+            AddLambdaExpressionBodyNodesToList(node, result.Children);
 
             return result;
         }
@@ -264,6 +285,15 @@ namespace Codelyzer.Analysis.CSharp
             RootNode = null;
         }
 
+        private UstNode VisitExpressionSyntax(ExpressionSyntax node)
+        {
+            if (node == null) return null;
+
+            return _expressionSyntaxToVisitMethodMap.TryGetValue(node.GetType().Name, out var visitMethod)
+                ? visitMethod.Invoke(node)
+                : null;
+        }
+
         private void AddIdentifierNameNodesToList(SyntaxNode node, List<UstNode> nodeList)
         {
             var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
@@ -310,6 +340,21 @@ namespace Codelyzer.Analysis.CSharp
             else if (node.ExpressionBody != null)
             {
                 nodeList.Add(VisitArrowExpressionClause(node.ExpressionBody));
+            }
+        }
+
+        private void AddLambdaExpressionBodyNodesToList(LambdaExpressionSyntax node, List<UstNode> nodeList)
+        {
+            if (!MetaDataSettings.LambdaMethods) return;
+
+            // Only one of node.Block and node.ExpressionBody can be null
+            if (node.Block != null)
+            {
+                nodeList.Add(VisitBlock(node.Block));
+            }
+            else
+            {
+                nodeList.Add(VisitExpressionSyntax(node.ExpressionBody));
             }
         }
 
@@ -396,6 +441,21 @@ namespace Codelyzer.Analysis.CSharp
                 Logger.LogError(ex, node.ToString());
                 return null;
             }
+        }
+
+        // TODO: Continue updating this map when support is added for a new ExpressionSyntax type
+        // See full list of ExpressionSyntax nodes here:
+        //  https://docs.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.csharp.syntax.expressionsyntax?view=roslyn-dotnet#derived:~:text=ExpressionSyntax-,Derived,Microsoft.CodeAnalysis.CSharp.Syntax.WithExpressionSyntax,-Properties
+        private Dictionary<string, Func<ExpressionSyntax, UstNode>> GetSyntaxNodeToVisitMethodMap()
+        {
+            return new Dictionary<string, Func<ExpressionSyntax, UstNode>>
+                {
+                    {nameof(IdentifierNameSyntax), node => VisitIdentifierName((IdentifierNameSyntax)node)},
+                    {nameof(InvocationExpressionSyntax), node => VisitInvocationExpression((InvocationExpressionSyntax)node)},
+                    {nameof(LiteralExpressionSyntax), node => VisitLiteralExpression((LiteralExpressionSyntax)node)},
+                    {nameof(ObjectCreationExpressionSyntax), node => VisitObjectCreationExpression((ObjectCreationExpressionSyntax)node)},
+                    {nameof(SimpleLambdaExpressionSyntax), node => VisitSimpleLambdaExpression((SimpleLambdaExpressionSyntax)node)},
+                };
         }
     }
 }
