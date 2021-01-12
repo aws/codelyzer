@@ -22,7 +22,7 @@ namespace Codelyzer.Analysis.Tests
         public void Setup()
         {
             Setup(GetType());
-            tempDir = GetTstPath(Path.Combine(new [] { "Projects", "Temp" }));
+            tempDir = GetTstPath(Path.Combine(Constants.TempProjectDirectories));
             DownloadTestProjects();
         }
 
