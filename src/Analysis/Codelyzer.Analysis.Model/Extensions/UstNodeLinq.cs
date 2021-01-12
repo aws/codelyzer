@@ -1,5 +1,3 @@
-using System.Xml.Serialization;
-
 namespace Codelyzer.Analysis.Model
 {
     public static class UstNodeLinq
@@ -90,9 +88,25 @@ namespace Codelyzer.Analysis.Model
         {
             return GetNodes<StructDeclaration>(node);
         }
+
         public static UstList<ArrowExpressionClause> AllArrowExpressionClauses(this UstNode node)
         {
             return GetNodes<ArrowExpressionClause>(node);
+        }
+
+        public static UstList<SimpleLambdaExpression> AllSimpleLambdaExpressions(this UstNode node)
+        {
+            return GetNodes<SimpleLambdaExpression>(node);
+        }
+
+        public static UstList<ParenthesizedLambdaExpression> AllParenthesizedLambdaExpressions(this UstNode node)
+        {
+            return GetNodes<ParenthesizedLambdaExpression>(node);
+        }
+
+        public static UstList<LambdaExpression> AllLambdaExpressions(this UstNode node)
+        {
+            return GetNodes<LambdaExpression>(node);
         }
 
         private static UstList<T> GetNodes<T>(UstNode node) where T : UstNode
