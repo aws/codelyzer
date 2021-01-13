@@ -1,5 +1,3 @@
-using System;
-using System.Text.RegularExpressions;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis;
@@ -28,16 +26,12 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             {
                 foreach (var argumentSyntax in syntaxNode.ArgumentList.Arguments)
                 {
-                    Parameter parameter = new Parameter();
-                    if (argumentSyntax.Expression != null)
-                        parameter.Name = argumentSyntax.Expression.ToString();
-                    
-                    parameter.SemanticType =
-                        SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel);
-                    if (Model.Parameters != null)
+                    var argument = new Argument
                     {
-                        Model.Parameters.Add(parameter);
-                    }
+                        Identifier = argumentSyntax.Expression.ToString(),
+                        SemanticType = SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel)
+                    };
+                    Model.Arguments.Add(argument);
                 }
             }
 
