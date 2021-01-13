@@ -45,6 +45,8 @@ namespace Codelyzer.Analysis.Model
             : base(typeName)
         {
             SemanticProperties = new List<string>();
+            Arguments = new List<Argument>();
+            Reference = new Reference();
         }
         
         public InvocationExpression()
