@@ -43,5 +43,7 @@ namespace Codelyzer.Analysis.Model
         public const string EnumIdName = "enum";
 
         public const string StructIdName = "struct";
+
+        public const string ArgumentIdName = "argument";
     }
 }

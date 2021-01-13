@@ -109,6 +109,11 @@ namespace Codelyzer.Analysis.Model
             return GetNodes<LambdaExpression>(node);
         }
 
+        public static UstList<Argument> AllArguments(this UstNode node)
+        {
+            return GetNodes<Argument>(node);
+        }
+
         private static UstList<T> GetNodes<T>(UstNode node) where T : UstNode
         {
             UstList<T> nodes = new UstList<T>();

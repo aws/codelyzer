@@ -1,7 +1,4 @@
 using Codelyzer.Analysis.Common;
-using Newtonsoft.Json.Serialization;
-using System;
-using System.Collections.Generic;
 
 namespace Codelyzer.Analysis
 {
@@ -50,6 +47,7 @@ namespace Codelyzer.Analysis
         public bool EnumDeclarations { get; set; } = false;
         public bool StructDeclarations { get; set; } = false;
         public bool ReturnStatements { get; set; } = false;
+        public bool InvocationArguments { get; set; } = false;
         public bool GenerateBinFiles { get; set; } = false;
     }
 }

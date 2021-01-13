@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
@@ -24,8 +23,8 @@ namespace Codelyzer.Analysis.Model
         [JsonProperty("semantic-method-signature", Order = 15)]
         public string SemanticMethodSignature { get; set; }
         
-        [JsonProperty("parameters", Order = 16)] 
-        public List<Parameter> Parameters { get; set; }
+        [JsonProperty("arguments", Order = 16)] 
+        public List<Argument> Arguments { get; set; }
         
         [JsonProperty("semantic-return-type", Order = 17)]
         public string SemanticReturnType { get; set; }
@@ -46,13 +45,15 @@ namespace Codelyzer.Analysis.Model
             : base(typeName)
         {
             SemanticProperties = new List<string>();
+            Arguments = new List<Argument>();
+            Reference = new Reference();
         }
         
         public InvocationExpression()
             : base(IdConstants.InvocationIdName)
         {
             SemanticProperties = new List<string>();
-            Parameters = new List<Parameter>();
+            Arguments = new List<Argument>();
             Reference = new Reference();
         }
     }
