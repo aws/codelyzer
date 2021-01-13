@@ -28,8 +28,10 @@ namespace Codelyzer.Analysis.Build
         internal IAnalyzerResult AnalyzerResult;
         internal IProjectAnalyzer ProjectAnalyzer;
 
-        private async Task SetCompilation()
+        private async Task<bool> SetCompilation()
         {
+            bool result = true;
+
             Compilation = await Project.GetCompilationAsync();
             var errors = Compilation.GetDiagnostics()
                 .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -61,12 +63,14 @@ namespace Codelyzer.Analysis.Build
                     
                     Errors.Add(err);
                     FallbackCompilation();
+                    result = false;
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
                 }
             }
+            return result;
         }
 
         private void FallbackCompilation()
@@ -136,7 +140,7 @@ namespace Codelyzer.Analysis.Build
         }
         public async Task<ProjectBuildResult> Build()
         {
-            await SetCompilation();
+            var isSyntaxAnalysis = await SetCompilation();
 
             ProjectBuildResult projectBuildResult = new ProjectBuildResult
             {
@@ -144,7 +148,8 @@ namespace Codelyzer.Analysis.Build
                 ProjectPath = Project.FilePath,
                 ProjectRootPath = Path.GetDirectoryName(Project.FilePath),
                 Project = Project,
-                Compilation = Compilation
+                Compilation = Compilation,
+                IsSyntaxAnalysis = isSyntaxAnalysis
             };
 
             GetTargetFrameworks(projectBuildResult, AnalyzerResult);

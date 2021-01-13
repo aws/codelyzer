@@ -2,6 +2,7 @@
 using Buildalyzer.Environment;
 using Buildalyzer.Workspaces;
 using Codelyzer.Analysis.Common;
+using Microsoft.Build.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using System;
@@ -66,7 +67,7 @@ namespace Codelyzer.Analysis.Build
                 Logger.LogInformation("Loading the Solution Done: " + WorkspacePath);
 
                 // AnalyzerManager builds the projects based on their dependencies
-                // After this, code does not depend on Buildalyzer
+                // After this, code does not depend on Buildalyzer                
                 BuildSolution(analyzerManager);
             }
             else
