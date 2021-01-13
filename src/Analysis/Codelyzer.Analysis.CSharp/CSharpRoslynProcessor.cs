@@ -17,6 +17,7 @@ namespace Codelyzer.Analysis.CSharp
     /// </summary>
     public class CSharpRoslynProcessor : CSharpSyntaxVisitor<UstNode>, IDisposable
     {
+        private readonly Dictionary<string, Func<ExpressionSyntax, UstNode>> _expressionSyntaxToVisitMethodMap;
         private CodeContext _context;
         protected SemanticModel SemanticModel { get => _context.SemanticModel; }
         protected SyntaxTree SyntaxTree { get => _context.SyntaxTree; }
@@ -27,6 +28,7 @@ namespace Codelyzer.Analysis.CSharp
         public CSharpRoslynProcessor(CodeContext context)
         {
             _context = context;
+            _expressionSyntaxToVisitMethodMap = GetSyntaxNodeToVisitMethodMap();
         }
 
         /// <summary>
@@ -175,6 +177,15 @@ namespace Codelyzer.Analysis.CSharp
             return base.VisitExpressionStatement(node);
         }
 
+        private UstNode VisitExpressionSyntax(ExpressionSyntax node)
+        {
+            if (node == null) return null;
+
+            return _expressionSyntaxToVisitMethodMap.TryGetValue(node.GetType().Name, out var visitMethod)
+                ? visitMethod.Invoke(node)
+                : null;
+        }
+
         public override UstNode VisitLiteralExpression(LiteralExpressionSyntax node)
         {
             if (!MetaDataSettings.LiteralExpressions) return null;
@@ -190,6 +201,18 @@ namespace Codelyzer.Analysis.CSharp
 
             InvocationExpressionHandler handler = new InvocationExpressionHandler(_context, node);
             HandleReferences(((InvocationExpression)handler.UstNode).Reference);
+
+            AddArgumentNodesToList(node, handler.UstNode.Children);
+
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitArgument(ArgumentSyntax node)
+        {
+            if (!MetaDataSettings.InvocationArguments) return null;
+
+            ArgumentHandler handler = new ArgumentHandler(_context, node);
+            handler.UstNode.Children.Add(VisitExpressionSyntax(node.Expression));
 
             return handler.UstNode;
         }
@@ -301,6 +324,17 @@ namespace Codelyzer.Analysis.CSharp
             }
         }
 
+        private void AddArgumentNodesToList(InvocationExpressionSyntax node, List<UstNode> nodeList)
+        {
+            if (MetaDataSettings.InvocationArguments)
+            {
+                foreach (var argument in node.ArgumentList.Arguments)
+                {
+                    nodeList.Add(VisitArgument(argument));
+                }
+            }
+        }
+
         private void AddMethodBodyNodesToList(BaseMethodDeclarationSyntax node, List<UstNode> nodeList)
         {
             if (node.Body != null)
@@ -396,6 +430,28 @@ namespace Codelyzer.Analysis.CSharp
                 Logger.LogError(ex, node.ToString());
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Some SyntaxNodes have properties of type ExpressionSyntax that we want to analyze. In those cases,
+        /// we can use this function to map implementation types of ExpressionSyntax to the correct Visit*()
+        /// function.
+        ///
+        /// Notes:
+        ///     - See full list of ExpressionSyntax nodes <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.csharp.syntax.expressionsyntax?view=roslyn-dotnet#derived:~:text=ExpressionSyntax-,Derived,Microsoft.CodeAnalysis.CSharp.Syntax.WithExpressionSyntax,-Properties">here</see>
+        ///     - TODO: Continue updating this map when support is added for a new ExpressionSyntax type
+        /// </summary>
+        /// <returns>Dictionary that maps an implementation type to the corresponding Visit*() method</returns>
+        private Dictionary<string, Func<ExpressionSyntax, UstNode>> GetSyntaxNodeToVisitMethodMap()
+        {
+            return new Dictionary<string, Func<ExpressionSyntax, UstNode>>
+            {
+                {nameof(IdentifierNameSyntax), node => VisitIdentifierName((IdentifierNameSyntax)node)},
+                {nameof(InvocationExpressionSyntax), node => VisitInvocationExpression((InvocationExpressionSyntax)node)},
+                {nameof(LiteralExpressionSyntax), node => VisitLiteralExpression((LiteralExpressionSyntax)node)},
+                {nameof(ObjectCreationExpressionSyntax), node => VisitObjectCreationExpression((ObjectCreationExpressionSyntax)node)},
+                {nameof(SimpleLambdaExpressionSyntax), node => VisitSimpleLambdaExpression((SimpleLambdaExpressionSyntax)node)},
+            };
         }
     }
 }
