@@ -26,6 +26,17 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             {
                 foreach (var argumentSyntax in syntaxNode.ArgumentList.Arguments)
                 {
+                    Parameter parameter = new Parameter();
+                    if (argumentSyntax.Expression != null)
+                        parameter.Name = argumentSyntax.Expression.ToString();
+
+                    parameter.SemanticType =
+                        SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel);
+                    if (Model.Parameters != null)
+                    {
+                        Model.Parameters.Add(parameter);
+                    }
+
                     var argument = new Argument
                     {
                         Identifier = argumentSyntax.Expression.ToString(),

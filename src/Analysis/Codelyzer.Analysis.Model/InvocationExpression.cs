@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
@@ -22,20 +23,24 @@ namespace Codelyzer.Analysis.Model
         
         [JsonProperty("semantic-method-signature", Order = 15)]
         public string SemanticMethodSignature { get; set; }
-        
-        [JsonProperty("arguments", Order = 16)] 
+
+        [Obsolete(Constants.ObsoleteParameterMessage, Constants.DoNotThrowErrorOnUse)]
+        [JsonProperty("parameters", Order = 30)]
+        public List<Parameter> Parameters { get; set; }
+
+        [JsonProperty("arguments", Order = 31)] 
         public List<Argument> Arguments { get; set; }
         
-        [JsonProperty("semantic-return-type", Order = 17)]
+        [JsonProperty("semantic-return-type", Order = 35)]
         public string SemanticReturnType { get; set; }
 
-        [JsonProperty("semantic-original-def", Order = 18)]
+        [JsonProperty("semantic-original-def", Order = 40)]
         public string SemanticOriginalDefinition { get; set; }
         
-        [JsonProperty("semantic-properties", Order = 19)]
+        [JsonProperty("semantic-properties", Order = 45)]
         public List<string> SemanticProperties { get; set; }
 
-        [JsonProperty("semantic-is-extension", Order = 20)]
+        [JsonProperty("semantic-is-extension", Order = 50)]
         public bool IsExtension { get; set; }
 
         [JsonProperty("references", Order = 99)]
@@ -45,6 +50,7 @@ namespace Codelyzer.Analysis.Model
             : base(typeName)
         {
             SemanticProperties = new List<string>();
+            Parameters = new List<Parameter>();
             Arguments = new List<Argument>();
             Reference = new Reference();
         }
@@ -53,6 +59,7 @@ namespace Codelyzer.Analysis.Model
             : base(IdConstants.InvocationIdName)
         {
             SemanticProperties = new List<string>();
+            Parameters = new List<Parameter>();
             Arguments = new List<Argument>();
             Reference = new Reference();
         }

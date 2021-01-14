@@ -28,7 +28,6 @@ namespace Codelyzer.Analysis.CSharp
         public CSharpRoslynProcessor(CodeContext context)
         {
             _context = context;
-            _expressionSyntaxToVisitMethodMap = GetSyntaxNodeToVisitMethodMap();
         }
 
         /// <summary>
@@ -196,13 +195,11 @@ namespace Codelyzer.Analysis.CSharp
             return base.VisitExpressionStatement(node);
         }
 
-        private UstNode VisitExpressionSyntax(ExpressionSyntax node)
+        public override UstNode VisitExpressionSyntax(ExpressionSyntax node)
         {
             if (node == null) return null;
 
-            return _expressionSyntaxToVisitMethodMap.TryGetValue(node.GetType().Name, out var visitMethod)
-                ? visitMethod.Invoke(node)
-                : null;
+            return HandleGenericVisit(node);
         }
 
         public override UstNode VisitLiteralExpression(LiteralExpressionSyntax node)
@@ -304,15 +301,6 @@ namespace Codelyzer.Analysis.CSharp
         {
             _context?.Dispose();
             RootNode = null;
-        }
-
-        private UstNode VisitExpressionSyntax(ExpressionSyntax node)
-        {
-            if (node == null) return null;
-
-            return _expressionSyntaxToVisitMethodMap.TryGetValue(node.GetType().Name, out var visitMethod)
-                ? visitMethod.Invoke(node)
-                : null;
         }
 
         private void AddIdentifierNameNodesToList(SyntaxNode node, List<UstNode> nodeList)
@@ -473,28 +461,6 @@ namespace Codelyzer.Analysis.CSharp
                 Logger.LogError(ex, node.ToString());
                 return null;
             }
-        }
-
-        /// <summary>
-        /// Some SyntaxNodes have properties of type ExpressionSyntax that we want to analyze. In those cases,
-        /// we can use this function to map implementation types of ExpressionSyntax to the correct Visit*()
-        /// function.
-        ///
-        /// Notes:
-        ///     - See full list of ExpressionSyntax nodes <see href="https://docs.microsoft.com/en-us/dotnet/api/microsoft.codeanalysis.csharp.syntax.expressionsyntax?view=roslyn-dotnet#derived:~:text=ExpressionSyntax-,Derived,Microsoft.CodeAnalysis.CSharp.Syntax.WithExpressionSyntax,-Properties">here</see>
-        ///     - TODO: Continue updating this map when support is added for a new ExpressionSyntax type
-        /// </summary>
-        /// <returns>Dictionary that maps an implementation type to the corresponding Visit*() method</returns>
-        private Dictionary<string, Func<ExpressionSyntax, UstNode>> GetSyntaxNodeToVisitMethodMap()
-        {
-            return new Dictionary<string, Func<ExpressionSyntax, UstNode>>
-            {
-                {nameof(IdentifierNameSyntax), node => VisitIdentifierName((IdentifierNameSyntax)node)},
-                {nameof(InvocationExpressionSyntax), node => VisitInvocationExpression((InvocationExpressionSyntax)node)},
-                {nameof(LiteralExpressionSyntax), node => VisitLiteralExpression((LiteralExpressionSyntax)node)},
-                {nameof(ObjectCreationExpressionSyntax), node => VisitObjectCreationExpression((ObjectCreationExpressionSyntax)node)},
-                {nameof(SimpleLambdaExpressionSyntax), node => VisitSimpleLambdaExpression((SimpleLambdaExpressionSyntax)node)},
-            };
         }
     }
 }
