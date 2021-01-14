@@ -175,6 +175,13 @@ namespace Codelyzer.Analysis.CSharp
             return base.VisitExpressionStatement(node);
         }
 
+        private UstNode VisitExpressionSyntax(ExpressionSyntax node)
+        {
+            if (node == null) return null;
+
+            return HandleGenericVisit(node);
+        }
+
         public override UstNode VisitLiteralExpression(LiteralExpressionSyntax node)
         {
             if (!MetaDataSettings.LiteralExpressions) return null;
@@ -190,6 +197,18 @@ namespace Codelyzer.Analysis.CSharp
 
             InvocationExpressionHandler handler = new InvocationExpressionHandler(_context, node);
             HandleReferences(((InvocationExpression)handler.UstNode).Reference);
+
+            AddArgumentNodesToList(node, handler.UstNode.Children);
+
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitArgument(ArgumentSyntax node)
+        {
+            if (!MetaDataSettings.InvocationArguments) return null;
+
+            ArgumentHandler handler = new ArgumentHandler(_context, node);
+            handler.UstNode.Children.Add(VisitExpressionSyntax(node.Expression));
 
             return handler.UstNode;
         }
@@ -297,6 +316,17 @@ namespace Codelyzer.Analysis.CSharp
                 foreach (var expression in expressions)
                 {
                     nodeList.Add(VisitInvocationExpression(expression));
+                }
+            }
+        }
+
+        private void AddArgumentNodesToList(InvocationExpressionSyntax node, List<UstNode> nodeList)
+        {
+            if (MetaDataSettings.InvocationArguments)
+            {
+                foreach (var argument in node.ArgumentList.Arguments)
+                {
+                    nodeList.Add(VisitArgument(argument));
                 }
             }
         }

@@ -22,7 +22,7 @@ namespace Codelyzer.Analysis.Tests
         public void Setup()
         {
             Setup(GetType());
-            tempDir = GetTstPath(Path.Combine(new [] { "Projects", "Temp" }));
+            tempDir = GetTstPath(Path.Combine(Constants.TempProjectDirectories));
             DownloadTestProjects();
         }
 
@@ -80,7 +80,7 @@ namespace Codelyzer.Analysis.Tests
         [Test]
         public async Task TestAnalyzer()
         {
-            string projectPath = string.Concat(GetTstPath(Path.Combine(new [] { "Projects", "CodelyzerDummy", "CodelyzerDummy" })), ".csproj");
+            string projectPath = string.Concat(GetTstPath(Path.Combine(new[] { "Projects", "CodelyzerDummy", "CodelyzerDummy" })), ".csproj");
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
             {
@@ -134,7 +134,8 @@ namespace Codelyzer.Analysis.Tests
                     ReferenceData = true,
                     InterfaceDeclarations = true,
                     GenerateBinFiles = true,
-                    ReturnStatements = true
+                    ReturnStatements = true,
+                    InvocationArguments = true
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
@@ -165,13 +166,12 @@ namespace Codelyzer.Analysis.Tests
             var objectCreationExpressions = houseController.AllObjectCreationExpressions();
             var usingDirectives = houseController.AllUsingDirectives();
             var interfaces = ihouseRepository.AllInterfaces();
-
-
+            var arguments = houseController.AllArguments();
             Assert.AreEqual(7, blockStatements.Count);
             Assert.AreEqual(1, classDeclarations.Count);
-            Assert.AreEqual(74, expressionStatements.Count);
-            Assert.AreEqual(63, invocationExpressions.Count);
-            Assert.AreEqual(11, literalExpressions.Count);
+            Assert.AreEqual(89, expressionStatements.Count);
+            Assert.AreEqual(75, invocationExpressions.Count);
+            Assert.AreEqual(14, literalExpressions.Count);
             Assert.AreEqual(6, methodDeclarations.Count);
             Assert.AreEqual(16, returnStatements.Count);
             Assert.AreEqual(17, annotations.Count);
@@ -179,6 +179,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(0, objectCreationExpressions.Count);
             Assert.AreEqual(10, usingDirectives.Count);
             Assert.AreEqual(1, interfaces.Count);
+            Assert.AreEqual(63, arguments.Count);
 
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(dllFiles.Count(), 16);
