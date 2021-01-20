@@ -17,7 +17,6 @@ namespace Codelyzer.Analysis.CSharp
     /// </summary>
     public class CSharpRoslynProcessor : CSharpSyntaxVisitor<UstNode>, IDisposable
     {
-        private readonly Dictionary<string, Func<ExpressionSyntax, UstNode>> _expressionSyntaxToVisitMethodMap;
         private readonly CodeContext _context;
         protected SemanticModel SemanticModel { get => _context.SemanticModel; }
         protected SyntaxTree SyntaxTree { get => _context.SyntaxTree; }
@@ -195,13 +194,6 @@ namespace Codelyzer.Analysis.CSharp
             return base.VisitExpressionStatement(node);
         }
 
-        public override UstNode VisitExpressionSyntax(ExpressionSyntax node)
-        {
-            if (node == null) return null;
-
-            return HandleGenericVisit(node);
-        }
-
         public override UstNode VisitLiteralExpression(LiteralExpressionSyntax node)
         {
             if (!MetaDataSettings.LiteralExpressions) return null;
@@ -301,6 +293,13 @@ namespace Codelyzer.Analysis.CSharp
         {
             _context?.Dispose();
             RootNode = null;
+        }
+
+        private UstNode VisitExpressionSyntax(ExpressionSyntax node)
+        {
+            if (node == null) return null;
+
+            return HandleGenericVisit(node);
         }
 
         private void AddIdentifierNameNodesToList(SyntaxNode node, List<UstNode> nodeList)
