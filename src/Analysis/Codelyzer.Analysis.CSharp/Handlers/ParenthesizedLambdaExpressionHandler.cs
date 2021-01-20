@@ -13,7 +13,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
         public ParenthesizedLambdaExpressionHandler(CodeContext context, ParenthesizedLambdaExpressionSyntax syntaxNode)
             : base(context, syntaxNode, new ParenthesizedLambdaExpression())
         {
-            Model.Identifier = "parenthesized-lambda-expression";
+            Model.Identifier = syntaxNode.ToString();
             SetMetaData(syntaxNode);
         }
 
@@ -27,14 +27,17 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 SemanticHelper.AddMethodProperties(methodSymbol, Model.SemanticProperties);
             }
 
-            Model.Parameters = syntaxNode.ParameterList.Parameters.Select(p => 
-                new Parameter 
+            Model.Parameters = syntaxNode.ParameterList.Parameters.Select(parameterSyntax => 
+            {
+                var parameterSymbol = (IParameterSymbol)SemanticModel.GetDeclaredSymbol(parameterSyntax);
+
+                return new Parameter 
                 {
-                    Name = p.Identifier.Text,
-                    Type = p.Type?.ToString(),
-                    SemanticType = SemanticHelper.GetSemanticType(p.Type, SemanticModel)
-                }
-            ).ToList();
+                    Name = parameterSyntax.Identifier.Text,
+                    Type = parameterSymbol.Type.Name,
+                    SemanticType = parameterSymbol.Type.ToString()
+                };
+            }).ToList();
         }
     }
 }

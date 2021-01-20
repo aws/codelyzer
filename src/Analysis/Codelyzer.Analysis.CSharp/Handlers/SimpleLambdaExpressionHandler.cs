@@ -12,7 +12,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
         public SimpleLambdaExpressionHandler(CodeContext context, SimpleLambdaExpressionSyntax syntaxNode)
             : base(context, syntaxNode, new SimpleLambdaExpression())
         {
-            Model.Identifier = "simple-lambda-expression";
+            Model.Identifier = syntaxNode.ToString();
             SetMetaData(syntaxNode);
         }
 
@@ -25,13 +25,14 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 Model.ReturnType = methodSymbol.ReturnType.Name;
                 SemanticHelper.AddMethodProperties(methodSymbol, Model.SemanticProperties);
             }
-            
+
             var nodeParameter = syntaxNode.Parameter;
+            var nodeParameterSymbol = (IParameterSymbol)SemanticModel.GetDeclaredSymbol(nodeParameter);
             Model.Parameter = new Parameter
             {
                 Name = nodeParameter.Identifier.Text,
-                Type = nodeParameter.Type?.ToString(),
-                SemanticType = SemanticHelper.GetSemanticType(nodeParameter.Type, SemanticModel)
+                Type = nodeParameterSymbol.Type.Name,
+                SemanticType = nodeParameterSymbol.Type.ToString()
             };
         }
     }

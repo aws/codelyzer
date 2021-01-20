@@ -13,6 +13,7 @@ namespace Codelyzer.Analysis.Model
         public LambdaExpression(string idName)
             : base(idName)
         {
+            SemanticProperties = new UstList<string>();
         }
     }
 }
