@@ -309,7 +309,8 @@ namespace Codelyzer.Analysis.Tests
                     EnumDeclarations = true,
                     StructDeclarations = true,
                     InterfaceDeclarations = true,
-                    LambdaMethods = true
+                    LambdaMethods = true,
+                    InvocationArguments = true
                 }
             };
 
@@ -328,46 +329,44 @@ namespace Codelyzer.Analysis.Tests
             var file = @"Admin\Controllers\VendorController.cs";
             var webProject = results.First(r => r.ProjectResult.ProjectName == project);
             var simpleLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllSimpleLambdaExpressions().Count;
+                .AllSimpleLambdaExpressions();
             var parenthesizedLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllParenthesizedLambdaExpressions().Count;
+                .AllParenthesizedLambdaExpressions();
             var allLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllLambdaExpressions().Count;
-            //Assert.AreEqual(9, simpleLambdas);
-            //Assert.AreEqual(0, parenthesizedLambdas);
-            //Assert.AreEqual(9, allLambdas);
+                .AllLambdaExpressions();
+            Assert.AreEqual(9, simpleLambdas.Count);
+            Assert.AreEqual(0, parenthesizedLambdas.Count);
+            Assert.AreEqual(9, allLambdas.Count);
 
             project = "Nop.Plugin.Tax.Avalara";
             file = "AvalaraTaxController.cs";
             webProject = results.First(r => r.ProjectResult.ProjectName == project);
             simpleLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllSimpleLambdaExpressions().Count;
+                .AllSimpleLambdaExpressions();
             parenthesizedLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllParenthesizedLambdaExpressions().Count;
+                .AllParenthesizedLambdaExpressions();
             allLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllLambdaExpressions().Count;
-            //Assert.AreEqual(5, simpleLambdas);
-            //Assert.AreEqual(3, parenthesizedLambdas);
-            //Assert.AreEqual(8, allLambdas);
+                .AllLambdaExpressions();
+            Assert.AreEqual(9, simpleLambdas.Count);
+            Assert.AreEqual(3, parenthesizedLambdas.Count);
+            Assert.AreEqual(12, allLambdas.Count);
 
             project = "Nop.Services";
             file = "CustomerService.cs";
             webProject = results.First(r => r.ProjectResult.ProjectName == project);
             simpleLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllSimpleLambdaExpressions().Count;
+                .AllSimpleLambdaExpressions();
             parenthesizedLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllParenthesizedLambdaExpressions().Count;
+                .AllParenthesizedLambdaExpressions();
             allLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllLambdaExpressions().Count;
-            var parenLambdasNoParameters = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllParenthesizedLambdaExpressions().Count(l => l.Parameters.Count == 0);
-            var parenLambdas2Parameters = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllParenthesizedLambdaExpressions().Count(l => l.Parameters.Count == 2);
-            //Assert.AreEqual(88, simpleLambdas);
-            //Assert.AreEqual(17, parenthesizedLambdas);
-            //Assert.AreEqual(8, parenLambdasNoParameters);
-            //Assert.AreEqual(9, parenLambdas2Parameters);
-            //Assert.AreEqual(105, allLambdas);
+                .AllLambdaExpressions();
+            var parenLambdasNoParameters = parenthesizedLambdas.Where(l => l.Parameters.Count == 0);
+            var parenLambdas2Parameters = parenthesizedLambdas.Where(l => l.Parameters.Count == 2);
+            Assert.AreEqual(138, simpleLambdas.Count);
+            Assert.AreEqual(26, parenthesizedLambdas.Count);
+            Assert.AreEqual(8, parenLambdasNoParameters.Count());
+            Assert.AreEqual(18, parenLambdas2Parameters.Count());
+            Assert.AreEqual(164, allLambdas.Count);
 
             results.ForEach(r => r.Dispose());
         }
