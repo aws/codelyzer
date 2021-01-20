@@ -16,7 +16,7 @@ namespace Codelyzer.Analysis.CSharp
         /// </summary>
         /// <param name="syntaxNode">The node to get symbol info for</param>
         /// <param name="semanticModel">An instance of the semantic model</param>
-        /// <returns>Name of the type</returns>
+        /// <returns>SymbolInfo of a node</returns>
         public static SymbolInfo? GetSymbolInfo(SyntaxNode syntaxNode, 
             SemanticModel semanticModel)
         {
