@@ -133,12 +133,14 @@ namespace Codelyzer.Analysis.Tests
                     LocationData = false,
                     ReferenceData = true,
                     InterfaceDeclarations = true,
-                    GenerateBinFiles = true
+                    GenerateBinFiles = true,
+                    LoadBuildData = true
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
             AnalyzerResult result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
             Assert.True(result != null);
+            Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
             //Project has 16 nuget references and 19 framework/dll references:
             Assert.AreEqual(result.ProjectResult.ExternalReferences.NugetReferences.Count, 16);
@@ -200,12 +202,14 @@ namespace Codelyzer.Analysis.Tests
                     Annotations = true,
                     DeclarationNodes = true,
                     LocationData = false,
-                    ReferenceData = true
+                    ReferenceData = true,
+                    LoadBuildData = true
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
             using var result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
             Assert.True(result != null);
+            Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
             Assert.AreEqual(result.ProjectResult.SourceFiles.Count, 28);
 
@@ -259,6 +263,7 @@ namespace Codelyzer.Analysis.Tests
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
             AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
+            Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
             Assert.True(result != null);
 

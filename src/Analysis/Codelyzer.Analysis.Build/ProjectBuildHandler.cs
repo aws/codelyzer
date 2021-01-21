@@ -30,7 +30,7 @@ namespace Codelyzer.Analysis.Build
 
         private async Task<bool> SetCompilation()
         {
-            bool result = true;
+            bool result = false;
 
             Compilation = await Project.GetCompilationAsync();
             var errors = Compilation.GetDiagnostics()
@@ -63,7 +63,7 @@ namespace Codelyzer.Analysis.Build
                     
                     Errors.Add(err);
                     FallbackCompilation();
-                    result = false;
+                    result = true;
                 }
                 catch (Exception e)
                 {
