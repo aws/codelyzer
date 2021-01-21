@@ -49,6 +49,9 @@ bld/
 *.VisualState.xml
 TestResult.xml
 
+# Test project directory
+**/Projects/Temp/
+
 # Build Results of an ATL Project
 [Dd]ebugPS/
 [Rr]eleasePS/

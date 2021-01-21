@@ -17,16 +17,16 @@ namespace Codelyzer.Analysis.CSharp
     /// </summary>
     public class CSharpRoslynProcessor : CSharpSyntaxVisitor<UstNode>, IDisposable
     {
-        private CodeContext context;
-        protected SemanticModel SemanticModel { get => context.SemanticModel; }
-        protected SyntaxTree SyntaxTree { get => context.SyntaxTree; }
-        protected ILogger Logger { get => context.Logger; }
-        protected MetaDataSettings MetaDataSettings { get => context.AnalyzerConfiguration.MetaDataSettings; }
+        private CodeContext _context;
+        protected SemanticModel SemanticModel { get => _context.SemanticModel; }
+        protected SyntaxTree SyntaxTree { get => _context.SyntaxTree; }
+        protected ILogger Logger { get => _context.Logger; }
+        protected MetaDataSettings MetaDataSettings { get => _context.AnalyzerConfiguration.MetaDataSettings; }
         protected RootUstNode RootNode { get; set; }
 
         public CSharpRoslynProcessor(CodeContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
         /// <summary>
@@ -56,40 +56,12 @@ namespace Codelyzer.Analysis.CSharp
                 }
             }
 
-            RootNode.SetPaths(context.SourceFilePath, SyntaxTree.FilePath);
+            RootNode.SetPaths(_context.SourceFilePath, SyntaxTree.FilePath);
             RootNode.Language = node.Language;
 
             RootNode.Children.AddRange(children);
             
             return RootNode;
-        }
-
-        private List<UstNode> HandleGenericMembers(in SyntaxList<SyntaxNode> nodeMembers)
-        {
-            List<UstNode> members = new List<UstNode>();
-
-            foreach (var nodeMember in nodeMembers)
-            {
-                var member = HandleGenericVisit(nodeMember);
-                if (null != member)
-                {
-                    members.Add(member);
-                }
-            }
-
-            return members;
-        }
-        private UstNode HandleGenericVisit(SyntaxNode node)
-        {
-            try
-            {
-                return base.Visit(node);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, node.ToString());
-                return null;
-            }
         }
 
         [return: MaybeNull]
@@ -101,180 +73,85 @@ namespace Codelyzer.Analysis.CSharp
         /* ---- Overrides ----------------------*/
         public override UstNode VisitUsingDirective(UsingDirectiveSyntax node)
         {
-            UsingDirectiveHandler handler = new UsingDirectiveHandler(context, node);
+            UsingDirectiveHandler handler = new UsingDirectiveHandler(_context, node);
             return handler.UstNode;
         }
 
         public override UstNode VisitNamespaceDeclaration(NamespaceDeclarationSyntax node)
         {
-            NamespaceDeclarationHandler handler = new NamespaceDeclarationHandler(context, node);
+            NamespaceDeclarationHandler handler = new NamespaceDeclarationHandler(_context, node);
             handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
             return handler.UstNode;
         }
 
         public override UstNode VisitClassDeclaration(ClassDeclarationSyntax node)
         {
-            ClassDeclarationHandler handler = new ClassDeclarationHandler(context, node);
+            ClassDeclarationHandler handler = new ClassDeclarationHandler(_context, node);
             HandleReferences(((ClassDeclaration)handler.UstNode).Reference );
             handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
 
-            var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
-            foreach (var attribute in attributes)
-            {
-                handler.UstNode.Children.Add(VisitAttribute((AttributeSyntax)attribute));
-            }
-
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
-                {
-                    handler.UstNode.Children.Add(identifier);
-                }
-            }
-
-            var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
-            foreach (var expression in objCreations)
-            {
-                var objectCreation = VisitObjectCreationExpression((ObjectCreationExpressionSyntax)expression);
-                if (objectCreation != null)
-                {
-                    handler.UstNode.Children.Add(objectCreation);
-                }
-            }
+            AddAttributeNodesToList(node, handler.UstNode.Children);
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
+            AddObjectCreationNodesToList(node, handler.UstNode.Children);
 
             return handler.UstNode;
         }
 
         public override UstNode VisitInterfaceDeclaration(InterfaceDeclarationSyntax node)
         {
-            if (MetaDataSettings.InterfaceDeclarations)
-            {
-                InterfaceDeclarationHandler handler = new InterfaceDeclarationHandler(context, node);
-                if (MetaDataSettings.InterfaceDeclarations)
-                {
-                    HandleReferences(((InterfaceDeclaration)handler.UstNode).Reference);
-                    handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
+            if (!MetaDataSettings.InterfaceDeclarations) return null;
 
-                    var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
-                    foreach (var attribute in attributes)
-                    {
-                        handler.UstNode.Children.Add(VisitAttribute((AttributeSyntax)attribute));
-                    }
+            InterfaceDeclarationHandler handler = new InterfaceDeclarationHandler(_context, node);
+            HandleReferences(((InterfaceDeclaration)handler.UstNode).Reference);
+            handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
 
-                    var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-                    foreach (var identifierName in identifierNames)
-                    {
-                        var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                        if (identifier != null)
-                        {
-                            handler.UstNode.Children.Add(identifier);
-                        }
-                    }
-                }
-                return handler.UstNode;
-            }
-            else
-            {
-                return null;
-            }
+            AddAttributeNodesToList(node, handler.UstNode.Children);
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
+        
+            return handler.UstNode;
         }
 
         public override UstNode VisitConstructorDeclaration(ConstructorDeclarationSyntax node)
         {
-            ConstructorDeclarationHandler handler = new ConstructorDeclarationHandler(context, node);
-
-            if (node.Body != null)
-            {
-                handler.UstNode.Children.Add(VisitBlock(node.Body));
-            }
-            else if (node.ExpressionBody != null)
-            {
-                handler.UstNode.Children.Add(VisitArrowExpressionClause(node.ExpressionBody));
-            }
-
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
-                {
-                    handler.UstNode.Children.Add(identifier);
-                }
-            }
+            ConstructorDeclarationHandler handler = new ConstructorDeclarationHandler(_context, node);
+            
+            AddMethodBodyNodesToList(node, handler.UstNode.Children);
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
 
             return handler.UstNode;
         }
 
         public override UstNode VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
-            MethodDeclarationHandler handler = new MethodDeclarationHandler(context, node);
+            MethodDeclarationHandler handler = new MethodDeclarationHandler(_context, node);
 
-            if (node.Body != null)
-            {
-                handler.UstNode.Children.Add(VisitBlock(node.Body));
-            }
-            else if (node.ExpressionBody != null)
-            {
-                handler.UstNode.Children.Add(VisitArrowExpressionClause(node.ExpressionBody));
-            }
+            AddMethodBodyNodesToList(node, handler.UstNode.Children);
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
 
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
-                {
-                    handler.UstNode.Children.Add(identifier);
-                }
-            }
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitReturnStatement(ReturnStatementSyntax node)
+        {
+            ReturnStatementHandler handler = new ReturnStatementHandler(_context, node);
+            AddInvocationExpressionNodesToList(node, handler.UstNode.Children);
+            AddObjectCreationNodesToList(node, handler.UstNode.Children);
+            AddLiteralExpressionNodesToList(node, handler.UstNode.Children);
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
 
             return handler.UstNode;
         }
 
         public override UstNode VisitBlock(BlockSyntax node)
         {
-            BlockStatementHandler handler = new BlockStatementHandler(context, node);
+            BlockStatementHandler handler = new BlockStatementHandler(_context, node);
             var result = handler.UstNode;
 
-            if (MetaDataSettings.MethodInvocations)
-            {
-                var expressions = node.DescendantNodes().OfType<InvocationExpressionSyntax>();
-                foreach (var expression in expressions)
-                {
-                    result.Children.Add(VisitInvocationExpression((InvocationExpressionSyntax)expression));
-                }
-            }
-
-            var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
-            foreach (var expression in objCreations)
-            {
-                var objectCreation = VisitObjectCreationExpression((ObjectCreationExpressionSyntax)expression);
-                if (objectCreation != null)
-                {
-                    result.Children.Add(objectCreation);
-                }
-            }
-
-            if (MetaDataSettings.LiteralExpressions)
-            {
-                var literalExpressions = node.DescendantNodes().OfType<LiteralExpressionSyntax>();
-                foreach (var expression in literalExpressions)
-                {
-                    result.Children.Add(VisitLiteralExpression((LiteralExpressionSyntax)expression));
-                }
-            }
-
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
-                {
-                    result.Children.Add(identifier);
-                }
-            }
+            AddInvocationExpressionNodesToList(node, result.Children);
+            AddReturnStatementNodesToList(node, result.Children);
+            AddObjectCreationNodesToList(node, result.Children);
+            AddLiteralExpressionNodesToList(node, result.Children);
+            AddIdentifierNameNodesToList(node, result.Children);
 
             return result;
         }
@@ -282,46 +159,13 @@ namespace Codelyzer.Analysis.CSharp
 
         public override UstNode VisitArrowExpressionClause(ArrowExpressionClauseSyntax node)
         {
-            ArrowExpressionClauseHandler handler = new ArrowExpressionClauseHandler(context, node);
+            ArrowExpressionClauseHandler handler = new ArrowExpressionClauseHandler(_context, node);
             var result = handler.UstNode;
 
-            if (MetaDataSettings.MethodInvocations)
-            {
-                var expressions = node.DescendantNodes().OfType<InvocationExpressionSyntax>();
-                foreach (var expression in expressions)
-                {
-                    result.Children.Add(VisitInvocationExpression((InvocationExpressionSyntax)expression));
-                }
-            }
-
-            var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
-            foreach (var expression in objCreations)
-            {
-                var objectCreation = VisitObjectCreationExpression((ObjectCreationExpressionSyntax)expression);
-                if (objectCreation != null)
-                {
-                    result.Children.Add(objectCreation);
-                }
-            }
-
-            if (MetaDataSettings.LiteralExpressions)
-            {
-                var literalExpressions = node.DescendantNodes().OfType<LiteralExpressionSyntax>();
-                foreach (var expression in literalExpressions)
-                {
-                    result.Children.Add(VisitLiteralExpression((LiteralExpressionSyntax)expression));
-                }
-            }
-
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
-                {
-                    result.Children.Add(identifier);
-                }
-            }
+            AddInvocationExpressionNodesToList(node, result.Children);
+            AddObjectCreationNodesToList(node, result.Children);
+            AddLiteralExpressionNodesToList(node, result.Children);
+            AddIdentifierNameNodesToList(node, result.Children);
 
             return result;
         }
@@ -331,11 +175,19 @@ namespace Codelyzer.Analysis.CSharp
             return base.VisitExpressionStatement(node);
         }
 
+        private UstNode VisitExpressionSyntax(ExpressionSyntax node)
+        {
+            if (node == null) return null;
+
+            return HandleGenericVisit(node);
+        }
+
         public override UstNode VisitLiteralExpression(LiteralExpressionSyntax node)
         {
             if (!MetaDataSettings.LiteralExpressions) return null;
 
-            LiteralExpressionHandler handler = new LiteralExpressionHandler(context, node);
+            LiteralExpressionHandler handler = new LiteralExpressionHandler(_context, node);
+
             return handler.UstNode;
         }
 
@@ -343,43 +195,47 @@ namespace Codelyzer.Analysis.CSharp
         {
             if (!MetaDataSettings.MethodInvocations) return null;
 
-            InvocationExpressionHandler handler = new InvocationExpressionHandler(context, node);
+            InvocationExpressionHandler handler = new InvocationExpressionHandler(_context, node);
             HandleReferences(((InvocationExpression)handler.UstNode).Reference);
+
+            AddArgumentNodesToList(node, handler.UstNode.Children);
+
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitArgument(ArgumentSyntax node)
+        {
+            if (!MetaDataSettings.InvocationArguments) return null;
+
+            ArgumentHandler handler = new ArgumentHandler(_context, node);
+            handler.UstNode.Children.Add(VisitExpressionSyntax(node.Expression));
+
             return handler.UstNode;
         }
 
         public override UstNode VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
         {
-            ObjectCreationExpressionHandler handler = new ObjectCreationExpressionHandler(context, node);
+            ObjectCreationExpressionHandler handler = new ObjectCreationExpressionHandler(_context, node);
 
-            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach (var identifierName in identifierNames)
-            {
-                var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                if (identifier != null)
-                {
-                    handler.UstNode.Children.Add(identifier);
-                }
-            }
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
+
             return handler.UstNode;
         }
 
         public override UstNode VisitAttribute(AttributeSyntax node)
         {
-            if (MetaDataSettings.Annotations)
-            {
-                AttributeHandler handler = new AttributeHandler(context, node);
-                HandleReferences(((Annotation)handler.UstNode).Reference);
-                return handler.UstNode;
-            }
-            return null;
+            if (!MetaDataSettings.Annotations) return null;
+
+            AttributeHandler handler = new AttributeHandler(_context, node);
+            HandleReferences(((Annotation)handler.UstNode).Reference);
+            return handler.UstNode;
         }
 
         public override UstNode VisitIdentifierName(IdentifierNameSyntax node)
         {
             if (MetaDataSettings.DeclarationNodes)
             {
-                IdentifierNameHandler handler = new IdentifierNameHandler(context, node);
+                IdentifierNameHandler handler = new IdentifierNameHandler(_context, node);
                 if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
                 {
                     HandleReferences(((DeclarationNode)handler.UstNode).Reference);
@@ -393,7 +249,7 @@ namespace Codelyzer.Analysis.CSharp
         {
             if (MetaDataSettings.EnumDeclarations)
             {
-                EnumDeclarationHandler handler = new EnumDeclarationHandler(context, node);
+                EnumDeclarationHandler handler = new EnumDeclarationHandler(_context, node);
                 if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
                 {
                     HandleReferences(((EnumDeclaration)handler.UstNode).Reference);
@@ -405,35 +261,124 @@ namespace Codelyzer.Analysis.CSharp
 
         public override UstNode VisitStructDeclaration(StructDeclarationSyntax node)
         {
-            if (MetaDataSettings.StructDeclarations)
+            if (!MetaDataSettings.StructDeclarations) return null;
+            
+            StructDeclarationHandler handler = new StructDeclarationHandler(_context, node);
+            if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
             {
-                StructDeclarationHandler handler = new StructDeclarationHandler(context, node);
-                if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
+                HandleReferences(((StructDeclaration)handler.UstNode).Reference);
+            }
+
+            handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
+
+            AddAttributeNodesToList(node, handler.UstNode.Children);
+            AddIdentifierNameNodesToList(node, handler.UstNode.Children);
+
+            return handler.UstNode;
+        }
+
+        public void Dispose()
+        {
+            _context?.Dispose();
+            RootNode = null;
+        }
+
+        private void AddIdentifierNameNodesToList(SyntaxNode node, List<UstNode> nodeList)
+        {
+            var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
+            foreach (var identifierName in identifierNames)
+            {
+                var identifier = VisitIdentifierName(identifierName);
+                if (identifier != null)
                 {
-                    HandleReferences(((StructDeclaration)handler.UstNode).Reference);
+                    nodeList.Add(identifier);
                 }
+            }
+        }
 
-                handler.UstNode.Children.AddRange(HandleGenericMembers(node.Members));
-
-                var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
-                foreach (var attribute in attributes)
+        private void AddLiteralExpressionNodesToList(SyntaxNode node, List<UstNode> nodeList)
+        {
+            if (MetaDataSettings.LiteralExpressions)
+            {
+                var literalExpressions = node.DescendantNodes().OfType<LiteralExpressionSyntax>();
+                foreach (var expression in literalExpressions)
                 {
-                    handler.UstNode.Children.Add(VisitAttribute((AttributeSyntax)attribute));
+                    nodeList.Add(VisitLiteralExpression(expression));
                 }
+            }
+        }
 
-                var identifierNames = node.DescendantNodes().OfType<IdentifierNameSyntax>();
-                foreach (var identifierName in identifierNames)
+        private void AddInvocationExpressionNodesToList(SyntaxNode node, List<UstNode> nodeList)
+        {
+            if (MetaDataSettings.MethodInvocations)
+            {
+                var expressions = node.DescendantNodes().OfType<InvocationExpressionSyntax>();
+                foreach (var expression in expressions)
                 {
-                    var identifier = VisitIdentifierName((IdentifierNameSyntax)identifierName);
-                    if (identifier != null)
+                    nodeList.Add(VisitInvocationExpression(expression));
+                }
+            }
+        }
+
+        private void AddArgumentNodesToList(InvocationExpressionSyntax node, List<UstNode> nodeList)
+        {
+            if (MetaDataSettings.InvocationArguments)
+            {
+                foreach (var argument in node.ArgumentList.Arguments)
+                {
+                    nodeList.Add(VisitArgument(argument));
+                }
+            }
+        }
+
+        private void AddMethodBodyNodesToList(BaseMethodDeclarationSyntax node, List<UstNode> nodeList)
+        {
+            if (node.Body != null)
+            {
+                nodeList.Add(VisitBlock(node.Body));
+            }
+            else if (node.ExpressionBody != null)
+            {
+                nodeList.Add(VisitArrowExpressionClause(node.ExpressionBody));
+            }
+        }
+
+        private void AddObjectCreationNodesToList(SyntaxNode node, List<UstNode> nodeList)
+        {
+            var objCreations = node.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
+            foreach (var expression in objCreations)
+            {
+                var objectCreation = VisitObjectCreationExpression(expression);
+                if (objectCreation != null)
+                { 
+                    nodeList.Add(objectCreation);
+                }
+            }
+        }
+
+        private void AddReturnStatementNodesToList(SyntaxNode node, List<UstNode> nodeList)
+        {
+            if (MetaDataSettings.ReturnStatements)
+            {
+                var returnStatements = node.DescendantNodes().OfType<ReturnStatementSyntax>();
+                foreach (var returnStatement in returnStatements)
+                {
+                    var returnStatementNode = VisitReturnStatement(returnStatement);
+                    if (returnStatementNode != null)
                     {
-                        handler.UstNode.Children.Add(identifier);
+                        nodeList.Add(returnStatementNode);
                     }
                 }
-
-                return handler.UstNode;
             }
-            return null;
+        }
+
+        private void AddAttributeNodesToList(SyntaxNode node, List<UstNode> nodeList)
+        {
+            var attributes = node.DescendantNodes().OfType<AttributeSyntax>();
+            foreach (var attribute in attributes)
+            {
+                nodeList.Add(VisitAttribute(attribute));
+            }
         }
 
         private void HandleReferences(Reference reference)
@@ -454,12 +399,33 @@ namespace Codelyzer.Analysis.CSharp
             }
         }
 
-        public void Dispose()
+        private List<UstNode> HandleGenericMembers(in SyntaxList<SyntaxNode> nodeMembers)
         {
-            context?.Dispose();
-            RootNode = null;
+            List<UstNode> members = new List<UstNode>();
+
+            foreach (var nodeMember in nodeMembers)
+            {
+                var member = HandleGenericVisit(nodeMember);
+                if (null != member)
+                {
+                    members.Add(member);
+                }
+            }
+
+            return members;
         }
 
+        private UstNode HandleGenericVisit(SyntaxNode node)
+        {
+            try
+            {
+                return base.Visit(node);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, node.ToString());
+                return null;
+            }
+        }
     }
-
 }

@@ -17,6 +17,8 @@ namespace Codelyzer.Analysis.Model
         public const string InterfaceIdName = "interface";
 
         public const string MethodIdName = "method";
+
+        public const string ReturnStatementIdName = "return-statement";
         
         public const string BodyIdName = "body";
 
@@ -37,5 +39,7 @@ namespace Codelyzer.Analysis.Model
         public const string EnumIdName = "enum";
 
         public const string StructIdName = "struct";
+
+        public const string ArgumentIdName = "argument";
     }
 }

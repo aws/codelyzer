@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis;
@@ -47,6 +44,16 @@ namespace Codelyzer.Analysis.CSharp.Handlers
 
                 parameter.SemanticType =
                     SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel);
+
+                Model.Parameters.Add(parameter);
+
+                var argument = new Argument
+                {
+                    Identifier = argumentSyntax.Expression.ToString(),
+                    SemanticType = SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel)
+                };
+
+                Model.Arguments.Add(argument);
             }
 
             if (SemanticModel == null) return;
