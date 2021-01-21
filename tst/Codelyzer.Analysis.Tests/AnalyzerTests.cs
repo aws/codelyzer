@@ -134,7 +134,7 @@ namespace Codelyzer.Analysis.Tests
                     ReferenceData = true,
                     InterfaceDeclarations = true,
                     GenerateBinFiles = true,
-                    LoadBuildData = true
+                    LoadBuildData = true,
                     ReturnStatements = true,
                     InvocationArguments = true
                 }
