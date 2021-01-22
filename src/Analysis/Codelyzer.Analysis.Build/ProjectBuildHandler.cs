@@ -27,11 +27,10 @@ namespace Codelyzer.Analysis.Build
         private readonly AnalyzerConfiguration _analyzerConfiguration;
         internal IAnalyzerResult AnalyzerResult;
         internal IProjectAnalyzer ProjectAnalyzer;
+        internal bool isSyntaxAnalysis;
 
-        private async Task<bool> SetCompilation()
+        private async Task SetCompilation()
         {
-            bool result = false;
-
             Compilation = await Project.GetCompilationAsync();
             var errors = Compilation.GetDiagnostics()
                 .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
@@ -63,14 +62,13 @@ namespace Codelyzer.Analysis.Build
                     
                     Errors.Add(err);
                     FallbackCompilation();
-                    result = true;
+                    isSyntaxAnalysis = true;
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
                 }
             }
-            return result;
         }
 
         private void FallbackCompilation()
@@ -140,8 +138,7 @@ namespace Codelyzer.Analysis.Build
         }
         public async Task<ProjectBuildResult> Build()
         {
-            var isSyntaxAnalysis = await SetCompilation();
-
+            await SetCompilation();
             ProjectBuildResult projectBuildResult = new ProjectBuildResult
             {
                 BuildErrors = Errors,
