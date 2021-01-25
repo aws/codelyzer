@@ -2,6 +2,7 @@
 using Buildalyzer.Environment;
 using Buildalyzer.Workspaces;
 using Codelyzer.Analysis.Common;
+using Microsoft.Build.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using System;
@@ -45,7 +46,7 @@ namespace Codelyzer.Analysis.Build
         {
             var sb = new StringBuilder();
             var writer = new StringWriter(sb);
-
+            
             /* Uncomment the below code to debug issues with msbuild */
             /*var writer = new StreamWriter(Console.OpenStandardOutput());
             writer.AutoFlush = true;
@@ -66,7 +67,7 @@ namespace Codelyzer.Analysis.Build
                 Logger.LogInformation("Loading the Solution Done: " + WorkspacePath);
 
                 // AnalyzerManager builds the projects based on their dependencies
-                // After this, code does not depend on Buildalyzer
+                // After this, code does not depend on Buildalyzer                
                 BuildSolution(analyzerManager);
             }
             else
@@ -136,8 +137,18 @@ namespace Codelyzer.Analysis.Build
                 }
             }
 
-            Logger.LogDebug(sb.ToString());
+            Logger.LogDebug(sb.ToString());            
+            writer.Flush();
             writer.Close();
+            ProcessLog(writer.ToString());
+        }
+
+        private void ProcessLog(string currentLog)
+        {
+            if (currentLog.Contains(KnownErrors.MsBuildMissing))
+            {
+                Logger.LogError("Build error: Missing MSBuild Path");
+            }
         }
 
         /*
@@ -229,63 +240,6 @@ namespace Codelyzer.Analysis.Build
             return null;
         }
 
-        /*
-         *  Set Target Framework version along with Framework settings
-         *  This is to handle build issues with framework version and framework mentioned here:
-         *  https://github.com/Microsoft/msbuild/issues/1805
-         *  
-         
-        private void setTargetFrameworkSettings(IProjectAnalyzer projectAnalyzer)
-        {
-            string frameworkId = projectAnalyzer.ProjectFile.TargetFrameworks.FirstOrDefault();
-            if (null == frameworkId)
-            {
-                Logger.LogDebug("Target Framework not found!. Setting to default (net451)");
-                frameworkId = "net451";
-            }
-
-            AnalyzerManager analyzerManager = projectAnalyzer.Manager;
-
-            analyzerManager.RemoveGlobalProperty(TargetFramework);
-            analyzerManager.RemoveGlobalProperty(TargetFrameworkVersion);
-            projectAnalyzer.RemoveGlobalProperty(TargetFramework);
-            projectAnalyzer.RemoveGlobalProperty(TargetFrameworkVersion);
-
-            analyzerManager.SetGlobalProperty(TargetFramework, frameworkId);
-            projectAnalyzer.SetGlobalProperty(TargetFramework, frameworkId);
-
-            if (projectAnalyzer.ProjectFile.RequiresNetFramework)
-            {
-                string frameworkVerison = getTargetFrameworkVersion(frameworkId);
-                analyzerManager.SetGlobalProperty(TargetFrameworkVersion, frameworkVerison);
-                projectAnalyzer.SetGlobalProperty(TargetFrameworkVersion, frameworkVerison);
-            }
-        }
-
-        private string getTargetFrameworkVersion(string framework)
-        {
-            var numericPart = Regex.Match(framework, "\\d+").Value;
-            return "v" + String.Join(".", numericPart.ToCharArray());
-        }
-        */
-        /*
-         * MSBuild properties:
-         * https://docs.microsoft.com/en-us/visualstudio/msbuild/common-msbuild-project-properties?view=vs-2019
-
-        private void setBuildProperties(AnalyzerManager analyzerManager)
-        {
-            analyzerManager.SetGlobalProperty(MsBuildProperties.DesignTimeBuild, bool.FalseString);
-            analyzerManager.SetGlobalProperty(MsBuildProperties.AddModules, bool.TrueString);
-            analyzerManager.SetGlobalProperty(MsBuildProperties.SkipCopyBuildProduct, bool.FalseString);
-            analyzerManager.SetGlobalProperty(MsBuildProperties.CopyOutputSymbolsToOutputDirectory, bool.TrueString);
-            analyzerManager.SetGlobalProperty(MsBuildProperties.CopyBuildOutputToOutputDirectory, bool.TrueString);
-            analyzerManager.SetGlobalProperty(MsBuildProperties.GeneratePackageOnBuild, bool.TrueString);
-            analyzerManager.SetGlobalProperty(MsBuildProperties.SkipCompilerExecution, bool.FalseString);
-            analyzerManager.SetGlobalProperty(MsBuildProperties.AutoGenerateBindingRedirects, bool.TrueString);
-            analyzerManager.SetGlobalProperty(MsBuildProperties.UseCommonOutputDirectory, bool.TrueString);
-            analyzerManager.SetGlobalProperty(Configuration, "Release");
-        }
-        */
         private EnvironmentOptions GetEnvironmentOptions(bool requiresNetFramework)
         {
             var os = DetermineOSPlatform();

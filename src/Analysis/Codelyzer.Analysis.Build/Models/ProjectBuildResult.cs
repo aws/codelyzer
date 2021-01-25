@@ -22,6 +22,7 @@ namespace Codelyzer.Analysis.Build
         public List<string> TargetFrameworks { get; set; }
         public string ProjectGuid { get; set; }        
         public string ProjectType { get; set; }
+        public bool IsSyntaxAnalysis { get; set; }
 
         public ProjectBuildResult()
         {

@@ -27,6 +27,7 @@ namespace Codelyzer.Analysis.Build
         private readonly AnalyzerConfiguration _analyzerConfiguration;
         internal IAnalyzerResult AnalyzerResult;
         internal IProjectAnalyzer ProjectAnalyzer;
+        internal bool isSyntaxAnalysis;
 
         private async Task SetCompilation()
         {
@@ -61,6 +62,7 @@ namespace Codelyzer.Analysis.Build
                     
                     Errors.Add(err);
                     FallbackCompilation();
+                    isSyntaxAnalysis = true;
                 }
                 catch (Exception e)
                 {
@@ -137,14 +139,14 @@ namespace Codelyzer.Analysis.Build
         public async Task<ProjectBuildResult> Build()
         {
             await SetCompilation();
-
             ProjectBuildResult projectBuildResult = new ProjectBuildResult
             {
                 BuildErrors = Errors,
                 ProjectPath = Project.FilePath,
                 ProjectRootPath = Path.GetDirectoryName(Project.FilePath),
                 Project = Project,
-                Compilation = Compilation
+                Compilation = Compilation,
+                IsSyntaxAnalysis = isSyntaxAnalysis
             };
 
             GetTargetFrameworks(projectBuildResult, AnalyzerResult);
