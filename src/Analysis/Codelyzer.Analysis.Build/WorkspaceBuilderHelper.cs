@@ -249,6 +249,10 @@ namespace Codelyzer.Analysis.Build
             if (os == OSPlatform.Linux || os == OSPlatform.OSX)
             {
                 var requiresNetFramework = false;
+                /*
+                    We need to have this property in a try/catch because there are cases when there are additional Import or LanguageTarget tags
+                    with unexpected (or missing) attributes. This avoids a NPE in buildalyzer code retrieving this property                  
+                 */
                 try
                 {
                     requiresNetFramework = projectFile.RequiresNetFramework;
