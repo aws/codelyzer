@@ -1,4 +1,5 @@
 ﻿using Buildalyzer;
+using Buildalyzer.Construction;
 using Buildalyzer.Environment;
 using Buildalyzer.Workspaces;
 using Codelyzer.Analysis.Common;
@@ -96,7 +97,7 @@ namespace Codelyzer.Analysis.Build
                         Logger.LogInformation("Building: " + path);
 
                         IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(path);
-                        IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile.RequiresNetFramework));
+                        IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile));
                         IAnalyzerResult analyzerResult = analyzerResults.First();
 
 
@@ -224,7 +225,7 @@ namespace Codelyzer.Analysis.Build
         {
             try
             {
-                return projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile.RequiresNetFramework)).FirstOrDefault();
+                return projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile)).FirstOrDefault();
             }
             catch (Exception e)
             {
@@ -240,17 +241,29 @@ namespace Codelyzer.Analysis.Build
             return null;
         }
 
-        private EnvironmentOptions GetEnvironmentOptions(bool requiresNetFramework)
+        private EnvironmentOptions GetEnvironmentOptions(IProjectFile projectFile)
         {
             var os = DetermineOSPlatform();
             EnvironmentOptions options = new EnvironmentOptions();
 
             if (os == OSPlatform.Linux || os == OSPlatform.OSX)
             {
+                var requiresNetFramework = false;
+                /*
+                    We need to have this property in a try/catch because there are cases when there are additional Import or LanguageTarget tags
+                    with unexpected (or missing) attributes. This avoids a NPE in buildalyzer code retrieving this property                  
+                 */
+                try
+                {
+                    requiresNetFramework = projectFile.RequiresNetFramework;
+                }
+                catch(Exception ex)
+                {
+                    Logger.LogError(ex, "Error while checking if project is a framework project");
+                }
                 if (requiresNetFramework)
                 {
                     options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, Constants.MsBuildCommandName);
-
                 }
             }
 
@@ -270,6 +283,7 @@ namespace Codelyzer.Analysis.Build
 
             return options;
         }
+
 
         private OSPlatform DetermineOSPlatform()
         {
