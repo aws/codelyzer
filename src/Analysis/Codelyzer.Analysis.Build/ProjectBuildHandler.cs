@@ -68,6 +68,7 @@ namespace Codelyzer.Analysis.Build
                 }
                 catch (Exception e)
                 {
+                    Logger.LogError(e, "Error while running syntax analysis");
                     Console.WriteLine(e);
                 }
             }
@@ -103,7 +104,7 @@ namespace Codelyzer.Analysis.Build
                 Compilation = CSharpCompilation.Create(Project.AssemblyName, trees, meta, options);
             }
         }
-        private async Task SetSyntaxCompilation()
+        private void SetSyntaxCompilation()
         {
             var trees = new List<SyntaxTree>();
             isSyntaxAnalysis = true;
@@ -126,6 +127,7 @@ namespace Codelyzer.Analysis.Build
                 }
                 catch (Exception e)
                 {
+                    Logger.LogError(e, "Error while running syntax analysis");
                     Console.WriteLine(e);
                 }
             }
@@ -216,9 +218,9 @@ namespace Codelyzer.Analysis.Build
             return projectBuildResult;
         }
 
-        public async Task<ProjectBuildResult> SyntaxOnlyBuild()
+        public ProjectBuildResult SyntaxOnlyBuild()
         {
-            await SetSyntaxCompilation();
+            SetSyntaxCompilation();
 
             ProjectBuildResult projectBuildResult = new ProjectBuildResult
             {

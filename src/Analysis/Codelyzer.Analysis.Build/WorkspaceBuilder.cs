@@ -45,7 +45,7 @@ namespace Codelyzer.Analysis.Build
                         new ProjectBuildHandler(Logger, _analyzerConfiguration))
                         {
                             projectBuildHandler.ProjectAnalyzer = projectResult.ProjectAnalyzer;
-                            var result = await projectBuildHandler.SyntaxOnlyBuild();
+                            var result = projectBuildHandler.SyntaxOnlyBuild();
                             ProjectResults.Add(result);
                         }
                     }
