@@ -29,6 +29,9 @@ namespace Codelyzer.Analysis.Build
         internal IProjectAnalyzer ProjectAnalyzer;
         internal bool isSyntaxAnalysis;
 
+        private const string syntaxAnalysisError = "Build Errors: Encountered an unknown build issue. Falling back to syntax analysis";
+
+
         private async Task SetCompilation()
         {
             Compilation = await Project.GetCompilationAsync();
@@ -57,10 +60,9 @@ namespace Codelyzer.Analysis.Build
             {
                 try
                 {
-                    string err = "Build Errors: Encountered an unknown build issue. Falling back to syntax analysis";
-                    Logger.LogError(err);
-                    
-                    Errors.Add(err);
+                    Logger.LogError(syntaxAnalysisError);                   
+                    Errors.Add(syntaxAnalysisError);
+
                     FallbackCompilation();
                     isSyntaxAnalysis = true;
                 }
@@ -101,7 +103,38 @@ namespace Codelyzer.Analysis.Build
                 Compilation = CSharpCompilation.Create(Project.AssemblyName, trees, meta, options);
             }
         }
+        private async Task SetSyntaxCompilation()
+        {
+            var trees = new List<SyntaxTree>();
+            isSyntaxAnalysis = true;
 
+            Logger.LogError(syntaxAnalysisError);
+            Errors.Add(syntaxAnalysisError);
+
+            var projPath = Path.GetDirectoryName(ProjectAnalyzer.ProjectFile.Path);
+            DirectoryInfo directory = new DirectoryInfo(projPath);
+            var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+            foreach (var file in allFiles)
+            {
+                try
+                {
+                    using (var stream = File.OpenRead(file.FullName))
+                    {
+                        var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                        trees.Add(syntaxTree);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
+
+            if (trees.Count != 0)
+            {
+                Compilation = CSharpCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
+            }
+        }
         private static void DisplayProjectProperties(Project project)
         {
             Console.WriteLine($" Project: {project.Name}");
@@ -115,6 +148,13 @@ namespace Codelyzer.Analysis.Build
             Console.WriteLine($" Project references: {project.ProjectReferences.Count()}");
             Console.WriteLine($" Project references: {String.Join("\n", project.ProjectReferences)}");
             Console.WriteLine();
+        }
+        public ProjectBuildHandler(ILogger logger, AnalyzerConfiguration analyzerConfiguration = null)
+        {
+            Logger = logger;
+            _analyzerConfiguration = analyzerConfiguration;
+
+            Errors = new List<string>();
         }
         public ProjectBuildHandler(ILogger logger, Project project, AnalyzerConfiguration analyzerConfiguration = null)
         {
@@ -171,6 +211,39 @@ namespace Codelyzer.Analysis.Build
             if (_analyzerConfiguration != null && _analyzerConfiguration.MetaDataSettings.ReferenceData)
             {
                 projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult);
+            }
+
+            return projectBuildResult;
+        }
+
+        public async Task<ProjectBuildResult> SyntaxOnlyBuild()
+        {
+            await SetSyntaxCompilation();
+
+            ProjectBuildResult projectBuildResult = new ProjectBuildResult
+            {
+                BuildErrors = Errors,
+                ProjectPath = ProjectAnalyzer.ProjectFile.Path,
+                ProjectRootPath = Path.GetDirectoryName(ProjectAnalyzer.ProjectFile.Path),
+                Compilation = Compilation,
+                IsSyntaxAnalysis = isSyntaxAnalysis
+            };
+
+            projectBuildResult.ProjectGuid = ProjectAnalyzer.ProjectGuid.ToString();
+            projectBuildResult.ProjectType = ProjectAnalyzer.ProjectInSolution != null ? ProjectAnalyzer.ProjectInSolution.ProjectType.ToString() : string.Empty;
+
+            foreach (var syntaxTree in Compilation.SyntaxTrees)
+            {
+                var sourceFilePath = Path.GetRelativePath(projectBuildResult.ProjectRootPath, syntaxTree.FilePath);
+                var fileResult = new SourceFileBuildResult
+                {
+                    SyntaxTree = syntaxTree,
+                    SemanticModel = Compilation.GetSemanticModel(syntaxTree),
+                    SourceFileFullPath = syntaxTree.FilePath,
+                    SourceFilePath = sourceFilePath
+                };
+                projectBuildResult.SourceFileBuildResults.Add(fileResult);
+                projectBuildResult.SourceFiles.Add(sourceFilePath);
             }
 
             return projectBuildResult;

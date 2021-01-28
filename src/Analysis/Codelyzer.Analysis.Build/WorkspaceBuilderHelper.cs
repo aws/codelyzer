@@ -25,6 +25,7 @@ namespace Codelyzer.Analysis.Build
         private readonly AnalyzerConfiguration _analyzerConfiguration;
 
         internal List<ProjectAnalysisResult> Projects;
+        internal List<ProjectAnalysisResult> FailedProjects;
 
         private ILogger Logger { get; set; }
 
@@ -33,6 +34,7 @@ namespace Codelyzer.Analysis.Build
             this.Logger = logger;
             this.WorkspacePath = workspacePath;
             this.Projects = new List<ProjectAnalysisResult>();
+            this.FailedProjects = new List<ProjectAnalysisResult>();
             _analyzerConfiguration = analyzerConfiguration;
         }
 
@@ -100,6 +102,13 @@ namespace Codelyzer.Analysis.Build
                         IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile));
                         IAnalyzerResult analyzerResult = analyzerResults.First();
 
+                        if (analyzerResult == null)
+                        {
+                            FailedProjects.Add(new ProjectAnalysisResult()
+                            {
+                                ProjectAnalyzer = projectAnalyzer
+                            });
+                        }
 
                         dict[analyzerResult.ProjectGuid] = analyzerResult;
                         analyzerResult.AddToWorkspace(workspace);
@@ -173,6 +182,10 @@ namespace Codelyzer.Analysis.Build
                 }
                 else
                 {
+                    FailedProjects.Add(new ProjectAnalysisResult()
+                    {
+                        ProjectAnalyzer = p
+                    });
                     Logger.LogDebug("Building complete for {0} - {1}", p.ProjectFile.Path, "Fail");
                 }
             });

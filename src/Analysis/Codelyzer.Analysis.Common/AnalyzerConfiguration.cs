@@ -6,6 +6,7 @@ namespace Codelyzer.Analysis
     {
         public string Language;
         public int ConcurrentThreads = Constants.DefaultConcurrentThreads;
+        public bool AnalyzeFailedProjects = false;
 
         public AnalyzerConfiguration(string language)
         {
