@@ -185,6 +185,25 @@ namespace Codelyzer.Analysis.Tests
 
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(dllFiles.Count(), 16);
+
+            await RunAgainWithChangedFile(solutionPath, result.ProjectBuildResult.ProjectPath, configuration, analyzer);
+        }
+
+        private async Task RunAgainWithChangedFile(string solutionPath, string projectPath, AnalyzerConfiguration configuration, CodeAnalyzer analyzer)
+        {
+            string projectFileContent = File.ReadAllText(projectPath);
+            //Change the target to an invalid target to replicate an invalid msbuild installation
+            File.WriteAllText(projectPath, projectFileContent.Replace(@"$(MSBuildBinPath)\Microsoft.CSharp.targets", @"InvalidTarget"));
+
+            //Try without setting the flag, result should be null:
+            AnalyzerResult result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
+            Assert.Null(result);
+
+            //Try with setting the flag, syntax tree should be returned
+            configuration.AnalyzeFailedProjects = true;
+            result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
+            Assert.NotNull(result);
+            Assert.True(result.ProjectBuildResult.IsSyntaxAnalysis);
         }
 
         [Test]

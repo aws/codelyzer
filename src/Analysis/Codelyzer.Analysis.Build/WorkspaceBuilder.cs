@@ -37,6 +37,19 @@ namespace Codelyzer.Analysis.Build
                         ProjectResults.Add(result);
                     }
                 }
+                if (_analyzerConfiguration.AnalyzeFailedProjects)
+                {
+                    foreach (var projectResult in builder.FailedProjects)
+                    {
+                        using (ProjectBuildHandler projectBuildHandler =
+                        new ProjectBuildHandler(Logger, _analyzerConfiguration))
+                        {
+                            projectBuildHandler.ProjectAnalyzer = projectResult.ProjectAnalyzer;
+                            var result = projectBuildHandler.SyntaxOnlyBuild();
+                            ProjectResults.Add(result);
+                        }
+                    }
+                }
             }
 
             return ProjectResults;
