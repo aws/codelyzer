@@ -171,9 +171,9 @@ namespace Codelyzer.Analysis.Tests
             var arguments = houseController.AllArguments();
             Assert.AreEqual(7, blockStatements.Count);
             Assert.AreEqual(1, classDeclarations.Count);
-            Assert.AreEqual(89, expressionStatements.Count);
-            Assert.AreEqual(75, invocationExpressions.Count);
-            Assert.AreEqual(14, literalExpressions.Count);
+            Assert.AreEqual(62, expressionStatements.Count);
+            Assert.AreEqual(41, invocationExpressions.Count);
+            Assert.AreEqual(21, literalExpressions.Count);
             Assert.AreEqual(6, methodDeclarations.Count);
             Assert.AreEqual(16, returnStatements.Count);
             Assert.AreEqual(17, annotations.Count);
@@ -181,7 +181,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(0, objectCreationExpressions.Count);
             Assert.AreEqual(10, usingDirectives.Count);
             Assert.AreEqual(1, interfaces.Count);
-            Assert.AreEqual(63, arguments.Count);
+            Assert.AreEqual(34, arguments.Count);
 
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(dllFiles.Count(), 16);
@@ -251,8 +251,8 @@ namespace Codelyzer.Analysis.Tests
             var classDeclaration = homeController.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault().Children[0];
             Assert.NotNull(classDeclaration);
 
-            var declarationNodes = classDeclaration.Children.OfType<Codelyzer.Analysis.Model.DeclarationNode>();
-            var methodDeclarations = classDeclaration.Children.OfType<Model.MethodDeclaration>();
+            var declarationNodes = classDeclaration.AllDeclarationNodes();
+            var methodDeclarations = classDeclaration.AllMethods();
 
             //HouseController has 3 identifiers declared within the class declaration:
             Assert.AreEqual(4, declarationNodes.Count());
@@ -345,7 +345,7 @@ namespace Codelyzer.Analysis.Tests
 
             Assert.AreEqual(80, enumDeclarations);
             Assert.AreEqual(1, structDeclarations);
-            Assert.AreEqual(2, arrowClauseStatements);
+            Assert.AreEqual(1216, arrowClauseStatements);
 
             results.ForEach(r => r.Dispose());
         }

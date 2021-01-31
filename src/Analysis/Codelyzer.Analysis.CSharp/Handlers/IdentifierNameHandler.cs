@@ -11,6 +11,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
     {
         private static Type[] identifierNameTypes = new Type[] {
             typeof(MethodDeclarationSyntax),
+            typeof(ConstructorDeclarationSyntax),
             typeof(ClassDeclarationSyntax),
             typeof(VariableDeclarationSyntax),
             typeof(ParameterSyntax),
@@ -22,7 +23,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             IdentifierNameSyntax syntaxNode)
             : base(context, syntaxNode, new DeclarationNode())
         {
-            if (identifierNameTypes.Contains(syntaxNode.Parent.GetType()))
+            if (identifierNameTypes.Contains(syntaxNode.Parent?.GetType()))
             {
                 var type = SemanticHelper.GetSemanticType(syntaxNode, SemanticModel);
                 var symbolInfo = SemanticModel.GetSymbolInfo(syntaxNode);
