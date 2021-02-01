@@ -108,6 +108,8 @@ namespace Codelyzer.Analysis
                         Configuration.MetaDataSettings.InterfaceDeclarations = result;
                         Configuration.MetaDataSettings.DeclarationNodes = result;
                         Configuration.MetaDataSettings.Annotations = result;
+                        Configuration.MetaDataSettings.ElementAccess = result;
+                        Configuration.MetaDataSettings.MemberAccess = result;
                     }
 
                     if (!string.IsNullOrEmpty(o.ConcurrentThreads))

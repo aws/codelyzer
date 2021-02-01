@@ -208,7 +208,24 @@ namespace Codelyzer.Analysis.CSharp
             return handler.UstNode;
         }
 
-        private void HandleReferences(Reference reference)
+        public override UstNode VisitElementAccessExpression(ElementAccessExpressionSyntax node)
+        {
+            if (!MetaDataSettings.ElementAccess) return null;
+
+            var handler = new ElementAccessExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
+        {
+            if (!MetaDataSettings.MemberAccess) return null;
+
+            var handler = new MemberAccessExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
+
+
+        private void HandleReferences(in Reference reference)
         {
             if (MetaDataSettings.ReferenceData
                 && !RootNode.References.Contains(reference))
