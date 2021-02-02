@@ -8,15 +8,12 @@ namespace Codelyzer.Analysis.CSharp.Handlers
     {
         private ElementAccess Model { get => (ElementAccess)UstNode; }
 
-        public ElementAccessExpressionHandler(CodeContext context, 
+        public ElementAccessExpressionHandler(CodeContext context,
             ElementAccessExpressionSyntax syntaxNode)
             : base(context, syntaxNode, new ElementAccess())
         {
             Model.Identifier = syntaxNode.ToString();
-            if (syntaxNode.Expression != null)
-            {
-                Model.Expression = syntaxNode.Expression.ToString();
-            }
+            Model.Expression = syntaxNode.Expression?.ToString();
         }
     }
 }

@@ -15,11 +15,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
         {
             Model.Identifier = syntaxNode.ToString();
             Model.Name = syntaxNode.Name?.ToString();
-
-            if (syntaxNode.Expression != null)
-            {
-                Model.Expression = syntaxNode.Expression?.ToString();
-            }
+            Model.Expression = syntaxNode.Expression?.ToString();
         }
     }
 }

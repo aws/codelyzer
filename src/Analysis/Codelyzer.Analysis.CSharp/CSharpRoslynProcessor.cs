@@ -126,9 +126,7 @@ namespace Codelyzer.Analysis.CSharp
         public override UstNode VisitArrowExpressionClause(ArrowExpressionClauseSyntax node)
         {
             ArrowExpressionClauseHandler handler = new ArrowExpressionClauseHandler(_context, node);
-            var result = handler.UstNode;
-
-            return result;
+            return handler.UstNode;
         }
         public override UstNode VisitExpressionStatement(ExpressionStatementSyntax node)
         {
@@ -249,7 +247,7 @@ namespace Codelyzer.Analysis.CSharp
             foreach (var child in children)
             {
                 var childUstNode = HandleGenericVisit(child);
-                if (null != childUstNode)
+                if (childUstNode != null)
                 {
                     childUstNodes.Add(childUstNode);
                 }
