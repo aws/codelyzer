@@ -41,5 +41,9 @@ namespace Codelyzer.Analysis.Model
         public const string StructIdName = "struct";
 
         public const string ArgumentIdName = "argument";
+
+        public const string ElementAccessIdName = "element-access";
+
+        public const string MemberAccessIdName = "member-access";
     }
 }

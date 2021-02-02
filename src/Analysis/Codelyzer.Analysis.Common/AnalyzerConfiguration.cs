@@ -50,5 +50,7 @@ namespace Codelyzer.Analysis
         public bool ReturnStatements = false;
         public bool InvocationArguments = false;
         public bool GenerateBinFiles = false;
+        public bool ElementAccess = false;
+        public bool MemberAccess = false;
     }
 }
