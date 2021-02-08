@@ -211,6 +211,7 @@ namespace Codelyzer.Analysis.CSharp
             if (!MetaDataSettings.ElementAccess) return null;
 
             var handler = new ElementAccessExpressionHandler(_context, node);
+            HandleReferences(((ElementAccess)handler.UstNode).Reference);
             return handler.UstNode;
         }
 
