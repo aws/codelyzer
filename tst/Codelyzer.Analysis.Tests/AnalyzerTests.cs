@@ -1,3 +1,4 @@
+using System;
 using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
@@ -188,6 +189,9 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(34, arguments.Count);
             Assert.AreEqual(39, memberAccess.Count);
 
+            var semanticMethodSignatures = methodDeclarations.Select(m => m.SemanticSignature);
+            Assert.True(semanticMethodSignatures.Any(m => string.Compare("public SampleWebApi.Controllers.HouseController.Create(SampleWebApi.Models.HouseDto)", m, StringComparison.InvariantCulture) == 0));
+
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(dllFiles.Count(), 16);
 
@@ -265,7 +269,7 @@ namespace Codelyzer.Analysis.Tests
 
             var declarationNodes = classDeclaration.AllDeclarationNodes();
             var methodDeclarations = classDeclaration.AllMethods();
-
+            
             var elementAccess = accountClassDeclaration.AllElementAccessExpressions();
             var memberAccess = accountClassDeclaration.AllMemberAccessExpressions();
 

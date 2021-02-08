@@ -52,6 +52,8 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                     SemanticModel.GetDeclaredSymbol(syntaxNode));
             if (methodSymbol == null) return;
             SemanticHelper.AddMethodProperties(methodSymbol, Model.SemanticProperties);
+
+            Model.SemanticSignature = SemanticHelper.GetSemanticMethodSignature(SemanticModel, syntaxNode);
         }
     }
 }

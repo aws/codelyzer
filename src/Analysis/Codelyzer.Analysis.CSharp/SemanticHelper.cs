@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -101,6 +102,19 @@ namespace Codelyzer.Analysis.CSharp
             Match match = Regex.Match(classNameWithNamespace, String.Format("{0}.(.*)", Regex.Escape(semanticNamespace)));
             return match.Success ? match.Groups[1].Value : classNameWithNamespace;
         }
-        
+
+        /// <summary>
+        /// Returns the semantic method signature of a method declaration (fully qualified method names and parameter types)
+        /// </summary>
+        /// <param name="semanticModel">Semantic model of syntax tree containing the method declaration</param>
+        /// <param name="syntaxNode">Method declaration node</param>
+        /// <returns>The semantic method signature</returns>
+        public static string GetSemanticMethodSignature(SemanticModel semanticModel, BaseMethodDeclarationSyntax syntaxNode)
+        {
+            var semanticMethodNameAndParameters = semanticModel.GetDeclaredSymbol(syntaxNode).ToString();
+            var joinedModifiers = string.Join(" ", syntaxNode.Modifiers.Select(m => m.ToString()));
+
+            return $"{joinedModifiers} {semanticMethodNameAndParameters}".Trim();
+        }
     }
 }
