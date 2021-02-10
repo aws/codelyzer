@@ -128,6 +128,10 @@ namespace Codelyzer.Analysis.CSharp
             ArrowExpressionClauseHandler handler = new ArrowExpressionClauseHandler(_context, node);
             return handler.UstNode;
         }
+        public override UstNode VisitExpressionStatement(ExpressionStatementSyntax node)
+        {
+            return base.VisitExpressionStatement(node);
+        }
         public override UstNode VisitLiteralExpression(LiteralExpressionSyntax node)
         {
             if (!MetaDataSettings.LiteralExpressions) return null;
