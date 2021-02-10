@@ -6,7 +6,7 @@ Closes: #ISSUE_NUMBER
 ## Description
 * Describe the changes in this pull request
 
-## Additional Testing
+## Supplemental testing
 Describe any testing done in addition to existing unit tests
 
 ## Additional context
