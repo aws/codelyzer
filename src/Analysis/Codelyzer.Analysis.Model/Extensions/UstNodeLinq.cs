@@ -113,6 +113,14 @@ namespace Codelyzer.Analysis.Model
         {
             return GetNodes<Argument>(node);
         }
+        public static UstList<ElementAccess> AllElementAccessExpressions(this UstNode node)
+        {
+            return GetNodes<ElementAccess>(node);
+        }
+        public static UstList<MemberAccess> AllMemberAccessExpressions(this UstNode node)
+        {
+            return GetNodes<MemberAccess>(node);
+        }
 
         private static UstList<T> GetNodes<T>(UstNode node) where T : UstNode
         {

@@ -32,8 +32,12 @@ namespace Codelyzer.Analysis
 
         [Option('d', "detailed-analysis", Required = false, HelpText = "Run detailed analysis that includes enums, structs, interfaces, annotations, and declaration nodes")]
         public string DetailedAnalysis { get; set; }
+
+        [Option('f', "analyze-failed", Required = false, HelpText = "Analyze projects that fail design build")]
+        public string AnalyzeFailed { get; set; }
+
     }
-    
+
     public class AnalyzerCLI
     {
         public bool Project;
@@ -104,12 +108,19 @@ namespace Codelyzer.Analysis
                         Configuration.MetaDataSettings.InterfaceDeclarations = result;
                         Configuration.MetaDataSettings.DeclarationNodes = result;
                         Configuration.MetaDataSettings.Annotations = result;
+                        Configuration.MetaDataSettings.ElementAccess = result;
+                        Configuration.MetaDataSettings.MemberAccess = result;
                     }
 
                     if (!string.IsNullOrEmpty(o.ConcurrentThreads))
                     {
                         int.TryParse(o.ConcurrentThreads, out int concurrentThreads);
                         Configuration.ConcurrentThreads = concurrentThreads > 0 ? concurrentThreads : Constants.DefaultConcurrentThreads;
+                    }
+
+                    if (!string.IsNullOrEmpty(o.AnalyzeFailed))
+                    {
+                        Configuration.AnalyzeFailedProjects = o.AnalyzeFailed.ToLower() == bool.TrueString.ToLower();
                     }
                 });
 

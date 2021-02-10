@@ -134,13 +134,17 @@ namespace Codelyzer.Analysis.Tests
                     ReferenceData = true,
                     InterfaceDeclarations = true,
                     GenerateBinFiles = true,
+                    LoadBuildData = true,
                     ReturnStatements = true,
-                    InvocationArguments = true
+                    InvocationArguments = true,
+                    ElementAccess = true,
+                    MemberAccess = true
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
             AnalyzerResult result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
             Assert.True(result != null);
+            Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
             //Project has 16 nuget references and 19 framework/dll references:
             Assert.AreEqual(16, result.ProjectResult.ExternalReferences.NugetReferences.Count);
@@ -167,11 +171,13 @@ namespace Codelyzer.Analysis.Tests
             var usingDirectives = houseController.AllUsingDirectives();
             var interfaces = ihouseRepository.AllInterfaces();
             var arguments = houseController.AllArguments();
+            var memberAccess = houseController.AllMemberAccessExpressions();
+
             Assert.AreEqual(7, blockStatements.Count);
             Assert.AreEqual(1, classDeclarations.Count);
-            Assert.AreEqual(89, expressionStatements.Count);
-            Assert.AreEqual(75, invocationExpressions.Count);
-            Assert.AreEqual(14, literalExpressions.Count);
+            Assert.AreEqual(62, expressionStatements.Count);
+            Assert.AreEqual(41, invocationExpressions.Count);
+            Assert.AreEqual(21, literalExpressions.Count);
             Assert.AreEqual(6, methodDeclarations.Count);
             Assert.AreEqual(16, returnStatements.Count);
             Assert.AreEqual(17, annotations.Count);
@@ -179,10 +185,30 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(0, objectCreationExpressions.Count);
             Assert.AreEqual(10, usingDirectives.Count);
             Assert.AreEqual(1, interfaces.Count);
-            Assert.AreEqual(63, arguments.Count);
+            Assert.AreEqual(34, arguments.Count);
+            Assert.AreEqual(39, memberAccess.Count);
 
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(dllFiles.Count(), 16);
+
+            await RunAgainWithChangedFile(solutionPath, result.ProjectBuildResult.ProjectPath, configuration, analyzer);
+        }
+
+        private async Task RunAgainWithChangedFile(string solutionPath, string projectPath, AnalyzerConfiguration configuration, CodeAnalyzer analyzer)
+        {
+            string projectFileContent = File.ReadAllText(projectPath);
+            //Change the target to an invalid target to replicate an invalid msbuild installation
+            File.WriteAllText(projectPath, projectFileContent.Replace(@"$(MSBuildBinPath)\Microsoft.CSharp.targets", @"InvalidTarget"));
+
+            //Try without setting the flag, result should be null:
+            AnalyzerResult result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
+            Assert.Null(result);
+
+            //Try with setting the flag, syntax tree should be returned
+            configuration.AnalyzeFailedProjects = true;
+            result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
+            Assert.NotNull(result);
+            Assert.True(result.ProjectBuildResult.IsSyntaxAnalysis);
         }
 
         [Test]
@@ -206,12 +232,16 @@ namespace Codelyzer.Analysis.Tests
                     Annotations = true,
                     DeclarationNodes = true,
                     LocationData = false,
-                    ReferenceData = true
+                    ReferenceData = true,
+                    LoadBuildData = true,
+                    ElementAccess = true,
+                    MemberAccess = true
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
             using var result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
             Assert.True(result != null);
+            Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
             Assert.AreEqual(28, result.ProjectResult.SourceFiles.Count);
 
@@ -220,22 +250,33 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(24, result.ProjectResult.ExternalReferences.SdkReferences.Count);
 
             var homeController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.cs")).FirstOrDefault();
+            var accountController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("AccountController.cs")).FirstOrDefault();
             Assert.NotNull(homeController);
+            Assert.NotNull(accountController);
 
             var classDeclarations = homeController.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault();
             Assert.Greater(classDeclarations.Children.Count, 0);
 
+            var accountClassDeclaration = accountController.Children.OfType<NamespaceDeclaration>().FirstOrDefault();
+            Assert.NotNull(accountClassDeclaration);
+
             var classDeclaration = homeController.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault().Children[0];
             Assert.NotNull(classDeclaration);
 
-            var declarationNodes = classDeclaration.Children.OfType<Codelyzer.Analysis.Model.DeclarationNode>();
-            var methodDeclarations = classDeclaration.Children.OfType<Model.MethodDeclaration>();
+            var declarationNodes = classDeclaration.AllDeclarationNodes();
+            var methodDeclarations = classDeclaration.AllMethods();
+
+            var elementAccess = accountClassDeclaration.AllElementAccessExpressions();
+            var memberAccess = accountClassDeclaration.AllMemberAccessExpressions();
 
             //HouseController has 3 identifiers declared within the class declaration:
             Assert.AreEqual(4, declarationNodes.Count());
 
             //It has 2 method declarations
             Assert.AreEqual(2, methodDeclarations.Count());
+
+            Assert.AreEqual(2, elementAccess.Count());
+            Assert.AreEqual(149, memberAccess.Count());
         }
 
         [Test]
@@ -265,6 +306,7 @@ namespace Codelyzer.Analysis.Tests
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
             AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
+            Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
             Assert.True(result != null);
 
@@ -309,6 +351,7 @@ namespace Codelyzer.Analysis.Tests
                     EnumDeclarations = true,
                     StructDeclarations = true,
                     InterfaceDeclarations = true,
+                    ElementAccess = true,
                     LambdaMethods = true,
                     InvocationArguments = true
                 }
@@ -320,10 +363,12 @@ namespace Codelyzer.Analysis.Tests
             var enumDeclarations = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllEnumDeclarations().Count > 0).Sum(s => s.AllEnumDeclarations().Count));
             var structDeclarations = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllStructDeclarations().Count > 0).Sum(s => s.AllStructDeclarations().Count));
             var arrowClauseStatements = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllArrowExpressionClauses().Count > 0).Sum(s => s.AllArrowExpressionClauses().Count));
-
+            var elementAccessStatements = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllElementAccessExpressions().Count > 0).Sum(s => s.AllElementAccessExpressions().Count));
+            
             Assert.AreEqual(80, enumDeclarations);
             Assert.AreEqual(1, structDeclarations);
-            Assert.AreEqual(2, arrowClauseStatements);
+            Assert.AreEqual(1216, arrowClauseStatements);
+            Assert.AreEqual(742, elementAccessStatements);
 
             var project = "Nop.Web";
             var file = @"Admin\Controllers\VendorController.cs";
