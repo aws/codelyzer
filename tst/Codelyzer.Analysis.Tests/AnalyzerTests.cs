@@ -165,6 +165,7 @@ namespace Codelyzer.Analysis.Tests
             var invocationExpressions = houseController.AllInvocationExpressions();
             var literalExpressions = houseController.AllLiterals();
             var methodDeclarations = houseController.AllMethods();
+            var constructorDeclarations = houseController.AllConstructors();
             var returnStatements = houseController.AllReturnStatements();
             var annotations = houseController.AllAnnotations();
             var namespaceDeclarations = houseController.AllNamespaces();
@@ -190,7 +191,16 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(39, memberAccess.Count);
 
             var semanticMethodSignatures = methodDeclarations.Select(m => m.SemanticSignature);
-            Assert.True(semanticMethodSignatures.Any(m => string.Compare("public SampleWebApi.Controllers.HouseController.Create(SampleWebApi.Models.HouseDto)", m, StringComparison.InvariantCulture) == 0));
+            Assert.True(semanticMethodSignatures.Any(methodSignature => string.Compare(
+                "public SampleWebApi.Controllers.HouseController.Create(SampleWebApi.Models.HouseDto)",
+                methodSignature,
+                StringComparison.InvariantCulture) == 0));
+
+            var semanticConstructorSignatures = constructorDeclarations.Select(c => c.SemanticSignature);
+            Assert.True(semanticConstructorSignatures.Any(constructorSignature => string.Compare(
+                "public SampleWebApi.Controllers.HouseController.HouseController(SampleWebApi.Repositories.IHouseRepository, SampleWebApi.Services.IHouseMapper)", 
+                constructorSignature, 
+                StringComparison.InvariantCulture) == 0));
 
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(dllFiles.Count(), 16);
