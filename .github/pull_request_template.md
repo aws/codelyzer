@@ -1,6 +1,6 @@
 ## Related issue
 
-Closes: #ISSUE_NUMBER
+Closes: #ISSUE_NUMBER_HERE
 
 
 ## Description
