@@ -14,6 +14,9 @@ namespace Codelyzer.Analysis.Model
         [JsonProperty("semantic-properties", Order = 14)]
         public UstList<string> SemanticProperties { get; set; }
 
+        [JsonProperty("semantic-signature", Order = 30)]
+        public string SemanticSignature { get; set; }
+
         protected BaseMethodDeclaration(string idName)
             : base(idName)
         {

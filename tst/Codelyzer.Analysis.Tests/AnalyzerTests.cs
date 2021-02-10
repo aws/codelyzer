@@ -1,3 +1,4 @@
+using System;
 using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
@@ -164,6 +165,7 @@ namespace Codelyzer.Analysis.Tests
             var invocationExpressions = houseController.AllInvocationExpressions();
             var literalExpressions = houseController.AllLiterals();
             var methodDeclarations = houseController.AllMethods();
+            var constructorDeclarations = houseController.AllConstructors();
             var returnStatements = houseController.AllReturnStatements();
             var annotations = houseController.AllAnnotations();
             var namespaceDeclarations = houseController.AllNamespaces();
@@ -187,6 +189,18 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(1, interfaces.Count);
             Assert.AreEqual(34, arguments.Count);
             Assert.AreEqual(39, memberAccess.Count);
+
+            var semanticMethodSignatures = methodDeclarations.Select(m => m.SemanticSignature);
+            Assert.True(semanticMethodSignatures.Any(methodSignature => string.Compare(
+                "public SampleWebApi.Controllers.HouseController.Create(SampleWebApi.Models.HouseDto)",
+                methodSignature,
+                StringComparison.InvariantCulture) == 0));
+
+            var semanticConstructorSignatures = constructorDeclarations.Select(c => c.SemanticSignature);
+            Assert.True(semanticConstructorSignatures.Any(constructorSignature => string.Compare(
+                "public SampleWebApi.Controllers.HouseController.HouseController(SampleWebApi.Repositories.IHouseRepository, SampleWebApi.Services.IHouseMapper)", 
+                constructorSignature, 
+                StringComparison.InvariantCulture) == 0));
 
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(dllFiles.Count(), 16);
@@ -265,7 +279,7 @@ namespace Codelyzer.Analysis.Tests
 
             var declarationNodes = classDeclaration.AllDeclarationNodes();
             var methodDeclarations = classDeclaration.AllMethods();
-
+            
             var elementAccess = accountClassDeclaration.AllElementAccessExpressions();
             var memberAccess = accountClassDeclaration.AllMemberAccessExpressions();
 
