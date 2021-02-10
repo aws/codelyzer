@@ -223,6 +223,21 @@ namespace Codelyzer.Analysis.CSharp
             return handler.UstNode;
         }
 
+        public override UstNode VisitSimpleLambdaExpression(SimpleLambdaExpressionSyntax node)
+        {
+            if (!MetaDataSettings.LambdaMethods) return null;
+
+            var handler = new SimpleLambdaExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitParenthesizedLambdaExpression(ParenthesizedLambdaExpressionSyntax node)
+        {
+            if (!MetaDataSettings.LambdaMethods) return null;
+
+            var handler = new ParenthesizedLambdaExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
 
         private void HandleReferences(in Reference reference)
         {
