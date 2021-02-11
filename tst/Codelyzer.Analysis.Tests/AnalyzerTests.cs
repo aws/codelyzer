@@ -392,9 +392,9 @@ namespace Codelyzer.Analysis.Tests
                 .AllParenthesizedLambdaExpressions();
             allLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
                 .AllLambdaExpressions();
-            Assert.AreEqual(9, simpleLambdas.Count);
+            Assert.AreEqual(5, simpleLambdas.Count);
             Assert.AreEqual(3, parenthesizedLambdas.Count);
-            Assert.AreEqual(12, allLambdas.Count);
+            Assert.AreEqual(8, allLambdas.Count);
 
             project = "Nop.Services";
             file = "CustomerService.cs";
@@ -407,12 +407,11 @@ namespace Codelyzer.Analysis.Tests
                 .AllLambdaExpressions();
             var parenLambdasNoParameters = parenthesizedLambdas.Where(l => l.Parameters.Count == 0);
             var parenLambdas2Parameters = parenthesizedLambdas.Where(l => l.Parameters.Count == 2);
-            Assert.AreEqual(138, simpleLambdas.Count);
-            Assert.AreEqual(26, parenthesizedLambdas.Count);
+            Assert.AreEqual(88, simpleLambdas.Count);
+            Assert.AreEqual(17, parenthesizedLambdas.Count);
+            Assert.AreEqual(105, allLambdas.Count);
             Assert.AreEqual(8, parenLambdasNoParameters.Count());
-            Assert.AreEqual(18, parenLambdas2Parameters.Count());
-            Assert.AreEqual(164, allLambdas.Count);
-
+            Assert.AreEqual(9, parenLambdas2Parameters.Count());
             results.ForEach(r => r.Dispose());
         }
 
