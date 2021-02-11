@@ -2,8 +2,11 @@ using Newtonsoft.Json;
 
 namespace Codelyzer.Analysis.Model
 {
-    public class LambdaExpression : UstNode
+    public abstract class LambdaExpression : UstNode
     {
+        [JsonProperty("lambda-type", Order = 1)]
+        public abstract string LambdaType { get; }
+
         [JsonProperty("return-type", Order = 20)]
         public string ReturnType { get; set; }
 

@@ -4,11 +4,14 @@ namespace Codelyzer.Analysis.Model
 {
     public class SimpleLambdaExpression : LambdaExpression
     {
+        [JsonProperty("lambda-type", Order = 1)]
+        public override string LambdaType => IdConstants.SimpleLambdaExpressionIdName;
+
         [JsonProperty("parameter", Order = 10)]
         public Parameter Parameter { get; set; }
 
         public SimpleLambdaExpression()
-            : base(IdConstants.SimpleLambdaExpressionIdName)
+            : base(IdConstants.LambdaExpressionIdName)
         {
         }
     }
