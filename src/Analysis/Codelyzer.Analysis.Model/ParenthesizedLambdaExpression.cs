@@ -5,7 +5,7 @@ namespace Codelyzer.Analysis.Model
 {
     public class ParenthesizedLambdaExpression : LambdaExpression
     {
-        [JsonProperty("lambda-type", Order = 1)]
+        [JsonProperty("lambda-type", Order = 2)]
         public override string LambdaType => IdConstants.ParenthesizedLambdaExpressionIdName;
 
         [JsonProperty("parameters", Order = 10)]
