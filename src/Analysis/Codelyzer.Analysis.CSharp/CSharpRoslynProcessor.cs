@@ -17,7 +17,7 @@ namespace Codelyzer.Analysis.CSharp
     /// </summary>
     public class CSharpRoslynProcessor : CSharpSyntaxVisitor<UstNode>, IDisposable
     {
-        private CodeContext _context;
+        private readonly CodeContext _context;
         protected SemanticModel SemanticModel { get => _context.SemanticModel; }
         protected SyntaxTree SyntaxTree { get => _context.SyntaxTree; }
         protected ILogger Logger { get => _context.Logger; }
@@ -223,6 +223,21 @@ namespace Codelyzer.Analysis.CSharp
             return handler.UstNode;
         }
 
+        public override UstNode VisitSimpleLambdaExpression(SimpleLambdaExpressionSyntax node)
+        {
+            if (!MetaDataSettings.LambdaMethods) return null;
+
+            var handler = new SimpleLambdaExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitParenthesizedLambdaExpression(ParenthesizedLambdaExpressionSyntax node)
+        {
+            if (!MetaDataSettings.LambdaMethods) return null;
+
+            var handler = new ParenthesizedLambdaExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
 
         private void HandleReferences(in Reference reference)
         {
