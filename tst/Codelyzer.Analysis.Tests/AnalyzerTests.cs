@@ -202,6 +202,9 @@ namespace Codelyzer.Analysis.Tests
                 constructorSignature, 
                 StringComparison.InvariantCulture) == 0));
 
+            var houseControllerClass = classDeclarations.First(c => c.Identifier == "HouseController");
+            Assert.AreEqual("public", houseControllerClass.Modifiers);
+
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(dllFiles.Count(), 16);
 
