@@ -10,6 +10,9 @@ namespace Codelyzer.Analysis.Model
         [JsonProperty("base-type-original-def", Order = 11)]
         public string BaseTypeOriginalDefinition { get; set; }
 
+        [JsonProperty("modifiers", Order = 20)]
+        public string Modifiers { get; set; }
+
         [JsonProperty("references", Order = 99)]
         public Reference Reference { get; set; }
         public string SemanticAssembly { get; set; }

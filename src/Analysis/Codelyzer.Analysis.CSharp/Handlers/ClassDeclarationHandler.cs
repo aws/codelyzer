@@ -16,6 +16,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             var classSymbol = SemanticModel.GetDeclaredSymbol(syntaxNode);
 
             ClassDeclaration.Identifier = syntaxNode.Identifier.ToString();
+            ClassDeclaration.Modifiers = syntaxNode.Modifiers.ToString();
 
             if (classSymbol != null && classSymbol.BaseType != null)
             {
