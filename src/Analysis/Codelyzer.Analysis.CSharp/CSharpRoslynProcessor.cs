@@ -167,6 +167,13 @@ namespace Codelyzer.Analysis.CSharp
             HandleReferences(((Annotation)handler.UstNode).Reference);
             return handler.UstNode;
         }
+        public override UstNode VisitAttributeArgument(AttributeArgumentSyntax node)
+        {
+            if (!MetaDataSettings.Annotations) return null;
+
+            AttributeArgumentHandler handler = new AttributeArgumentHandler(_context, node);
+            return handler.UstNode;
+        }
         public override UstNode VisitIdentifierName(IdentifierNameSyntax node)
         {
             if (MetaDataSettings.DeclarationNodes)
