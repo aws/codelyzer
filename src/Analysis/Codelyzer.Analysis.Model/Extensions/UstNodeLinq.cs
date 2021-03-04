@@ -7,6 +7,11 @@ namespace Codelyzer.Analysis.Model
             return GetNodes<Annotation>(node);
         }
 
+        public static UstList<AttributeArgument> AllAttributeArguments(this UstNode node)
+        {
+            return GetNodes<AttributeArgument>(node);
+        }
+
         public static UstList<BlockStatement> AllBlockStatements(this UstNode node)
         {
             return GetNodes<BlockStatement>(node);
