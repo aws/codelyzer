@@ -268,8 +268,10 @@ namespace Codelyzer.Analysis.Tests
 
             var homeController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.cs")).FirstOrDefault();
             var accountController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("AccountController.cs")).FirstOrDefault();
+            var storeManagerController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("StoreManagerController.cs")).FirstOrDefault();
             Assert.NotNull(homeController);
             Assert.NotNull(accountController);
+            Assert.NotNull(storeManagerController);
 
             var classDeclarations = homeController.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault();
             Assert.Greater(classDeclarations.Children.Count, 0);
@@ -299,6 +301,16 @@ namespace Codelyzer.Analysis.Tests
             {
                 Assert.AreEqual(accountController, child.Parent);
             }
+
+            var authorizeAttribute = storeManagerController.AllAnnotations().First(a => a.Identifier == "Authorize");
+            var authorizeAttributeArgument = authorizeAttribute.AllAttributeArguments().First();
+            Assert.AreEqual("Roles",authorizeAttributeArgument.ArgumentName);
+            Assert.AreEqual("\"Administrator\"",authorizeAttributeArgument.ArgumentExpression);
+
+            var actionNameAttribute = storeManagerController.AllAnnotations().First(a => a.Identifier == "ActionName");
+            var actionNameAttributeArgument = actionNameAttribute.AllAttributeArguments().First();
+            Assert.IsNull(actionNameAttributeArgument.ArgumentName);
+            Assert.AreEqual("\"Delete\"", actionNameAttributeArgument.ArgumentExpression);
         }
 
         [Test]
