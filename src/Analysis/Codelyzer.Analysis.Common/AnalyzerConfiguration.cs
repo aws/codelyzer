@@ -52,5 +52,6 @@ namespace Codelyzer.Analysis
         public bool GenerateBinFiles = false;
         public bool ElementAccess = false;
         public bool MemberAccess = false;
+        public bool AssignmentExpressions = false;
     }
 }
