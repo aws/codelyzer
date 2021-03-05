@@ -40,6 +40,8 @@ namespace Codelyzer.Analysis.Model
 
         public const string AnnotationIdName = "annotation";
 
+        public const string AttributeArgumentIdName = "attribute-argument";
+
         public const string ConstructorIdName = "constructor";
 
         public const string EnumIdName = "enum";
