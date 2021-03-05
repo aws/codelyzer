@@ -294,6 +294,11 @@ namespace Codelyzer.Analysis.Tests
 
             Assert.AreEqual(2, elementAccess.Count());
             Assert.AreEqual(149, memberAccess.Count());
+
+            foreach (var child in accountController.Children)
+            {
+                Assert.AreEqual(accountController, child.Parent);
+            }
         }
 
         [Test]
