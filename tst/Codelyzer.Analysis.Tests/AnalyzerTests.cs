@@ -252,7 +252,8 @@ namespace Codelyzer.Analysis.Tests
                     ReferenceData = true,
                     LoadBuildData = true,
                     ElementAccess = true,
-                    MemberAccess = true
+                    MemberAccess = true,
+                    AssignmentExpressions = true
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
@@ -306,6 +307,13 @@ namespace Codelyzer.Analysis.Tests
             var actionNameAttributeArgument = actionNameAttribute.AllAttributeArguments().First();
             Assert.IsNull(actionNameAttributeArgument.ArgumentName);
             Assert.AreEqual("\"Delete\"", actionNameAttributeArgument.ArgumentExpression);
+            
+            var assignmentExpressions = storeManagerController.AllAssignmentExpressions();
+            var assignmentExpression = assignmentExpressions.First(e => e.Identifier == "ViewBag.GenreId = new SelectList(db.Genres, \"GenreId\", \"Name\")");
+            Assert.AreEqual(9, assignmentExpressions.Count);
+            Assert.AreEqual("ViewBag.GenreId", assignmentExpression.Left);
+            Assert.AreEqual("new SelectList(db.Genres, \"GenreId\", \"Name\")", assignmentExpression.Right);
+            Assert.AreEqual("=", assignmentExpression.Operator);
         }
 
         [Test]

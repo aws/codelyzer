@@ -139,7 +139,6 @@ namespace Codelyzer.Analysis.CSharp
             LiteralExpressionHandler handler = new LiteralExpressionHandler(_context, node);
             return handler.UstNode;
         }
-
         public override UstNode VisitAssignmentExpression(AssignmentExpressionSyntax node)
         {
             if (!MetaDataSettings.AssignmentExpressions) return null;
