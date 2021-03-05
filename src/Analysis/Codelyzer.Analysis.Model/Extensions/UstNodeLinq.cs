@@ -54,6 +54,11 @@ namespace Codelyzer.Analysis.Model
             return GetNodes<LiteralExpression>(node);
         }
 
+        public static UstList<AssignmentExpression> AllAssignmentExpressions(this UstNode node)
+        {
+            return GetNodes<AssignmentExpression>(node);
+        }
+
         public static UstList<MethodDeclaration> AllMethods(this UstNode node)
         {
             return GetNodes<MethodDeclaration>(node);
