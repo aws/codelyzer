@@ -1,8 +1,9 @@
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Codelyzer.Analysis.CSharp
 {
@@ -18,13 +19,19 @@ namespace Codelyzer.Analysis.CSharp
         /// <param name="semanticModel">An instance of the semantic model</param>
         /// <returns>Name of the type</returns>
         public static string GetSemanticType(TypeSyntax typeSyntax, 
-            SemanticModel semanticModel)
+            SemanticModel semanticModel,
+            SemanticModel preportSemanticModel = null)
         {
-            if (semanticModel == null) return null;
+            if (semanticModel == null && preportSemanticModel == null) return null;
             
             string type = null;
 
             var typeInfo = semanticModel.GetTypeInfo(typeSyntax);
+            if(typeInfo.Type == null && preportSemanticModel != null)
+            {
+                typeInfo = preportSemanticModel.GetTypeInfo(typeSyntax);
+            }
+
             if (typeInfo.Type != null)
             {
                 type = typeInfo.Type.Name;
@@ -40,19 +47,55 @@ namespace Codelyzer.Analysis.CSharp
         /// <param name="semanticModel">An instance of the semantic model</param>
         /// <returns>Name of the type</returns>
         public static string GetSemanticType(ExpressionSyntax expressionSyntax, 
-            SemanticModel semanticModel)
+            SemanticModel semanticModel,
+            SemanticModel preportSemanticModel = null)
         {
-            if (semanticModel == null) return null;
+            if (semanticModel == null && preportSemanticModel == null) return null;
             
             string type = null;
 
             var typeInfo = semanticModel.GetTypeInfo(expressionSyntax);
+            if (typeInfo.Type == null && preportSemanticModel != null)
+            {
+                typeInfo = preportSemanticModel.GetTypeInfo(expressionSyntax);
+            }
+
             if (typeInfo.Type != null)
             {
                 type = typeInfo.Type.Name;
             }
 
             return type;
+        }
+
+        public static ISymbol GetSemanticSymbol(SyntaxNode syntaxNode,
+            SemanticModel semanticModel,
+            SemanticModel preportSemanticModel = null)
+        {
+            if (semanticModel == null && preportSemanticModel == null) return null;
+
+            var symbol = semanticModel.GetSymbolInfo(syntaxNode).Symbol;
+            if (symbol == null && preportSemanticModel != null)
+            {
+                symbol = preportSemanticModel.GetSymbolInfo(syntaxNode).Symbol;
+            }
+
+            return symbol;
+        }
+
+        public static INamedTypeSymbol GetDeclaredSymbol(SyntaxNode syntaxNode,
+            SemanticModel semanticModel,
+            SemanticModel preportSemanticModel = null)
+        {
+            if (semanticModel == null && preportSemanticModel == null) return null;
+
+            var symbol = semanticModel.GetDeclaredSymbol(syntaxNode) as INamedTypeSymbol;
+            if (symbol == null && preportSemanticModel != null)
+            {
+                symbol = preportSemanticModel.GetDeclaredSymbol(syntaxNode) as INamedTypeSymbol;
+            }
+
+            return symbol;
         }
 
         /// <summary>
@@ -62,13 +105,19 @@ namespace Codelyzer.Analysis.CSharp
         /// <param name="semanticModel">An instance of the semantic model</param>
         /// <returns>Name of the type</returns>
         public static string GetSemanticType(IdentifierNameSyntax identifierNameSyntax,
-          SemanticModel semanticModel)
+          SemanticModel semanticModel,
+          SemanticModel preportSemanticModel)
         {
-            if (semanticModel == null) return null;
+            if (semanticModel == null && preportSemanticModel == null) return null;
 
             string type = null;
             
-            var typeInfo = semanticModel.GetTypeInfo(identifierNameSyntax);
+            var typeInfo = semanticModel.GetTypeInfo(identifierNameSyntax); 
+            if (typeInfo.Type == null && preportSemanticModel != null)
+            {
+                typeInfo = preportSemanticModel.GetTypeInfo(identifierNameSyntax);
+            }
+
             if (typeInfo.Type != null)
             {
                 type = typeInfo.Type.Name;

@@ -17,11 +17,12 @@ using System.Xml.Linq;
 using System.Xml;
 
 namespace Codelyzer.Analysis.Build
-{    
+{
     public class ProjectBuildHandler : IDisposable
     {
         private Project Project;
         private Compilation Compilation;
+        private Compilation PrePortCompilation;
         private List<string> Errors { get; set; }
         private ILogger Logger;
         private readonly AnalyzerConfiguration _analyzerConfiguration;
@@ -31,10 +32,66 @@ namespace Codelyzer.Analysis.Build
 
         private const string syntaxAnalysisError = "Build Errors: Encountered an unknown build issue. Falling back to syntax analysis";
 
+        private List<PortableExecutableReference> LoadMetadataReferences()
+        {
+            XDocument projectFile = null;
+            var references = new List<PortableExecutableReference>();
+
+            try
+            {
+                projectFile = XDocument.Load(Project.FilePath);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error loading project file");
+            }   
+
+            if (projectFile != null)
+            {
+                var portingNode = projectFile.Descendants().FirstOrDefault(d => d.Name.LocalName == "ItemGroup"
+                && d.FirstAttribute?.Name == "Label" && d.FirstAttribute?.Value == "PortingInfo");
+
+                var fileReferences = portingNode?.FirstNode?.ToString()
+                    .Split(new string[] { Environment.NewLine, "\t", "\\t" }, StringSplitOptions.RemoveEmptyEntries)?
+                    .Where(s => !(s.Contains("<!-") || s.Contains("-->"))).ToList();
+
+                if (fileReferences != null)
+                {
+                    fileReferences.ForEach(fileRef =>
+                    {
+                        try
+                        {
+                            references.Add(MetadataReference.CreateFromFile(fileRef));
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.LogError(ex, "Error while parsing metadata file");
+                        }
+
+                    });
+                }
+            }
+
+            return references;
+        }
+
+        private async Task<Compilation> SetPrePortCompilation()
+        {
+            var preportReferences = LoadMetadataReferences();
+            if (preportReferences.Count > 0)
+            {
+                var preportProject = Project.WithMetadataReferences(preportReferences);
+                return await preportProject.GetCompilationAsync();
+            }
+
+            return null;
+        }
 
         private async Task SetCompilation()
         {
+            PrePortCompilation = await SetPrePortCompilation();
             Compilation = await Project.GetCompilationAsync();
+
             var errors = Compilation.GetDiagnostics()
                 .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
             if (errors.Any())
@@ -178,6 +235,15 @@ namespace Codelyzer.Analysis.Build
             this.Project = project.WithCompilationOptions(options);
             Errors = new List<string>();
         }
+        public ProjectBuildHandler(ILogger logger, Project project, Compilation compilation, Compilation preportCompilation, AnalyzerConfiguration analyzerConfiguration = null)
+        {
+            Logger = logger;
+            _analyzerConfiguration = analyzerConfiguration;
+            this.Project = project;
+            this.Compilation = compilation;
+            this.PrePortCompilation = preportCompilation;
+            Errors = new List<string>();
+        }
         public async Task<ProjectBuildResult> Build()
         {
             await SetCompilation();
@@ -188,6 +254,7 @@ namespace Codelyzer.Analysis.Build
                 ProjectRootPath = Path.GetDirectoryName(Project.FilePath),
                 Project = Project,
                 Compilation = Compilation,
+                PrePortCompilation = PrePortCompilation,
                 IsSyntaxAnalysis = isSyntaxAnalysis
             };
 
@@ -201,6 +268,7 @@ namespace Codelyzer.Analysis.Build
                 var fileResult = new SourceFileBuildResult
                 {
                     SyntaxTree = syntaxTree,
+                    PrePortSemanticModel = PrePortCompilation?.GetSemanticModel(PrePortCompilation.SyntaxTrees.FirstOrDefault(s=>s.FilePath == syntaxTree.FilePath)),
                     SemanticModel = Compilation.GetSemanticModel(syntaxTree),
                     SourceFileFullPath = syntaxTree.FilePath,
                     SyntaxGenerator = SyntaxGenerator.GetGenerator(Project),
@@ -214,6 +282,42 @@ namespace Codelyzer.Analysis.Build
             {
                 projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult);
             }
+
+            return projectBuildResult;
+        }
+
+        public async Task<ProjectBuildResult> IncrementalBuild(string filePath, ProjectBuildResult projectBuildResult)
+        {
+            await Task.Run(() =>
+            {
+                var fileContents = File.ReadAllText(filePath);
+                var updatedTree = CSharpSyntaxTree.ParseText(SourceText.From(fileContents), path: filePath);
+
+                var syntaxTree = Compilation.SyntaxTrees.FirstOrDefault(syntaxTree => syntaxTree.FilePath == filePath);
+                var preportSyntaxTree = Compilation.SyntaxTrees.FirstOrDefault(syntaxTree => syntaxTree.FilePath == filePath);
+
+                Compilation = Compilation.RemoveSyntaxTrees(syntaxTree).AddSyntaxTrees(updatedTree);
+                PrePortCompilation = PrePortCompilation?.RemoveSyntaxTrees(preportSyntaxTree).AddSyntaxTrees(updatedTree);
+
+                var oldSourceFileBuildResult = projectBuildResult.SourceFileBuildResults.FirstOrDefault(sourceFile => sourceFile.SourceFileFullPath == filePath);
+                projectBuildResult.SourceFileBuildResults.Remove(oldSourceFileBuildResult);
+
+                var sourceFilePath = Path.GetRelativePath(projectBuildResult.ProjectRootPath, filePath);
+                var fileResult = new SourceFileBuildResult
+                {
+                    SyntaxTree = updatedTree,
+                    PrePortSemanticModel = PrePortCompilation?.GetSemanticModel(PrePortCompilation.SyntaxTrees.FirstOrDefault(s => s.FilePath == preportSyntaxTree.FilePath)),
+                    SemanticModel = Compilation.GetSemanticModel(updatedTree),
+                    SourceFileFullPath = syntaxTree.FilePath,
+                    SyntaxGenerator = SyntaxGenerator.GetGenerator(Project),
+                    SourceFilePath = sourceFilePath
+                };
+
+                projectBuildResult.SourceFileBuildResults.Add(fileResult);
+                projectBuildResult.Compilation = Compilation;
+                projectBuildResult.PrePortCompilation = PrePortCompilation;
+            });
+
 
             return projectBuildResult;
         }

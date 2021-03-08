@@ -13,7 +13,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             ClassDeclarationSyntax syntaxNode)
             : base(context, syntaxNode, new ClassDeclaration())
         {
-            var classSymbol = SemanticModel.GetDeclaredSymbol(syntaxNode);
+            var classSymbol = SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
 
             ClassDeclaration.Identifier = syntaxNode.Identifier.ToString();
 

@@ -18,7 +18,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             Model.Name = syntaxNode.Name?.ToString();
             Model.Expression = syntaxNode.Expression?.ToString();
 
-            var invokedSymbol = SemanticModel.GetSymbolInfo(syntaxNode).Symbol;
+            var invokedSymbol = SemanticHelper.GetSemanticSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
 
             if (invokedSymbol != null)
             {

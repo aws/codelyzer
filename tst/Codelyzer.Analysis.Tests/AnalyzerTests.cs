@@ -251,6 +251,7 @@ namespace Codelyzer.Analysis.Tests
 
             var homeController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.cs")).FirstOrDefault();
             var accountController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("AccountController.cs")).FirstOrDefault();
+            
             Assert.NotNull(homeController);
             Assert.NotNull(accountController);
 
@@ -277,6 +278,88 @@ namespace Codelyzer.Analysis.Tests
 
             Assert.AreEqual(2, elementAccess.Count());
             Assert.AreEqual(149, memberAccess.Count());
+
+            await TestMvcMusicStoreIncrementalBuild(analyzer, result, accountController);
+        }
+
+        private async Task TestMvcMusicStoreIncrementalBuild(CodeAnalyzer analyzer, AnalyzerResult result, RootUstNode accountController)
+        {
+            File.WriteAllText(accountController.FileFullPath, @"using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using System.Web.Security;
+using Mvc3ToolsUpdateWeb_Default.Models;
+using MvcMusicStore.Models;
+
+namespace Mvc3ToolsUpdateWeb_Default.Controllers
+{
+    public class AccountController : Controller
+    {
+        private void MigrateShoppingCart(string UserName)
+        {
+            // Associate shopping cart items with logged-in user
+            var cart = ShoppingCart.GetCart(this.HttpContext);
+            cart.MigrateCart(UserName);
+            Session[ShoppingCart.CartSessionKey] = UserName;
+        }
+
+        
+        // GET: /Account/ChangePassword
+        [Authorize]
+        public ActionResult ChangePassword()
+        {
+            return View();
+        }
+
+        //
+        // POST: /Account/ChangePassword
+        [Authorize]
+        [HttpPost]
+        public ActionResult ChangePassword(ChangePasswordModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                // ChangePassword will throw an exception rather
+                // than return false in certain failure scenarios.
+                bool changePasswordSucceeded;
+                try
+                {
+                    MembershipUser currentUser = Membership.GetUser(User.Identity.Name, true /* userIsOnline */);
+                    changePasswordSucceeded = currentUser.ChangePassword(model.OldPassword, model.NewPassword);
+                }
+                catch (Exception)
+                {
+                    changePasswordSucceeded = false;
+                }
+
+                if (changePasswordSucceeded)
+                {
+                    return RedirectToAction(""ChangePasswordSuccess"");
+                }
+                else
+                {
+                    ModelState.AddModelError("""", ""The current password is incorrect or the new password is invalid."");
+                }
+            }
+
+            // If we got this far, something failed, redisplay form
+            return View(model);
+        }
+    }
+}");
+
+            result = await analyzer.AnalyzeFile(accountController.FileFullPath, result);
+
+            var updatedSourcefile = result.ProjectResult.SourceFileResults.FirstOrDefault(s => s.FileFullPath.Contains("AccountController.cs"));
+            Assert.NotNull(updatedSourcefile);
+
+            var updatedobjectCreations = updatedSourcefile.AllObjectCreationExpressions();
+
+            Assert.AreEqual(3, updatedSourcefile.AllMethods().Count);
+            Assert.AreEqual(5, updatedSourcefile.AllLiterals().Count);
+            Assert.AreEqual(5, updatedSourcefile.AllDeclarationNodes().Count);
         }
 
         [Test]

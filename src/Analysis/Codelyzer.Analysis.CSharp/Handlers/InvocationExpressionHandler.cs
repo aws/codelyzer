@@ -21,7 +21,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
         {
             // Set method name and expression (classname)
             // context.Logger.Debug(syntaxNode.ToString());
-
+            
             if (syntaxNode.Expression is MemberAccessExpressionSyntax)
             {
                 //Object or Class invocations
@@ -58,8 +58,8 @@ namespace Codelyzer.Analysis.CSharp.Handlers
 
             if (SemanticModel == null) return;
 
-            IMethodSymbol invokedSymbol =
-                ((IMethodSymbol)SemanticModel.GetSymbolInfo(syntaxNode).Symbol);
+            IMethodSymbol invokedSymbol = (IMethodSymbol)SemanticHelper.GetSemanticSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
+
             if (invokedSymbol == null) return;
 
             //Set semantic details
@@ -80,6 +80,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 Model.SemanticClassType = Model.SemanticNamespace == null ? classNameWithNamespace :
                     SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.SemanticNamespace);
             }
+
 
             Model.Reference.Namespace = GetNamespace(invokedSymbol);
             Model.Reference.Assembly = GetAssembly(invokedSymbol);

@@ -6,13 +6,15 @@ namespace Codelyzer.Analysis.Common
 {
     public class CodeContext : IDisposable
     {
-        public CodeContext(SemanticModel semanticModel, 
+        public CodeContext(SemanticModel preportSemanticModel,
+            SemanticModel semanticModel, 
             SyntaxTree syntaxTree,
             string workspacePath,
             string sourceFilePath,
             AnalyzerConfiguration analyzerConfiguration,
             ILogger logger)
         {
+            PreportSemanticModel = preportSemanticModel;
             SemanticModel = semanticModel;
             SyntaxTree = syntaxTree;
             WorkspacePath = workspacePath;
@@ -20,7 +22,7 @@ namespace Codelyzer.Analysis.Common
             SourceFilePath = sourceFilePath;
             Logger = logger;
         }
-
+        public SemanticModel PreportSemanticModel { get; private set; }
         public SemanticModel SemanticModel { get; private set; }
         public SyntaxTree SyntaxTree { get; private set; }
         

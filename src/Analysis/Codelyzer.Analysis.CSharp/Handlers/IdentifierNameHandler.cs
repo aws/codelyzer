@@ -25,14 +25,14 @@ namespace Codelyzer.Analysis.CSharp.Handlers
         {
             if (identifierNameTypes.Contains(syntaxNode.Parent?.GetType()))
             {
-                var type = SemanticHelper.GetSemanticType(syntaxNode, SemanticModel);
-                var symbolInfo = SemanticModel.GetSymbolInfo(syntaxNode);
-                if (symbolInfo.Symbol != null)
+                var type = SemanticHelper.GetSemanticType(syntaxNode, SemanticModel, OriginalSemanticModel);
+                var symbol = SemanticHelper.GetSemanticSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
+                if (symbol != null)
                 {
-                    Model.Identifier = symbolInfo.Symbol.Name != null ? symbolInfo.Symbol.Name.Trim() : type;
-                    Model.Reference.Namespace = GetNamespace(symbolInfo.Symbol);
-                    Model.Reference.Assembly = GetAssembly(symbolInfo.Symbol);
-                    Model.Reference.AssemblySymbol = symbolInfo.Symbol.ContainingAssembly;
+                    Model.Identifier = symbol.Name != null ? symbol.Name.Trim() : type;
+                    Model.Reference.Namespace = GetNamespace(symbol);
+                    Model.Reference.Assembly = GetAssembly(symbol);
+                    Model.Reference.AssemblySymbol = symbol.ContainingAssembly;
                 }
                 else
                 {

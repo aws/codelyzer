@@ -9,6 +9,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
     public class UstNodeHandler
     {
         protected CodeContext context;
+        protected SemanticModel OriginalSemanticModel { get => context.PreportSemanticModel; }
         protected SemanticModel SemanticModel { get => context.SemanticModel; }
         protected SyntaxTree SyntaxTree { get => context.SyntaxTree; }
         public UstNode  UstNode { get; set; }

@@ -21,9 +21,9 @@ namespace Codelyzer.Analysis.CSharp.Handlers
         {
             if (syntaxNode.ReturnType != null)
                 Model.ReturnType = syntaxNode.ReturnType.ToString();
-            
-            Model.SemanticReturnType = 
-                SemanticHelper.GetSemanticType(syntaxNode.ReturnType, SemanticModel);
+
+            Model.SemanticReturnType =
+                SemanticHelper.GetSemanticType(syntaxNode.ReturnType, SemanticModel, OriginalSemanticModel);
 
             if (syntaxNode.ParameterList != null)
             {
@@ -37,19 +37,16 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                         param.Type = parameter.Type.ToString();
                     
                     param.SemanticType =
-                        SemanticHelper.GetSemanticType(parameter.Type, SemanticModel);
+                        SemanticHelper.GetSemanticType(parameter.Type, SemanticModel, OriginalSemanticModel);
                     Model.Parameters.Add(param);
                 }
             }
 
             Model.Modifiers = syntaxNode.Modifiers.ToString();
             
-           
-            if (SemanticModel == null) return;
-            
-            var methodSymbol  = (IMethodSymbol)
-                (SemanticModel.GetSymbolInfo(syntaxNode).Symbol ?? 
-                    SemanticModel.GetDeclaredSymbol(syntaxNode));
+           var methodSymbol = (IMethodSymbol)
+                (SemanticHelper.GetSemanticSymbol(syntaxNode, SemanticModel, OriginalSemanticModel)
+                ?? SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel));
             if (methodSymbol == null) return;
             SemanticHelper.AddMethodProperties(methodSymbol, Model.SemanticProperties);
         }

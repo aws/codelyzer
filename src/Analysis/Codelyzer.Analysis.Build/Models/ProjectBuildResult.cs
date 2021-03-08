@@ -16,6 +16,7 @@ namespace Codelyzer.Analysis.Build
         public List<SourceFileBuildResult> SourceFileBuildResults { get; private set; }
         public List<string> BuildErrors { get; set; }
         public Project Project { get; set; }
+        public Compilation PrePortCompilation { get; set; }
         public Compilation Compilation { get; set; }
         public ExternalReferences ExternalReferences { get; set; }
         public string TargetFramework { get; set; }
@@ -45,6 +46,7 @@ namespace Codelyzer.Analysis.Build
         public void Dispose()
         {
             Compilation = null;
+            PrePortCompilation = null;
         }
     }
 }

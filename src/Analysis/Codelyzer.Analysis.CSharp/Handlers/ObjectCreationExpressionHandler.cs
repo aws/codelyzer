@@ -31,7 +31,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                         parameter.Name = argumentSyntax.Expression.ToString();
 
                     parameter.SemanticType =
-                        SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel);
+                        SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel, OriginalSemanticModel);
                     if (Model.Parameters != null)
                     {
                         Model.Parameters.Add(parameter);
@@ -40,16 +40,14 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                     var argument = new Argument
                     {
                         Identifier = argumentSyntax.Expression.ToString(),
-                        SemanticType = SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel)
+                        SemanticType = SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel, OriginalSemanticModel)
                     };
                     Model.Arguments.Add(argument);
                 }
             }
 
-            if (SemanticModel == null) return;
-            
-            IMethodSymbol invokedSymbol = 
-                ((IMethodSymbol)SemanticModel.GetSymbolInfo(syntaxNode).Symbol);
+            IMethodSymbol invokedSymbol = (IMethodSymbol)SemanticHelper.GetSemanticSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
+
             if (invokedSymbol == null) return;
             
             //Set semantic details
