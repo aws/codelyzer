@@ -29,14 +29,7 @@ namespace Codelyzer.Analysis.Model
 
         public static UstList<InvocationExpression> AllInvocationExpressions(this UstNode node)
         {
-            // Combine method invocations and object creations
-            var objCreations = GetNodes<ObjectCreationExpression>(node)
-                .ConvertAll(x => (InvocationExpression)x);
-            
-            var result = GetNodes<InvocationExpression>(node);
-            result.AddRange(objCreations);
-            
-            return result;
+            return  GetNodes<InvocationExpression>(node);
         }
         
         public static UstList<ObjectCreationExpression> AllObjectCreationExpressions(this UstNode node)
