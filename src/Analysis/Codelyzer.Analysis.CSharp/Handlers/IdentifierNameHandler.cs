@@ -14,6 +14,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             typeof(ConstructorDeclarationSyntax),
             typeof(ClassDeclarationSyntax),
             typeof(VariableDeclarationSyntax),
+            typeof(TypeParameterListSyntax),
             typeof(ParameterSyntax),
             typeof(ObjectCreationExpressionSyntax)};
 
