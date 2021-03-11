@@ -205,6 +205,9 @@ namespace Codelyzer.Analysis.Tests
             var houseControllerClass = classDeclarations.First(c => c.Identifier == "HouseController");
             Assert.AreEqual("public", houseControllerClass.Modifiers);
 
+            var houseMapper = result.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith("HouseMapper.cs"));
+            Assert.AreEqual(2, houseMapper.AllInvocationExpressions().Count);
+
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(dllFiles.Count(), 16);
 
