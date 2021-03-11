@@ -15,6 +15,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             typeof(ClassDeclarationSyntax),
             typeof(VariableDeclarationSyntax),
             typeof(ParameterSyntax),
+            typeof(TypeArgumentListSyntax),
             typeof(ObjectCreationExpressionSyntax)};
 
         private DeclarationNode Model { get => (DeclarationNode)UstNode; }

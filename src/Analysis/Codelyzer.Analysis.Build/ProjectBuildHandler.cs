@@ -15,6 +15,7 @@ using Microsoft.CodeAnalysis.Text;
 using Constants = Codelyzer.Analysis.Common.Constants;
 using System.Xml.Linq;
 using System.Xml;
+using JetBrains.Profiler.Api;
 
 namespace Codelyzer.Analysis.Build
 {
@@ -36,7 +37,7 @@ namespace Codelyzer.Analysis.Build
         {
             XDocument projectFile = null;
             var references = new List<PortableExecutableReference>();
-
+            
             try
             {
                 projectFile = XDocument.Load(Project.FilePath);
@@ -89,8 +90,8 @@ namespace Codelyzer.Analysis.Build
 
         private async Task SetCompilation()
         {
-            PrePortCompilation = await SetPrePortCompilation();
-            Compilation = await Project.GetCompilationAsync();
+            //PrePortCompilation = await SetPrePortCompilation();         
+            Compilation = await Project.GetCompilationAsync();           
 
             var errors = Compilation.GetDiagnostics()
                 .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);

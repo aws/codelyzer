@@ -1,6 +1,7 @@
 using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
+using System;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -239,7 +240,10 @@ namespace Codelyzer.Analysis.Tests
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            var timeStart = DateTime.Now;
             using var result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
+            var timeEnd = (DateTime.Now - timeStart).TotalMilliseconds;
+
             Assert.True(result != null);
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
@@ -350,7 +354,9 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
     }
 }");
 
+            var timeStart = DateTime.Now;
             result = await analyzer.AnalyzeFile(accountController.FileFullPath, result);
+            var timeEnd = (DateTime.Now - timeStart).TotalMilliseconds;
 
             var updatedSourcefile = result.ProjectResult.SourceFileResults.FirstOrDefault(s => s.FileFullPath.Contains("AccountController.cs"));
             Assert.NotNull(updatedSourcefile);

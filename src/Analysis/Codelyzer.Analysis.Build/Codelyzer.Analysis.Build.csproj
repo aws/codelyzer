@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>netcoreapp3.1</TargetFramework>
@@ -10,6 +10,7 @@
       <PackageReference Include="Buildalyzer" Version="3.2.0" />
       <PackageReference Include="Buildalyzer.Logger" Version="3.2.0" />
       <PackageReference Include="Buildalyzer.Workspaces" Version="3.2.0" />
+      <PackageReference Include="JetBrains.Profiler.Api" Version="1.1.7" />
       <PackageReference Include="NuGet.Packaging" Version="5.9.0" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
     </ItemGroup>

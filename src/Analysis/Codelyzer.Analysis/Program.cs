@@ -1,8 +1,11 @@
 ﻿using Codelyzer.Analysis.Model;
+using JetBrains.Profiler.Api;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Codelyzer.Analysis
@@ -41,6 +44,7 @@ namespace Codelyzer.Analysis
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(cli.Configuration, 
                 loggerFactory.CreateLogger("Analyzer"));
 
+
             /* 4. Analyze the project or solution */
             AnalyzerResult analyzerResult = null;
             if (cli.Project)
@@ -74,12 +78,6 @@ namespace Codelyzer.Analysis
             {
                 Console.WriteLine(invocation.MethodName + ":" + invocation.SemanticMethodSignature);
             }
-
-            var objectCreations = sourcefile.AllObjectCreationExpressions();
-            var allClasses = sourcefile.AllClasses();
-            var allMethods = sourcefile.AllMethods();
-            var allLiterals = sourcefile.AllLiterals();
-            var declarationNodes = sourcefile.AllDeclarationNodes();
         }
     }
 }
