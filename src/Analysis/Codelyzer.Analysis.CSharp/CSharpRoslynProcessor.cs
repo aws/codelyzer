@@ -60,7 +60,8 @@ namespace Codelyzer.Analysis.CSharp
             RootNode.Language = node.Language;
 
             RootNode.Children.AddRange(children);
-            
+            AssignParentNode(RootNode.Children, RootNode);
+
             return RootNode;
         }
 
@@ -299,6 +300,7 @@ namespace Codelyzer.Analysis.CSharp
                 if (ustNode != null)
                 {
                     AddChildNodes(ustNode.Children, node);
+                    AssignParentNode(ustNode.Children, ustNode);
                 }
                 return ustNode;
             }
@@ -314,6 +316,13 @@ namespace Codelyzer.Analysis.CSharp
             if (children != null && nodeChildren != null)
             {
                 nodeChildren.AddRange(children);
+            }
+        }
+        private void AssignParentNode(List<UstNode> children, UstNode parentNode)
+        {
+            foreach (var child in children)
+            {
+                child.Parent = parentNode;
             }
         }
         public void Dispose()

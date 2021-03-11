@@ -300,6 +300,11 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(2, elementAccess.Count());
             Assert.AreEqual(149, memberAccess.Count());
 
+            foreach (var child in accountController.Children)
+            {
+                Assert.AreEqual(accountController, child.Parent);
+            }
+
             var authorizeAttribute = storeManagerController.AllAnnotations().First(a => a.Identifier == "Authorize");
             var authorizeAttributeArgument = authorizeAttribute.AllAttributeArguments().First();
             Assert.AreEqual("Roles",authorizeAttributeArgument.ArgumentName);
