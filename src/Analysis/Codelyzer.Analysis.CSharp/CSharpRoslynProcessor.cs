@@ -228,6 +228,7 @@ namespace Codelyzer.Analysis.CSharp
             if (!MetaDataSettings.MemberAccess) return null;
 
             var handler = new MemberAccessExpressionHandler(_context, node);
+            HandleReferences(((MemberAccess)handler.UstNode).Reference);
             return handler.UstNode;
         }
 
