@@ -17,7 +17,7 @@ namespace Codelyzer.Analysis.CSharp
     /// </summary>
     public class CSharpRoslynProcessor : CSharpSyntaxVisitor<UstNode>, IDisposable
     {
-        private CodeContext _context;
+        private readonly CodeContext _context;
         protected SemanticModel SemanticModel { get => _context.SemanticModel; }
         protected SyntaxTree SyntaxTree { get => _context.SyntaxTree; }
         protected ILogger Logger { get => _context.Logger; }
@@ -60,7 +60,8 @@ namespace Codelyzer.Analysis.CSharp
             RootNode.Language = node.Language;
 
             RootNode.Children.AddRange(children);
-            
+            AssignParentNode(RootNode.Children, RootNode);
+
             return RootNode;
         }
 
@@ -167,6 +168,13 @@ namespace Codelyzer.Analysis.CSharp
             HandleReferences(((Annotation)handler.UstNode).Reference);
             return handler.UstNode;
         }
+        public override UstNode VisitAttributeArgument(AttributeArgumentSyntax node)
+        {
+            if (!MetaDataSettings.Annotations) return null;
+
+            AttributeArgumentHandler handler = new AttributeArgumentHandler(_context, node);
+            return handler.UstNode;
+        }
         public override UstNode VisitIdentifierName(IdentifierNameSyntax node)
         {
             if (MetaDataSettings.DeclarationNodes)
@@ -220,9 +228,25 @@ namespace Codelyzer.Analysis.CSharp
             if (!MetaDataSettings.MemberAccess) return null;
 
             var handler = new MemberAccessExpressionHandler(_context, node);
+            HandleReferences(((MemberAccess)handler.UstNode).Reference);
             return handler.UstNode;
         }
 
+        public override UstNode VisitSimpleLambdaExpression(SimpleLambdaExpressionSyntax node)
+        {
+            if (!MetaDataSettings.LambdaMethods) return null;
+
+            var handler = new SimpleLambdaExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitParenthesizedLambdaExpression(ParenthesizedLambdaExpressionSyntax node)
+        {
+            if (!MetaDataSettings.LambdaMethods) return null;
+
+            var handler = new ParenthesizedLambdaExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
 
         private void HandleReferences(in Reference reference)
         {
@@ -277,6 +301,7 @@ namespace Codelyzer.Analysis.CSharp
                 if (ustNode != null)
                 {
                     AddChildNodes(ustNode.Children, node);
+                    AssignParentNode(ustNode.Children, ustNode);
                 }
                 return ustNode;
             }
@@ -292,6 +317,13 @@ namespace Codelyzer.Analysis.CSharp
             if (children != null && nodeChildren != null)
             {
                 nodeChildren.AddRange(children);
+            }
+        }
+        private void AssignParentNode(List<UstNode> children, UstNode parentNode)
+        {
+            foreach (var child in children)
+            {
+                child.Parent = parentNode;
             }
         }
         public void Dispose()

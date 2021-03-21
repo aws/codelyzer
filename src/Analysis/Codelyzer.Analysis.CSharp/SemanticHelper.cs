@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace Codelyzer.Analysis.CSharp
@@ -12,6 +13,18 @@ namespace Codelyzer.Analysis.CSharp
     /// </summary>
     public static class SemanticHelper
     {
+        /// <summary>
+        /// Gets SymbolInfo for a syntax node
+        /// </summary>
+        /// <param name="syntaxNode">The node to get symbol info for</param>
+        /// <param name="semanticModel">An instance of the semantic model</param>
+        /// <returns>SymbolInfo of a node</returns>
+        public static SymbolInfo? GetSymbolInfo(SyntaxNode syntaxNode, 
+            SemanticModel semanticModel)
+        {
+            return semanticModel?.GetSymbolInfo(syntaxNode);
+        }
+
         /// <summary>
         /// Gets name of type from TypeSyntax
         /// </summary>
@@ -150,6 +163,19 @@ namespace Codelyzer.Analysis.CSharp
             Match match = Regex.Match(classNameWithNamespace, String.Format("{0}.(.*)", Regex.Escape(semanticNamespace)));
             return match.Success ? match.Groups[1].Value : classNameWithNamespace;
         }
-        
+
+        /// <summary>
+        /// Returns the semantic method signature of a method declaration (fully qualified method names and parameter types)
+        /// </summary>
+        /// <param name="semanticModel">Semantic model of syntax tree containing the method declaration</param>
+        /// <param name="syntaxNode">Method declaration node</param>
+        /// <returns>The semantic method signature</returns>
+        public static string GetSemanticMethodSignature(SemanticModel semanticModel, BaseMethodDeclarationSyntax syntaxNode)
+        {
+            var semanticMethodNameAndParameters = semanticModel.GetDeclaredSymbol(syntaxNode).ToString();
+            var joinedModifiers = string.Join(" ", syntaxNode.Modifiers.Select(m => m.ToString()));
+
+            return $"{joinedModifiers} {semanticMethodNameAndParameters}".Trim();
+        }
     }
 }

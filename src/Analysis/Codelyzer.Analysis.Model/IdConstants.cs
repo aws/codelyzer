@@ -24,6 +24,12 @@ namespace Codelyzer.Analysis.Model
 
         public const string ArrowExpressionIdName = "arrow-expression";
 
+        public const string LambdaExpressionIdName = "lambda-expression";
+
+        public const string ParenthesizedLambdaExpressionIdName = "parenthesized-lambda-expression";
+
+        public const string SimpleLambdaExpressionIdName = "simple-lambda-expression";
+
         public const string LiteralIdName = "literal";
         
         public const string InvocationIdName = "invocation";
@@ -33,6 +39,8 @@ namespace Codelyzer.Analysis.Model
         public const string DeclarationNodeIdName = "declaration-node";
 
         public const string AnnotationIdName = "annotation";
+
+        public const string AttributeArgumentIdName = "attribute-argument";
 
         public const string ConstructorIdName = "constructor";
 

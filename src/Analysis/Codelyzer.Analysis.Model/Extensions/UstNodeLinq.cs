@@ -1,5 +1,3 @@
-using System.Xml.Serialization;
-
 namespace Codelyzer.Analysis.Model
 {
     public static class UstNodeLinq
@@ -7,6 +5,11 @@ namespace Codelyzer.Analysis.Model
         public static UstList<Annotation> AllAnnotations(this UstNode node)
         {
             return GetNodes<Annotation>(node);
+        }
+
+        public static UstList<AttributeArgument> AllAttributeArguments(this UstNode node)
+        {
+            return GetNodes<AttributeArgument>(node);
         }
 
         public static UstList<BlockStatement> AllBlockStatements(this UstNode node)
@@ -31,14 +34,7 @@ namespace Codelyzer.Analysis.Model
 
         public static UstList<InvocationExpression> AllInvocationExpressions(this UstNode node)
         {
-            // Combine method invocations and object creations
-            var objCreations = GetNodes<ObjectCreationExpression>(node)
-                .ConvertAll(x => (InvocationExpression)x);
-            
-            var result = GetNodes<InvocationExpression>(node);
-            result.AddRange(objCreations);
-            
-            return result;
+            return  GetNodes<InvocationExpression>(node);
         }
         
         public static UstList<ObjectCreationExpression> AllObjectCreationExpressions(this UstNode node)
@@ -94,6 +90,21 @@ namespace Codelyzer.Analysis.Model
         public static UstList<ArrowExpressionClause> AllArrowExpressionClauses(this UstNode node)
         {
             return GetNodes<ArrowExpressionClause>(node);
+        }
+
+        public static UstList<SimpleLambdaExpression> AllSimpleLambdaExpressions(this UstNode node)
+        {
+            return GetNodes<SimpleLambdaExpression>(node);
+        }
+
+        public static UstList<ParenthesizedLambdaExpression> AllParenthesizedLambdaExpressions(this UstNode node)
+        {
+            return GetNodes<ParenthesizedLambdaExpression>(node);
+        }
+
+        public static UstList<LambdaExpression> AllLambdaExpressions(this UstNode node)
+        {
+            return GetNodes<LambdaExpression>(node);
         }
 
         public static UstList<Argument> AllArguments(this UstNode node)
