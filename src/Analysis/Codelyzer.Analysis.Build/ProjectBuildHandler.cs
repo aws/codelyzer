@@ -54,7 +54,7 @@ namespace Codelyzer.Analysis.Build
 
                 var fileReferences = portingNode?.FirstNode?.ToString()
                     .Split(new string[] { Environment.NewLine, "\t", "\\t" }, StringSplitOptions.RemoveEmptyEntries)?
-                    .Where(s => !(s.Contains("<!-") || s.Contains("-->"))).ToList();
+                    .Where(s => !(s.Contains("<!-") || s.Contains("-->"))).Select(s=>s?.Trim()).ToList();
 
                 if (fileReferences != null)
                 {
@@ -90,7 +90,7 @@ namespace Codelyzer.Analysis.Build
 
         private async Task SetCompilation()
         {
-            //PrePortCompilation = await SetPrePortCompilation();         
+            PrePortCompilation = await SetPrePortCompilation();         
             Compilation = await Project.GetCompilationAsync();           
 
             var errors = Compilation.GetDiagnostics()
