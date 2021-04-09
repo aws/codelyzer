@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Assert = NUnit.Framework.Assert;
+using System.Collections.Generic;
 
 namespace Codelyzer.Analysis.Tests
 {
@@ -394,6 +395,10 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             var timeStart = DateTime.Now;
             result = await analyzer.AnalyzeFile(accountController.FileFullPath, result);
             var timeEnd = (DateTime.Now - timeStart).TotalMilliseconds;
+            var references = result.ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList();
+            var timeStart2 = DateTime.Now;
+            await analyzer.AnalyzeFile(result.ProjectResult.ProjectFilePath, new List<string> { accountController.FileFullPath }, null, references);
+            var timeEnd2 = (DateTime.Now - timeStart).TotalMilliseconds;
 
             var updatedSourcefile = result.ProjectResult.SourceFileResults.FirstOrDefault(s => s.FileFullPath.Contains("AccountController.cs"));
             Assert.NotNull(updatedSourcefile);

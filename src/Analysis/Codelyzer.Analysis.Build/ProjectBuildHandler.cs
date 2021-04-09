@@ -30,6 +30,7 @@ namespace Codelyzer.Analysis.Build
         internal IAnalyzerResult AnalyzerResult;
         internal IProjectAnalyzer ProjectAnalyzer;
         internal bool isSyntaxAnalysis;
+        private List<string> _metaReferences;
 
         private const string syntaxAnalysisError = "Build Errors: Encountered an unknown build issue. Falling back to syntax analysis";
 
@@ -209,10 +210,11 @@ namespace Codelyzer.Analysis.Build
             Console.WriteLine($" Project references: {String.Join("\n", project.ProjectReferences)}");
             Console.WriteLine();
         }
-        public ProjectBuildHandler(ILogger logger, AnalyzerConfiguration analyzerConfiguration = null)
+        public ProjectBuildHandler(ILogger logger, AnalyzerConfiguration analyzerConfiguration = null, List<string> metaReferences = null)
         {
             Logger = logger;
             _analyzerConfiguration = analyzerConfiguration;
+            _metaReferences = metaReferences;
 
             Errors = new List<string>();
         }

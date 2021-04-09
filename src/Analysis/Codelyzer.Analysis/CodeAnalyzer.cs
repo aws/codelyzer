@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Codelyzer.Analysis.Build;
 using Microsoft.Extensions.Logging;
 
 namespace Codelyzer.Analysis
@@ -49,5 +50,14 @@ namespace Codelyzer.Analysis
         /// <param name="analyzerResults">The analyzer results to be modified</param>
         /// <returns></returns>
         public abstract Task<List<AnalyzerResult>> AnalyzeFile(string filePath, List<AnalyzerResult> analyzerResults);
+
+        /// <summary>
+        /// Analyzes a code file independently using the metareferences provided
+        /// </summary>
+        /// <param name="filePath">The path to the code files</param>
+        /// <param name="frameworkMetaReferences">The references to be used when analyzing the file</param>
+        /// <param name="coreMetaReferences">The references to be used when analyzing the file</param>
+        /// <returns></returns>
+        public abstract Task<IDEProjectResult> AnalyzeFile(string projectPath, List<string> filePath, List<string> frameworkMetaReferences, List<string> coreMetaReferences);
     }
 }

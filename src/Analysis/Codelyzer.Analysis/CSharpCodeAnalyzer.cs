@@ -169,6 +169,20 @@ namespace Codelyzer.Analysis
             return analyzerResults;
         }
 
+        public override async Task<IDEProjectResult> AnalyzeFile(string projectPath, List<string> filePath, List<string> frameworkMetaReferences, List<string> coreMetaReferences)
+        {
+            var result = new IDEProjectResult();
 
+            FileBuildHandler fileBuildHandler = new FileBuildHandler(Logger, projectPath, filePath, frameworkMetaReferences, coreMetaReferences);
+            var sourceFileResults = await fileBuildHandler.Build();
+
+            result.SourceFileBuildResults = sourceFileResults;
+            sourceFileResults.ForEach(sourceFileResult => {
+                var fileAnalysis = AnalyzeFile(sourceFileResult, projectPath);
+                result.RootNodes.Add(fileAnalysis);
+            });
+
+            return result;
+        }
     }
 }
