@@ -24,6 +24,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 ClassDeclaration.BaseTypeOriginalDefinition = GetBaseTypOriginalDefinition(classSymbol); 
                 ClassDeclaration.Reference.Namespace = GetNamespace(classSymbol);
                 ClassDeclaration.Reference.Assembly = GetAssembly(classSymbol);
+                ClassDeclaration.Reference.Version = GetAssemblyVersion(classSymbol);
                 ClassDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
             }
         }

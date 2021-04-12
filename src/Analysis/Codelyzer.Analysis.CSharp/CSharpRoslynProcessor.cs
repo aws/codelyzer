@@ -253,7 +253,7 @@ namespace Codelyzer.Analysis.CSharp
             if (MetaDataSettings.ReferenceData
                 && !RootNode.References.Contains(reference))
             {
-                var rootReference = new Reference() { Assembly = reference.Assembly, Namespace = reference.Namespace };
+                var rootReference = new Reference() { Assembly = reference.Assembly, Namespace = reference.Namespace, Version = reference.Version };
                 if (reference.AssemblySymbol != null)
                 {
                     var metaDataReference = SemanticModel.Compilation.GetMetadataReference(reference.AssemblySymbol);

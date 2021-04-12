@@ -28,6 +28,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
 
                 InterfaceDeclaration.Reference.Namespace = GetNamespace(interfaceSymbol);
                 InterfaceDeclaration.Reference.Assembly = GetAssembly(interfaceSymbol);
+                InterfaceDeclaration.Reference.Version = GetAssemblyVersion(interfaceSymbol);
                 InterfaceDeclaration.Reference.AssemblySymbol = interfaceSymbol.ContainingAssembly;
             }
         }

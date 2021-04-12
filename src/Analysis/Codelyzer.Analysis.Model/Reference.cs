@@ -11,6 +11,8 @@ namespace Codelyzer.Analysis.Model
         public string Assembly { get; set; }        
         [JsonProperty("assembly-location", Order = 3)]
         public string AssemblyLocation { get; set; }
+        [JsonProperty("version", Order = 4)]
+        public string Version { get; set; }
 
         [JsonIgnore]
         public IAssemblySymbol AssemblySymbol { get; set; }

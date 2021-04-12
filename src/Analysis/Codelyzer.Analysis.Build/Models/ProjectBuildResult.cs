@@ -21,6 +21,7 @@ namespace Codelyzer.Analysis.Build
         public ExternalReferences ExternalReferences { get; set; }
         public string TargetFramework { get; set; }
         public List<string> TargetFrameworks { get; set; }
+        public List<string> PreportReferences { get; set; }
         public string ProjectGuid { get; set; }        
         public string ProjectType { get; set; }
         public bool IsSyntaxAnalysis { get; set; }
@@ -30,6 +31,7 @@ namespace Codelyzer.Analysis.Build
             SourceFileBuildResults = new List<SourceFileBuildResult>();
             SourceFiles = new List<string>();
             TargetFrameworks = new List<string>();
+            PreportReferences = new List<string>();
         }
 
         public bool IsBuildSuccess()

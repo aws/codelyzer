@@ -24,6 +24,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             {
                 Model.Reference.Namespace = GetNamespace(invokedSymbol);
                 Model.Reference.Assembly = GetAssembly(invokedSymbol);
+                Model.Reference.Version = GetAssemblyVersion(invokedSymbol);
                 Model.Reference.AssemblySymbol = invokedSymbol.ContainingAssembly;
 
                 if (invokedSymbol.ContainingType != null)

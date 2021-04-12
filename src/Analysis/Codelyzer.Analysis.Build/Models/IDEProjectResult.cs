@@ -12,6 +12,7 @@ namespace Codelyzer.Analysis.Build
             SourceFileBuildResults = new List<SourceFileBuildResult>();
             RootNodes = new List<RootUstNode>();
         }
+        public string ProjectPath { get; set; }
         public List<SourceFileBuildResult> SourceFileBuildResults { get; set; }
         public List<RootUstNode> RootNodes { get; set; }
     }

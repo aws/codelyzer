@@ -24,6 +24,8 @@ namespace Codelyzer.Analysis.Build
         private Project Project;
         private Compilation Compilation;
         private Compilation PrePortCompilation;
+        private List<string> PrePortMetaReferences;
+
         private List<string> Errors { get; set; }
         private ILogger Logger;
         private readonly AnalyzerConfiguration _analyzerConfiguration;
@@ -83,6 +85,7 @@ namespace Codelyzer.Analysis.Build
             if (preportReferences.Count > 0)
             {
                 var preportProject = Project.WithMetadataReferences(preportReferences);
+                PrePortMetaReferences = preportReferences.Select(m => m.Display).ToList();
                 return await preportProject.GetCompilationAsync();
             }
 
@@ -258,7 +261,8 @@ namespace Codelyzer.Analysis.Build
                 Project = Project,
                 Compilation = Compilation,
                 PrePortCompilation = PrePortCompilation,
-                IsSyntaxAnalysis = isSyntaxAnalysis
+                IsSyntaxAnalysis = isSyntaxAnalysis,
+                PreportReferences = PrePortMetaReferences
             };
 
             GetTargetFrameworks(projectBuildResult, AnalyzerResult);

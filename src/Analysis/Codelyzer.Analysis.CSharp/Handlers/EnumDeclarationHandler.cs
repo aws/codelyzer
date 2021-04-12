@@ -21,6 +21,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             {
                 EnumDeclaration.Reference.Namespace = GetNamespace(EnumSymbol);
                 EnumDeclaration.Reference.Assembly = GetAssembly(EnumSymbol);
+                EnumDeclaration.Reference.Version = GetAssemblyVersion(EnumSymbol);
                 EnumDeclaration.Reference.AssemblySymbol = EnumSymbol.ContainingAssembly;
             }
         }
