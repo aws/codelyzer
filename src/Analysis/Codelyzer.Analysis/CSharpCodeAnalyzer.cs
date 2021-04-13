@@ -184,5 +184,9 @@ namespace Codelyzer.Analysis
 
             return result;
         }
+        public override async Task<IDEProjectResult> AnalyzeFile(string projectPath, string filePath, List<string> frameworkMetaReferences, List<string> coreMetaReferences)
+        {
+            return await AnalyzeFile(projectPath, new List<string> { filePath }, frameworkMetaReferences, coreMetaReferences);
+        }
     }
 }

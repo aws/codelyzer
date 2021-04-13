@@ -59,5 +59,6 @@ namespace Codelyzer.Analysis
         /// <param name="coreMetaReferences">The references to be used when analyzing the file</param>
         /// <returns></returns>
         public abstract Task<IDEProjectResult> AnalyzeFile(string projectPath, List<string> filePath, List<string> frameworkMetaReferences, List<string> coreMetaReferences);
+        public abstract Task<IDEProjectResult> AnalyzeFile(string projectPath, string filePath, List<string> frameworkMetaReferences, List<string> coreMetaReferences);
     }
 }
