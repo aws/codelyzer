@@ -168,12 +168,33 @@ namespace Codelyzer.Analysis
             analyzerResults.Add(updatedResult);
             return analyzerResults;
         }
-
-        public override async Task<IDEProjectResult> AnalyzeFile(string projectPath, List<string> filePath, List<string> frameworkMetaReferences, List<string> coreMetaReferences)
+        public override async Task<IDEProjectResult> AnalyzeFile(string projectPath, string filePath, List<string> frameworkMetaReferences, List<string> coreMetaReferences)
+        {
+            var fileInfo = new Dictionary<string, string>();
+            var content = File.ReadAllText(filePath);
+            fileInfo.Add(filePath, content);
+            return await AnalyzeFile(projectPath, fileInfo, frameworkMetaReferences, coreMetaReferences);
+        }
+        public override async Task<IDEProjectResult> AnalyzeFile(string projectPath, List<string> filePaths, List<string> frameworkMetaReferences, List<string> coreMetaReferences)
+        {
+            var fileInfo = new Dictionary<string, string>();
+            filePaths.ForEach(filePath => {
+                var content = File.ReadAllText(filePath);
+                fileInfo.Add(filePath, content);
+            });
+            return await AnalyzeFile(projectPath, fileInfo, frameworkMetaReferences, coreMetaReferences);
+        }
+        public override async Task<IDEProjectResult> AnalyzeFile(string projectPath, string filePath, string fileContent, List<string> frameworkMetaReferences, List<string> coreMetaReferences)
+        {
+            var fileInfo = new Dictionary<string, string>();
+            fileInfo.Add(filePath, fileContent);
+            return await AnalyzeFile(projectPath, fileInfo, frameworkMetaReferences, coreMetaReferences);
+        }
+        public override async Task<IDEProjectResult> AnalyzeFile(string projectPath, Dictionary<string, string> fileInfo, List<string> frameworkMetaReferences, List<string> coreMetaReferences)
         {
             var result = new IDEProjectResult();
 
-            FileBuildHandler fileBuildHandler = new FileBuildHandler(Logger, projectPath, filePath, frameworkMetaReferences, coreMetaReferences);
+            FileBuildHandler fileBuildHandler = new FileBuildHandler(Logger, projectPath, fileInfo, frameworkMetaReferences, coreMetaReferences);
             var sourceFileResults = await fileBuildHandler.Build();
 
             result.SourceFileBuildResults = sourceFileResults;
@@ -183,10 +204,6 @@ namespace Codelyzer.Analysis
             });
 
             return result;
-        }
-        public override async Task<IDEProjectResult> AnalyzeFile(string projectPath, string filePath, List<string> frameworkMetaReferences, List<string> coreMetaReferences)
-        {
-            return await AnalyzeFile(projectPath, new List<string> { filePath }, frameworkMetaReferences, coreMetaReferences);
         }
     }
 }

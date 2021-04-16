@@ -1,46 +1,32 @@
-using Codelyzer.Analysis.Model;
 using Buildalyzer;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.Editing;
 using Microsoft.Extensions.Logging;
-using NuGet.Packaging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.Text;
-using Constants = Codelyzer.Analysis.Common.Constants;
-using System.Xml.Linq;
-using System.Xml;
-using JetBrains.Profiler.Api;
 
 namespace Codelyzer.Analysis.Build
 {
     public class FileBuildHandler : IDisposable
     {
-        private Project Project;
         private Compilation Compilation;
         private Compilation PrePortCompilation;
 
         private List<string> Errors { get; set; }
         private ILogger Logger;
-        private readonly AnalyzerConfiguration _analyzerConfiguration;
-        internal IAnalyzerResult AnalyzerResult;
-        internal IProjectAnalyzer ProjectAnalyzer;
-        internal bool isSyntaxAnalysis;
 
         private string _projectPath;
-        private List<string> _files;
+        private Dictionary<string, string> _fileInfo;
         private List<string> _frameworkMetaReferences;
         private List<string> _coreMetaReferences;
 
-        public FileBuildHandler(ILogger logger, string projectPath, List<string> files, List<string> frameworkMetaReferences, List<string> coreMetaReferences)
+        public FileBuildHandler(ILogger logger, string projectPath, Dictionary<string, string> fileInfo, List<string> frameworkMetaReferences, List<string> coreMetaReferences)
         {
             Logger = logger;
-            _files = files;
+            _fileInfo = fileInfo;
             _frameworkMetaReferences = frameworkMetaReferences;
             _coreMetaReferences = coreMetaReferences;
             _projectPath = projectPath;
@@ -50,10 +36,10 @@ namespace Codelyzer.Analysis.Build
        public async Task<List<SourceFileBuildResult>> Build()
         {
             var trees = new List<SyntaxTree>();
-            foreach(var file in _files)
+            foreach(var file in _fileInfo)
             {
-                var fileContent = File.ReadAllText(file);
-                var syntaxTree = CSharpSyntaxTree.ParseText(fileContent, path: file);
+                var fileContent = file.Value;
+                var syntaxTree = CSharpSyntaxTree.ParseText(fileContent, path: file.Key);
                 trees.Add(syntaxTree);
             }
             if (trees.Count != 0)
@@ -72,7 +58,7 @@ namespace Codelyzer.Analysis.Build
 
             var results = new List<SourceFileBuildResult>();
 
-            _files.ForEach(file => {
+            _fileInfo.Keys.ToList().ForEach(file => {
                 var sourceFilePath = Path.GetRelativePath(_projectPath, file);
                 var fileTree = trees.FirstOrDefault(t => t.FilePath == file);
 
@@ -96,9 +82,6 @@ namespace Codelyzer.Analysis.Build
         public void Dispose()
         {
             Compilation = null;
-            AnalyzerResult = null;
-            ProjectAnalyzer = null;
-            Project = null;
             Logger = null;
         }
     }
