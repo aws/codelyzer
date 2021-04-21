@@ -13,13 +13,15 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             EnumDeclarationSyntax syntaxNode)
             : base(context, syntaxNode, new EnumDeclaration())
         {
-            var EnumSymbol = SemanticModel.GetDeclaredSymbol(syntaxNode);
+            var EnumSymbol = SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
+
             EnumDeclaration.Identifier = syntaxNode.Identifier.ToString();
 
             if (EnumSymbol != null)
             {
                 EnumDeclaration.Reference.Namespace = GetNamespace(EnumSymbol);
                 EnumDeclaration.Reference.Assembly = GetAssembly(EnumSymbol);
+                EnumDeclaration.Reference.Version = GetAssemblyVersion(EnumSymbol);
                 EnumDeclaration.Reference.AssemblySymbol = EnumSymbol.ContainingAssembly;
             }
         }

@@ -15,13 +15,13 @@ namespace Codelyzer.Analysis.CSharp.Handlers
         {
             Model.Identifier = syntaxNode.Name.ToString();
 
-            var symbolInfo = SemanticModel.GetSymbolInfo(syntaxNode);
-            if (symbolInfo.Symbol != null && symbolInfo.Symbol.ContainingNamespace != null)
-            {
-                var symbol = symbolInfo.Symbol;
+            var symbol = SemanticHelper.GetSemanticSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
 
+            if (symbol != null && symbol.ContainingNamespace != null)
+            {
                 Model.Reference.Namespace = GetNamespace(symbol);
                 Model.Reference.Assembly = GetAssembly(symbol);
+                Model.Reference.Version = GetAssemblyVersion(symbol);
                 Model.Reference.AssemblySymbol = symbol.ContainingAssembly;
 
                 if (symbol.ContainingType != null)

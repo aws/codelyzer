@@ -13,13 +13,14 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             StructDeclarationSyntax syntaxNode)
             : base(context, syntaxNode, new StructDeclaration())
         {
-            var structSymbol = SemanticModel.GetDeclaredSymbol(syntaxNode);
+            var structSymbol = SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
             StructDeclaration.Identifier = syntaxNode.Identifier.ToString();
 
             if (structSymbol != null)
             {
                 StructDeclaration.Reference.Namespace = GetNamespace(structSymbol);
                 StructDeclaration.Reference.Assembly = GetAssembly(structSymbol);
+                StructDeclaration.Reference.Version = GetAssemblyVersion(structSymbol);
                 StructDeclaration.Reference.AssemblySymbol = structSymbol.ContainingAssembly;
             }
         }

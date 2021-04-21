@@ -13,7 +13,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             ClassDeclarationSyntax syntaxNode)
             : base(context, syntaxNode, new ClassDeclaration())
         {
-            var classSymbol = SemanticModel.GetDeclaredSymbol(syntaxNode);
+            var classSymbol = SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
 
             ClassDeclaration.Identifier = syntaxNode.Identifier.ToString();
             ClassDeclaration.Modifiers = syntaxNode.Modifiers.ToString();
@@ -24,6 +24,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 ClassDeclaration.BaseTypeOriginalDefinition = GetBaseTypOriginalDefinition(classSymbol); 
                 ClassDeclaration.Reference.Namespace = GetNamespace(classSymbol);
                 ClassDeclaration.Reference.Assembly = GetAssembly(classSymbol);
+                ClassDeclaration.Reference.Version = GetAssemblyVersion(classSymbol);
                 ClassDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
             }
         }

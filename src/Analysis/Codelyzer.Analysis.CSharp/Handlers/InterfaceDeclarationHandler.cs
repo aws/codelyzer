@@ -14,7 +14,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             InterfaceDeclarationSyntax syntaxNode)
             : base(context, syntaxNode, new InterfaceDeclaration())
         {
-            var interfaceSymbol = SemanticModel.GetDeclaredSymbol(syntaxNode);
+            var interfaceSymbol = SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
             InterfaceDeclaration.Identifier = syntaxNode.Identifier.ToString();
 
 
@@ -28,6 +28,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
 
                 InterfaceDeclaration.Reference.Namespace = GetNamespace(interfaceSymbol);
                 InterfaceDeclaration.Reference.Assembly = GetAssembly(interfaceSymbol);
+                InterfaceDeclaration.Reference.Version = GetAssemblyVersion(interfaceSymbol);
                 InterfaceDeclaration.Reference.AssemblySymbol = interfaceSymbol.ContainingAssembly;
             }
         }

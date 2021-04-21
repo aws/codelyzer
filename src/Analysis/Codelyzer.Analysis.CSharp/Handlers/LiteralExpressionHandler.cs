@@ -17,8 +17,8 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             
             if (syntaxNode.Token != null && syntaxNode.Token.Value != null)
                 Model.LiteralType = syntaxNode.Token.Value.GetType().ToString();
-            
-            Model.SemanticType = SemanticHelper.GetSemanticType(syntaxNode, SemanticModel);
+
+            Model.SemanticType = SemanticHelper.GetSemanticType(syntaxNode, SemanticModel, OriginalSemanticModel);
         }
     }
 }

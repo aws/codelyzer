@@ -15,7 +15,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             if (syntaxNode.Expression != null)
             {
                 Model.Identifier = syntaxNode.Expression.ToString();
-                Model.SemanticReturnType = SemanticHelper.GetSemanticType(syntaxNode.Expression, SemanticModel);
+                Model.SemanticReturnType = SemanticHelper.GetSemanticType(syntaxNode.Expression, SemanticModel, OriginalSemanticModel);
             }
         }
     }

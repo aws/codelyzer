@@ -26,6 +26,7 @@ namespace Codelyzer.Analysis.Build
             using(var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
             {
                 builder.Build();
+
                 foreach(var projectResult in builder.Projects)
                 {
                     using (ProjectBuildHandler projectBuildHandler = 

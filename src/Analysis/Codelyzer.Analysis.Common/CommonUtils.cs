@@ -12,8 +12,8 @@ namespace Codelyzer.Analysis.Common
         {
             try
             {
-                logger.LogDebug("CallerInfo: " + callerInfo);
-                logger.LogDebug("Memory used before collection:       {0:N0}",
+                logger?.LogDebug("CallerInfo: " + callerInfo);
+                logger?.LogDebug("Memory used before collection:       {0:N0}",
                     GC.GetTotalMemory(false));
 
                 GC.Collect();
@@ -25,7 +25,7 @@ namespace Codelyzer.Analysis.Common
             }
             finally
             {
-                logger.LogDebug("Memory used after full collection:   {0:N0}",
+                logger?.LogDebug("Memory used after full collection:   {0:N0}",
                     GC.GetTotalMemory(false));
             }
         }

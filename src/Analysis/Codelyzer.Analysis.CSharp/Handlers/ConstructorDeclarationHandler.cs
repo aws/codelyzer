@@ -29,20 +29,20 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 if (parameter.Type != null)
                     param.Type = parameter.Type.ToString();
 
-                param.SemanticType =
-                    SemanticHelper.GetSemanticType(parameter.Type, SemanticModel);
+                param.SemanticType = SemanticHelper.GetSemanticType(parameter.Type, SemanticModel, OriginalSemanticModel);
                 Model.Parameters.Add(param);
             }
 
             Model.Modifiers = syntaxNode.Modifiers.ToString();
 
             var methodSymbol = (IMethodSymbol)
-                (SemanticModel.GetSymbolInfo(syntaxNode).Symbol ??
-                 SemanticModel.GetDeclaredSymbol(syntaxNode));
+                (SemanticHelper.GetSemanticSymbol(syntaxNode, SemanticModel, OriginalSemanticModel)
+                ?? SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel)
+                ?? SemanticHelper.GetDeclaredOriginalSymbol(syntaxNode, SemanticModel, OriginalSemanticModel));
             if (methodSymbol == null) return;
             SemanticHelper.AddMethodProperties(methodSymbol, Model.SemanticProperties);
 
-            Model.SemanticSignature = SemanticHelper.GetSemanticMethodSignature(SemanticModel, syntaxNode);
+            Model.SemanticSignature = SemanticHelper.GetSemanticMethodSignature(SemanticModel, OriginalSemanticModel, syntaxNode);
         }
     }
 }

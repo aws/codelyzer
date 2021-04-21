@@ -12,6 +12,7 @@ namespace Codelyzer.Analysis
     {
         static async Task Main(string[] args)
         {
+            var memory = GC.GetTotalMemory(false);
             AnalyzerCLI cli = new AnalyzerCLI();
             cli.HandleCommand(args);
             Console.WriteLine(cli);
@@ -36,10 +37,12 @@ namespace Codelyzer.Analysis
                 }
             };*/
             cli.Configuration.MetaDataSettings.DeclarationNodes = true;
+            cli.Configuration.MetaDataSettings.ReferenceData = true;
 
             /* 3. Get Analyzer instance based on language */
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(cli.Configuration, 
                 loggerFactory.CreateLogger("Analyzer"));
+
 
             /* 4. Analyze the project or solution */
             AnalyzerResult analyzerResult = null;
@@ -74,12 +77,6 @@ namespace Codelyzer.Analysis
             {
                 Console.WriteLine(invocation.MethodName + ":" + invocation.SemanticMethodSignature);
             }
-
-            var objectCreations = sourcefile.AllObjectCreationExpressions();
-            var allClasses = sourcefile.AllClasses();
-            var allMethods = sourcefile.AllMethods();
-            var allLiterals = sourcefile.AllLiterals();
-            var declarationNodes = sourcefile.AllDeclarationNodes();
         }
     }
 }
