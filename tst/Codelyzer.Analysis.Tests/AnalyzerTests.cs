@@ -10,6 +10,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Assert = NUnit.Framework.Assert;
 using System.Collections.Generic;
+using Codelyzer.Analysis.Common;
 
 namespace Codelyzer.Analysis.Tests
 {
@@ -261,9 +262,7 @@ namespace Codelyzer.Analysis.Tests
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
-            var timeStart = DateTime.Now;
             using var result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
-            var timeEnd = (DateTime.Now - timeStart).TotalMilliseconds;
 
             Assert.True(result != null);
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
@@ -321,10 +320,123 @@ namespace Codelyzer.Analysis.Tests
             Assert.IsNull(actionNameAttributeArgument.ArgumentName);
             Assert.AreEqual("\"Delete\"", actionNameAttributeArgument.ArgumentExpression);
 
-            await TestMvcMusicStoreIncrementalBuild(analyzer, result, accountController);
+            await TestMvcMusicStoreIncrementalBuildWithAnalzyer(analyzer, result, accountController);
         }
 
-        private async Task TestMvcMusicStoreIncrementalBuild(CodeAnalyzer analyzer, AnalyzerResult result, RootUstNode accountController)
+
+        [Test]
+        public async Task TestMvcMusicStoreWithReferences()
+        {
+            string solutionPath = Directory.EnumerateFiles(tempDir, "MvcMusicStore.sln", SearchOption.AllDirectories).FirstOrDefault();
+            FileAssert.Exists(solutionPath);
+            string projectPath = Directory.EnumerateFiles(Path.GetDirectoryName(solutionPath), "*.csproj", SearchOption.AllDirectories).FirstOrDefault();
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    LoadBuildData = true,
+                    ElementAccess = true,
+                    MemberAccess = true
+                }
+            };
+
+
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+
+            //We need to build initially to generate the references and get their info:
+            var start1 = DateTime.Now;
+            using var tempResult = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
+            var end1 = DateTime.Now - start1;
+
+            var references = tempResult.ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList();
+            var referencesInfo = new Dictionary<string, List<string>>();
+            referencesInfo.Add(projectPath, references);
+
+            var start = DateTime.Now;
+            using var result = (await analyzer.AnalyzeSolution(solutionPath, new Dictionary<string, List<string>>(), referencesInfo)).FirstOrDefault();
+            var end = DateTime.Now - start;
+
+            Assert.True(result != null);
+            Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
+
+            Assert.AreEqual(28, result.ProjectResult.SourceFiles.Count);
+
+            var homeController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.cs")).FirstOrDefault();
+            var accountController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("AccountController.cs")).FirstOrDefault();
+            var storeManagerController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("StoreManagerController.cs")).FirstOrDefault();
+
+            var homeControllerOld = tempResult.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.cs")).FirstOrDefault();
+            var accountControllerOld = tempResult.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("AccountController.cs")).FirstOrDefault();
+            var storeManagerControllerOld = tempResult.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("StoreManagerController.cs")).FirstOrDefault();
+
+
+            Assert.NotNull(homeController);
+            Assert.NotNull(accountController);
+            Assert.NotNull(storeManagerController);
+
+            var classDeclarations = homeController.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault();
+            var classDeclarationsOld = homeControllerOld.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault();
+            Assert.Greater(classDeclarations.Children.Count, 0);
+
+            var accountClassDeclaration = accountController.Children.OfType<NamespaceDeclaration>().FirstOrDefault();
+            var accountClassDeclarationOld = accountControllerOld.Children.OfType<NamespaceDeclaration>().FirstOrDefault();
+            Assert.NotNull(accountClassDeclaration);
+
+            var classDeclaration = homeController.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault().Children[0];
+            var classDeclarationOld = homeControllerOld.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault().Children[0];
+            Assert.NotNull(classDeclaration);
+
+            var declarationNodes = classDeclaration.AllDeclarationNodes();
+            var methodDeclarations = classDeclaration.AllMethods();
+            var elementAccess = accountClassDeclaration.AllElementAccessExpressions();
+            var memberAccess = accountClassDeclaration.AllMemberAccessExpressions();
+
+            var declarationNodesOld = classDeclarationOld.AllDeclarationNodes();
+            var methodDeclarationsOld = classDeclarationOld.AllMethods();
+            var elementAccessOld = accountClassDeclarationOld.AllElementAccessExpressions();
+            var memberAccessOld = accountClassDeclarationOld.AllMemberAccessExpressions();
+
+            //HouseController has 3 identifiers declared within the class declaration:
+            Assert.AreEqual(declarationNodesOld.Count(), declarationNodes.Count());
+
+            //It has 2 method declarations
+            Assert.AreEqual(methodDeclarationsOld.Count(), methodDeclarations.Count());
+
+            Assert.AreEqual(elementAccessOld.Count(), elementAccess.Count());
+            Assert.AreEqual(memberAccessOld.Count(), memberAccess.Count());
+
+            foreach (var child in accountController.Children)
+            {
+                Assert.AreEqual(accountController, child.Parent);
+            }
+
+            var authorizeAttribute = storeManagerController.AllAnnotations().First(a => a.Identifier == "Authorize");
+            var authorizeAttributeArgument = authorizeAttribute.AllAttributeArguments().First();
+            Assert.AreEqual("Roles", authorizeAttributeArgument.ArgumentName);
+            Assert.AreEqual("\"Administrator\"", authorizeAttributeArgument.ArgumentExpression);
+
+            var actionNameAttribute = storeManagerController.AllAnnotations().First(a => a.Identifier == "ActionName");
+            var actionNameAttributeArgument = actionNameAttribute.AllAttributeArguments().First();
+            Assert.IsNull(actionNameAttributeArgument.ArgumentName);
+            Assert.AreEqual("\"Delete\"", actionNameAttributeArgument.ArgumentExpression);
+
+            await TestMvcMusicStoreIncrementalBuild(projectPath, references, analyzer, accountController);
+        }
+
+        private async Task TestMvcMusicStoreIncrementalBuildWithAnalzyer(CodeAnalyzer analyzer, AnalyzerResult result, RootUstNode accountController)
         {
             File.WriteAllText(accountController.FileFullPath, @"using System;
 using System.Collections.Generic;
@@ -392,22 +504,114 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
     }
 }");
 
-            var timeStart = DateTime.Now;
             result = await analyzer.AnalyzeFile(accountController.FileFullPath, result);
-            var timeEnd = (DateTime.Now - timeStart).TotalMilliseconds;
             var references = result.ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList();
-            var timeStart2 = DateTime.Now;
-            await analyzer.AnalyzeFile(result.ProjectResult.ProjectFilePath, new List<string> { accountController.FileFullPath }, null, references);
-            var timeEnd2 = (DateTime.Now - timeStart).TotalMilliseconds;
-
             var updatedSourcefile = result.ProjectResult.SourceFileResults.FirstOrDefault(s => s.FileFullPath.Contains("AccountController.cs"));
-            Assert.NotNull(updatedSourcefile);
 
-            var updatedobjectCreations = updatedSourcefile.AllObjectCreationExpressions();
+        }
 
-            Assert.AreEqual(3, updatedSourcefile.AllMethods().Count);
-            Assert.AreEqual(5, updatedSourcefile.AllLiterals().Count);
-            Assert.AreEqual(5, updatedSourcefile.AllDeclarationNodes().Count);
+        private async Task TestMvcMusicStoreIncrementalBuild(string projectPath, List<string> references, CodeAnalyzer analyzer, RootUstNode accountController)
+        {
+            var filePath = accountController.FileFullPath;
+            var fileContent = @"using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using System.Web.Security;
+using Mvc3ToolsUpdateWeb_Default.Models;
+using MvcMusicStore.Models;
+
+namespace Mvc3ToolsUpdateWeb_Default.Controllers
+{
+    public class AccountController : Controller
+    {
+        private void MigrateShoppingCart(string UserName)
+        {
+            // Associate shopping cart items with logged-in user
+            var cart = ShoppingCart.GetCart(this.HttpContext);
+            cart.MigrateCart(UserName);
+            Session[ShoppingCart.CartSessionKey] = UserName;
+        }
+
+        
+        // GET: /Account/ChangePassword
+        [Authorize]
+        public ActionResult ChangePassword()
+        {
+            return View();
+        }
+
+        //
+        // POST: /Account/ChangePassword
+        [Authorize]
+        [HttpPost]
+        public ActionResult ChangePassword(ChangePasswordModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                // ChangePassword will throw an exception rather
+                // than return false in certain failure scenarios.
+                bool changePasswordSucceeded;
+                try
+                {
+                    MembershipUser currentUser = Membership.GetUser(User.Identity.Name, true /* userIsOnline */);
+                    changePasswordSucceeded = currentUser.ChangePassword(model.OldPassword, model.NewPassword);
+                }
+                catch (Exception)
+                {
+                    changePasswordSucceeded = false;
+                }
+
+                if (changePasswordSucceeded)
+                {
+                    return RedirectToAction(""ChangePasswordSuccess"");
+                }
+                else
+                {
+                    ModelState.AddModelError("""", ""The current password is incorrect or the new password is invalid."");
+                }
+            }
+
+            // If we got this far, something failed, redisplay form
+            return View(model);
+        }
+    }
+}";
+            File.WriteAllText(accountController.FileFullPath, fileContent);
+
+            var fileInfo = new Dictionary<string, string>();
+            fileInfo.Add(filePath, fileContent);
+
+            var oneFileResult = await analyzer.AnalyzeFile(projectPath, filePath, null, references);
+            var listOfFilesResult = await analyzer.AnalyzeFile(projectPath, new List<string> { filePath }, null, references);
+            var fileInfoResult = await analyzer.AnalyzeFile(projectPath, fileInfo, null, references);
+            var oneFileWithContentResult = await analyzer.AnalyzeFile(projectPath, filePath, fileContent, null, references);
+
+            var oneFileResultPre = await analyzer.AnalyzeFile(projectPath, filePath, references, null);
+            var listOfFilesResultPre = await analyzer.AnalyzeFile(projectPath, new List<string> { filePath }, references, null);
+            var fileInfoResultPre = await analyzer.AnalyzeFile(projectPath, fileInfo, references, null);
+            var oneFileWithContentResultPre = await analyzer.AnalyzeFile(projectPath, filePath, fileContent, references, null);
+
+            ValidateSourceFile(oneFileResult.RootNodes.FirstOrDefault());
+            ValidateSourceFile(listOfFilesResult.RootNodes.FirstOrDefault());
+            ValidateSourceFile(fileInfoResult.RootNodes.FirstOrDefault());
+            ValidateSourceFile(oneFileWithContentResult.RootNodes.FirstOrDefault());
+
+            ValidateSourceFile(oneFileResultPre.RootNodes.FirstOrDefault());
+            ValidateSourceFile(listOfFilesResultPre.RootNodes.FirstOrDefault());
+            ValidateSourceFile(fileInfoResultPre.RootNodes.FirstOrDefault());
+            ValidateSourceFile(oneFileWithContentResultPre.RootNodes.FirstOrDefault());
+
+            CommonUtils.RunGarbageCollection(null, "Test");
+        }
+
+        private void ValidateSourceFile(RootUstNode updatedSourceFile)
+        {
+            Assert.NotNull(updatedSourceFile);
+            Assert.AreEqual(3, updatedSourceFile.AllMethods().Count);
+            Assert.AreEqual(5, updatedSourceFile.AllLiterals().Count);
+            Assert.AreEqual(5, updatedSourceFile.AllDeclarationNodes().Count);
         }
 
         [Test]
@@ -498,7 +702,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             
             Assert.AreEqual(80, enumDeclarations);
             Assert.AreEqual(1, structDeclarations);
-            Assert.AreEqual(1216, arrowClauseStatements);
+            Assert.AreEqual(1217, arrowClauseStatements);
             Assert.AreEqual(742, elementAccessStatements);
 
             var project = "Nop.Web";

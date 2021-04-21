@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using JetBrains.Profiler.Api;
 using Microsoft.Extensions.Logging;
 
 namespace Codelyzer.Analysis.Build
@@ -28,7 +27,6 @@ namespace Codelyzer.Analysis.Build
             {
                 builder.Build();
 
-                MemoryProfiler.GetSnapshot();
                 foreach(var projectResult in builder.Projects)
                 {
                     using (ProjectBuildHandler projectBuildHandler = 
@@ -53,7 +51,6 @@ namespace Codelyzer.Analysis.Build
                         }
                     }
                 }
-                MemoryProfiler.GetSnapshot();
             }
 
             return ProjectResults;

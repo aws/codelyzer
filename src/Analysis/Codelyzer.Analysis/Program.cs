@@ -1,11 +1,8 @@
 ﻿using Codelyzer.Analysis.Model;
-using JetBrains.Profiler.Api;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Codelyzer.Analysis

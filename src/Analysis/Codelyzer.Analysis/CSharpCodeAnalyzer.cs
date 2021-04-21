@@ -2,6 +2,7 @@ using Codelyzer.Analysis.Build;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.CSharp;
 using Codelyzer.Analysis.Model;
+using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -27,11 +28,58 @@ namespace Codelyzer.Analysis
             AnalyzerResult analyzerResult = (await Analyze(projectPath)).First();
             return analyzerResult;
         }
+        public override async Task<AnalyzerResult> AnalyzeProject(string projectPath, List<string> oldReferences, List<string> references)
+        {
+            var analyzerResult = await AnalyzeProjectWithReferences(projectPath, oldReferences , references);
+            return analyzerResult;
+        }
 
         ///<inheritdoc/>
         public override async Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath)
         {
             return await Analyze(solutionPath);
+        }
+        ///<inheritdoc/>
+        public override async Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath, Dictionary<string, List<string>> oldReferences, Dictionary<string, List<string>> references)
+        {
+            var analyzerResults = new List<AnalyzerResult>();
+            foreach (var project in references)
+            {
+                var analyzerResult = await AnalyzeProjectWithReferences(project.Key, oldReferences.ContainsKey(project.Key) ? oldReferences[project.Key] : null, project.Value);
+                analyzerResults.Add(analyzerResult);
+            }
+            return analyzerResults;
+        }
+
+        private async Task<AnalyzerResult> AnalyzeProjectWithReferences(string path, List<string> oldReferences, List<string> references)
+        {
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException(path);
+            }
+
+            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
+            var analyzerResult = new AnalyzerResult();
+
+            ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, path, oldReferences, references, AnalyzerConfiguration);
+            var projectBuildResult = projectBuildHandler.ReferenceOnlyBuild();
+
+            var workspaceResult = AnalyzeProject(projectBuildResult);
+            workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
+            workspaceResult.ProjectType = projectBuildResult.ProjectType;
+            workspaceResults.Add(workspaceResult);
+
+            //Generate Output result
+            if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+            {
+                analyzerResult = new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult };
+            }
+            else
+            {
+                analyzerResult = new AnalyzerResult() { ProjectResult = workspaceResult };
+            }
+
+            return analyzerResult;
         }
 
         private async Task<List<AnalyzerResult>> Analyze(string path)
@@ -191,6 +239,22 @@ namespace Codelyzer.Analysis
             return await AnalyzeFile(projectPath, fileInfo, frameworkMetaReferences, coreMetaReferences);
         }
         public override async Task<IDEProjectResult> AnalyzeFile(string projectPath, Dictionary<string, string> fileInfo, List<string> frameworkMetaReferences, List<string> coreMetaReferences)
+        {
+            var result = new IDEProjectResult();
+
+            FileBuildHandler fileBuildHandler = new FileBuildHandler(Logger, projectPath, fileInfo, frameworkMetaReferences, coreMetaReferences);
+            var sourceFileResults = await fileBuildHandler.Build();
+
+            result.SourceFileBuildResults = sourceFileResults;
+            sourceFileResults.ForEach(sourceFileResult => {
+                var fileAnalysis = AnalyzeFile(sourceFileResult, projectPath);
+                result.RootNodes.Add(fileAnalysis);
+            });
+
+            return result;
+        }
+
+        public override async Task<IDEProjectResult> AnalyzeFile(string projectPath, Dictionary<string, string> fileInfo, IEnumerable<PortableExecutableReference> frameworkMetaReferences, List<PortableExecutableReference> coreMetaReferences)
         {
             var result = new IDEProjectResult();
 

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Codelyzer.Analysis.Build;
+using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 
 namespace Codelyzer.Analysis
@@ -27,11 +28,25 @@ namespace Codelyzer.Analysis
         public abstract Task<AnalyzerResult> AnalyzeProject(string projectPath);
 
         /// <summary>
+        /// Runs analysis on a project
+        /// </summary>
+        /// <param name="projectPath">The path to the project file</param>
+        /// <returns></returns>
+        public abstract Task<AnalyzerResult> AnalyzeProject(string projectPath, List<string> originalReferences, List<string> references);
+
+        /// <summary>
         /// Runs analysis on a solution
         /// </summary>
         /// <param name="solutionPath">The path to the solution file</param>
         /// <returns></returns>
         public abstract Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath);
+
+        /// <summary>
+        /// Runs analysis on a solution
+        /// </summary>
+        /// <param name="solutionPath">The path to the solution file</param>
+        /// <returns></returns>
+        public abstract Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath, Dictionary<string, List<string>> originalReferences, Dictionary<string, List<string>> references);
 
 
         /// <summary>
@@ -62,5 +77,6 @@ namespace Codelyzer.Analysis
         public abstract Task<IDEProjectResult> AnalyzeFile(string projectPath, string filePath, string fileContent, List<string> frameworkMetaReferences, List<string> coreMetaReferences);
         public abstract Task<IDEProjectResult> AnalyzeFile(string projectPath, List<string> filePath, List<string> frameworkMetaReferences, List<string> coreMetaReferences);
         public abstract Task<IDEProjectResult> AnalyzeFile(string projectPath, Dictionary<string, string> fileInfo, List<string> frameworkMetaReferences, List<string> coreMetaReferences);
+        public abstract Task<IDEProjectResult> AnalyzeFile(string projectPath, Dictionary<string, string> fileInfo, IEnumerable<PortableExecutableReference> frameworkMetaReferences, List<PortableExecutableReference> coreMetaReferences);
     }
 }

@@ -37,11 +37,12 @@ namespace Codelyzer.Analysis.CSharp.Handlers
 
             var methodSymbol = (IMethodSymbol)
                 (SemanticHelper.GetSemanticSymbol(syntaxNode, SemanticModel, OriginalSemanticModel)
-                ?? SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel));
+                ?? SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel)
+                ?? SemanticHelper.GetDeclaredOriginalSymbol(syntaxNode, SemanticModel, OriginalSemanticModel));
             if (methodSymbol == null) return;
             SemanticHelper.AddMethodProperties(methodSymbol, Model.SemanticProperties);
 
-            Model.SemanticSignature = SemanticHelper.GetSemanticMethodSignature(SemanticModel, syntaxNode);
+            Model.SemanticSignature = SemanticHelper.GetSemanticMethodSignature(SemanticModel, OriginalSemanticModel, syntaxNode);
         }
     }
 }

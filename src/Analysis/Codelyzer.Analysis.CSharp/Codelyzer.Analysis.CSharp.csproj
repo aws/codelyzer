@@ -7,16 +7,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\Codelyzer.Analysis.Common\Codelyzer.Analysis.Common.csproj" />
       <ProjectReference Include="..\Codelyzer.Analysis.Model\Codelyzer.Analysis.Model.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Update="Nerdbank.GitVersioning" Version="3.3.37" />
+      <PackageReference Update="Nerdbank.GitVersioning" Version="3.4.194" />
     </ItemGroup>
 
 </Project>
