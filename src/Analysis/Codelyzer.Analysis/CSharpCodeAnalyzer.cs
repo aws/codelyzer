@@ -58,27 +58,30 @@ namespace Codelyzer.Analysis
                 throw new FileNotFoundException(path);
             }
 
-            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
             var analyzerResult = new AnalyzerResult();
 
-            ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, path, oldReferences, references, AnalyzerConfiguration);
-            var projectBuildResult = projectBuildHandler.ReferenceOnlyBuild();
-
-            var workspaceResult = AnalyzeProject(projectBuildResult);
-            workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
-            workspaceResult.ProjectType = projectBuildResult.ProjectType;
-            workspaceResults.Add(workspaceResult);
-
-            //Generate Output result
-            if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+            await Task.Run(() =>
             {
-                analyzerResult = new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult };
-            }
-            else
-            {
-                analyzerResult = new AnalyzerResult() { ProjectResult = workspaceResult };
-            }
+                List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
 
+                ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, path, oldReferences, references, AnalyzerConfiguration);
+                var projectBuildResult = projectBuildHandler.ReferenceOnlyBuild();
+
+                var workspaceResult = AnalyzeProject(projectBuildResult);
+                workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
+                workspaceResult.ProjectType = projectBuildResult.ProjectType;
+                workspaceResults.Add(workspaceResult);
+
+                //Generate Output result
+                if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+                {
+                    analyzerResult = new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult };
+                }
+                else
+                {
+                    analyzerResult = new AnalyzerResult() { ProjectResult = workspaceResult };
+                }
+            });
             return analyzerResult;
         }
 
@@ -189,7 +192,6 @@ namespace Codelyzer.Analysis
 
             var projectBuildResult = analyzerResult.ProjectBuildResult;
             var oldSourceFileResult = analyzerResult.ProjectResult.SourceFileResults.FirstOrDefault(sourceFile => sourceFile.FileFullPath == filePath);
-            var oldSourceFileBuildResult = projectBuildResult.SourceFileBuildResults.FirstOrDefault(sourceFile => sourceFile.SourceFileFullPath == filePath);
 
             analyzerResult.ProjectResult.SourceFileResults.Remove(oldSourceFileResult);
 

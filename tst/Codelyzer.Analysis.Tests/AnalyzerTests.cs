@@ -1,16 +1,15 @@
-using System;
+using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Assert = NUnit.Framework.Assert;
-using System.Collections.Generic;
-using Codelyzer.Analysis.Common;
 
 namespace Codelyzer.Analysis.Tests
 {

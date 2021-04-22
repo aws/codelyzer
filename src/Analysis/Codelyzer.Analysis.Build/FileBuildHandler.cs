@@ -12,8 +12,8 @@ namespace Codelyzer.Analysis.Build
 {
     public class FileBuildHandler : IDisposable
     {
-        private Compilation Compilation;
-        private Compilation PrePortCompilation;
+        private Compilation _compilation;
+        private Compilation _prePortCompilation;
 
         private List<string> Errors { get; set; }
         private ILogger Logger;
@@ -46,53 +46,61 @@ namespace Codelyzer.Analysis.Build
         }
         public async Task<List<SourceFileBuildResult>> Build()
         {
-            var trees = new List<SyntaxTree>();
-            foreach(var file in _fileInfo)
-            {
-                var fileContent = file.Value;
-                var syntaxTree = CSharpSyntaxTree.ParseText(fileContent, path: file.Key);
-                trees.Add(syntaxTree);
-            }
-            if (trees.Count != 0)
-            {
-                var projectName = Path.GetFileNameWithoutExtension(_projectPath);
-
-                if (_frameworkMetaReferences?.Any() == true)
-                {
-                    PrePortCompilation = CSharpCompilation.Create(projectName, trees, _frameworkMetaReferences);
-                }
-                if (_coreMetaReferences?.Any() == true)
-                {
-                    Compilation = CSharpCompilation.Create(projectName, trees, _coreMetaReferences);
-                }
-            }
-
             var results = new List<SourceFileBuildResult>();
+            var trees = new List<SyntaxTree>();
 
-            _fileInfo.Keys.ToList().ForEach(file => {
-                var sourceFilePath = Path.GetRelativePath(_projectPath, file);
-                var fileTree = trees.FirstOrDefault(t => t.FilePath == file);
-
-                var fileResult = new SourceFileBuildResult
+            await Task.Run(() =>
+            {
+                foreach (var file in _fileInfo)
                 {
-                    SyntaxTree = fileTree,
-                    PrePortSemanticModel = PrePortCompilation?.GetSemanticModel(fileTree),
-                    SemanticModel = Compilation?.GetSemanticModel(fileTree),
-                    SourceFileFullPath = file,
-                    SourceFilePath = file
-                };
+                    var fileContent = file.Value;
+                    var syntaxTree = CSharpSyntaxTree.ParseText(fileContent, path: file.Key);
+                    trees.Add(syntaxTree);
+                }
+                if (trees.Count != 0)
+                {
+                    var projectName = Path.GetFileNameWithoutExtension(_projectPath);
 
-                results.Add(fileResult);
+                    if (_frameworkMetaReferences?.Any() == true)
+                    {
+                        _prePortCompilation = CSharpCompilation.Create(projectName, trees, _frameworkMetaReferences);
+                    }
+                    if (_coreMetaReferences?.Any() == true)
+                    {
+                        _compilation = CSharpCompilation.Create(projectName, trees, _coreMetaReferences);
+                    }
+                }
+
+
+                _fileInfo.Keys.ToList().ForEach(file =>
+                {
+                    var sourceFilePath = Path.GetRelativePath(_projectPath, file);
+                    var fileTree = trees.FirstOrDefault(t => t.FilePath == file);
+
+                    if (fileTree != null)
+                    {
+                        var fileResult = new SourceFileBuildResult
+                        {
+                            SyntaxTree = fileTree,
+                            PrePortSemanticModel = _prePortCompilation?.GetSemanticModel(fileTree),
+                            SemanticModel = _compilation?.GetSemanticModel(fileTree),
+                            SourceFileFullPath = file,
+                            SourceFilePath = file
+                        };
+                        results.Add(fileResult);
+                    }
+                    else
+                    {
+                        Logger.LogError($"Cannot find a syntax tree for {file}");
+                    }
+                });
             });
-
             return results;
-        }
-
-  
+        }  
 
         public void Dispose()
         {
-            Compilation = null;
+            _compilation = null;
             Logger = null;
         }
     }
