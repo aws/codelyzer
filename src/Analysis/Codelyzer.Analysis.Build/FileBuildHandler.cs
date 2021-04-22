@@ -85,7 +85,7 @@ namespace Codelyzer.Analysis.Build
                             PrePortSemanticModel = _prePortCompilation?.GetSemanticModel(fileTree),
                             SemanticModel = _compilation?.GetSemanticModel(fileTree),
                             SourceFileFullPath = file,
-                            SourceFilePath = file
+                            SourceFilePath = sourceFilePath
                         };
                         results.Add(fileResult);
                     }
