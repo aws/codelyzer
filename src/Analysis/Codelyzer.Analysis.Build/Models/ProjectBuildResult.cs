@@ -16,10 +16,12 @@ namespace Codelyzer.Analysis.Build
         public List<SourceFileBuildResult> SourceFileBuildResults { get; private set; }
         public List<string> BuildErrors { get; set; }
         public Project Project { get; set; }
+        public Compilation PrePortCompilation { get; set; }
         public Compilation Compilation { get; set; }
         public ExternalReferences ExternalReferences { get; set; }
         public string TargetFramework { get; set; }
         public List<string> TargetFrameworks { get; set; }
+        public List<string> PreportReferences { get; set; }
         public string ProjectGuid { get; set; }        
         public string ProjectType { get; set; }
         public bool IsSyntaxAnalysis { get; set; }
@@ -29,6 +31,7 @@ namespace Codelyzer.Analysis.Build
             SourceFileBuildResults = new List<SourceFileBuildResult>();
             SourceFiles = new List<string>();
             TargetFrameworks = new List<string>();
+            PreportReferences = new List<string>();
         }
 
         public bool IsBuildSuccess()
@@ -45,6 +48,7 @@ namespace Codelyzer.Analysis.Build
         public void Dispose()
         {
             Compilation = null;
+            PrePortCompilation = null;
         }
     }
 }

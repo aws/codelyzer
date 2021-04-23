@@ -1,9 +1,10 @@
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Codelyzer.Analysis.CSharp
 {
@@ -31,13 +32,27 @@ namespace Codelyzer.Analysis.CSharp
         /// <param name="semanticModel">An instance of the semantic model</param>
         /// <returns>Name of the type</returns>
         public static string GetSemanticType(TypeSyntax typeSyntax, 
-            SemanticModel semanticModel)
+            SemanticModel semanticModel,
+            SemanticModel preportSemanticModel = null)
         {
-            if (semanticModel == null) return null;
+            if (semanticModel == null && preportSemanticModel == null) return null;
             
             string type = null;
 
             var typeInfo = semanticModel.GetTypeInfo(typeSyntax);
+            if (typeInfo.Type == null && preportSemanticModel != null)
+            {
+                try
+                {
+                    typeInfo = preportSemanticModel.GetTypeInfo(typeSyntax);
+                }
+                catch (Exception ex)
+                {
+                    //When looking for a symbol, and the semantic model is not passed, this generates an error.
+                    //We don't log this error because this is an expected behavior when there's no previous semantic models
+                }
+            }
+
             if (typeInfo.Type != null)
             {
                 type = typeInfo.Type.Name;
@@ -53,13 +68,27 @@ namespace Codelyzer.Analysis.CSharp
         /// <param name="semanticModel">An instance of the semantic model</param>
         /// <returns>Name of the type</returns>
         public static string GetSemanticType(ExpressionSyntax expressionSyntax, 
-            SemanticModel semanticModel)
+            SemanticModel semanticModel,
+            SemanticModel preportSemanticModel = null)
         {
-            if (semanticModel == null) return null;
+            if (semanticModel == null && preportSemanticModel == null) return null;
             
             string type = null;
 
             var typeInfo = semanticModel.GetTypeInfo(expressionSyntax);
+            if (typeInfo.Type == null && preportSemanticModel != null)
+            {
+                try
+                {
+                    typeInfo = preportSemanticModel.GetTypeInfo(expressionSyntax);
+                }
+                catch (Exception ex)
+                {
+                    //When looking for a symbol, and the semantic model is not passed, this generates an error.
+                    //We don't log this error because this is an expected behavior when there's no previous semantic models
+                }
+            }
+
             if (typeInfo.Type != null)
             {
                 type = typeInfo.Type.Name;
@@ -68,6 +97,76 @@ namespace Codelyzer.Analysis.CSharp
             return type;
         }
 
+        public static ISymbol GetSemanticSymbol(SyntaxNode syntaxNode,
+            SemanticModel semanticModel,
+            SemanticModel preportSemanticModel = null)
+        {
+            if (semanticModel == null && preportSemanticModel == null) return null;
+
+            var symbol = semanticModel?.GetSymbolInfo(syntaxNode).Symbol;
+            if (symbol == null && preportSemanticModel != null)
+            {
+                try
+                {
+                    symbol = preportSemanticModel.GetSymbolInfo(syntaxNode).Symbol;
+                }
+                catch (Exception ex)
+                {
+                    //When looking for a symbol, and the semantic model is not passed, this generates an error.
+                    //We don't log this error because this is an expected behavior when there's no previous semantic models
+                }
+        }
+
+            return symbol;
+        }
+
+        public static INamedTypeSymbol GetDeclaredSymbol(SyntaxNode syntaxNode,
+            SemanticModel semanticModel,
+            SemanticModel preportSemanticModel = null)
+        {
+            if (semanticModel == null && preportSemanticModel == null) return null;
+
+            var symbol = semanticModel?.GetDeclaredSymbol(syntaxNode) as INamedTypeSymbol;
+            if (symbol == null && preportSemanticModel != null)
+            {
+                try
+                {
+                    symbol = preportSemanticModel.GetDeclaredSymbol(syntaxNode) as INamedTypeSymbol;
+                }
+                catch (Exception ex)
+                {
+                    //When looking for a symbol, and the semantic model is not passed, this generates an error.
+                    //We don't log this error because this is an expected behavior when there's no previous semantic models
+                }
+            }
+
+            return symbol;
+        }
+
+        public static ISymbol GetDeclaredOriginalSymbol(SyntaxNode syntaxNode,
+            SemanticModel semanticModel,
+            SemanticModel preportSemanticModel = null)
+        {
+            if (semanticModel == null && preportSemanticModel == null) return null;
+
+            var symbol = semanticModel?.GetDeclaredSymbol(syntaxNode);
+            if (symbol == null && preportSemanticModel != null)
+            {
+                try
+                {
+                    symbol = preportSemanticModel.GetDeclaredSymbol(syntaxNode);
+                }
+                catch (Exception ex)
+                {
+                    //When looking for a symbol, and the semantic model is not passed, this generates an error.
+                    //We don't log this error because this is an expected behavior when there's no previous semantic models
+                }
+            }
+
+            return symbol;
+        }
+
+
         /// <summary>
         /// Gets name of type from IdentifierNameSyntax
         /// </summary>
@@ -75,13 +174,27 @@ namespace Codelyzer.Analysis.CSharp
         /// <param name="semanticModel">An instance of the semantic model</param>
         /// <returns>Name of the type</returns>
         public static string GetSemanticType(IdentifierNameSyntax identifierNameSyntax,
-          SemanticModel semanticModel)
+          SemanticModel semanticModel,
+          SemanticModel preportSemanticModel)
         {
-            if (semanticModel == null) return null;
+            if (semanticModel == null && preportSemanticModel == null) return null;
 
             string type = null;
             
-            var typeInfo = semanticModel.GetTypeInfo(identifierNameSyntax);
+            var typeInfo = semanticModel.GetTypeInfo(identifierNameSyntax); 
+            if (typeInfo.Type == null && preportSemanticModel != null)
+            {
+                try
+                {
+                    typeInfo = preportSemanticModel.GetTypeInfo(identifierNameSyntax);
+                }
+                catch (Exception ex)
+                {
+                    //When looking for a symbol, and the semantic model is not passed, this generates an error.
+                    //We don't log this error because this is an expected behavior when there's no previous semantic models
+                }
+            }
+
             if (typeInfo.Type != null)
             {
                 type = typeInfo.Type.Name;
@@ -121,9 +234,9 @@ namespace Codelyzer.Analysis.CSharp
         /// <param name="semanticModel">Semantic model of syntax tree containing the method declaration</param>
         /// <param name="syntaxNode">Method declaration node</param>
         /// <returns>The semantic method signature</returns>
-        public static string GetSemanticMethodSignature(SemanticModel semanticModel, BaseMethodDeclarationSyntax syntaxNode)
+        public static string GetSemanticMethodSignature(SemanticModel semanticModel, SemanticModel originalSemanticModel, BaseMethodDeclarationSyntax syntaxNode)
         {
-            var semanticMethodNameAndParameters = semanticModel.GetDeclaredSymbol(syntaxNode).ToString();
+            var semanticMethodNameAndParameters = GetDeclaredOriginalSymbol(syntaxNode, semanticModel, originalSemanticModel)?.ToString();            
             var joinedModifiers = string.Join(" ", syntaxNode.Modifiers.Select(m => m.ToString()));
 
             return $"{joinedModifiers} {semanticMethodNameAndParameters}".Trim();

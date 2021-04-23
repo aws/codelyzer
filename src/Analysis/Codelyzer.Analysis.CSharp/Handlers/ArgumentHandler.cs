@@ -13,7 +13,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             : base(context, syntaxNode, new Argument())
         {
             Model.Identifier = syntaxNode.Expression.ToString();
-            Model.SemanticType = SemanticHelper.GetSemanticType(syntaxNode.Expression, SemanticModel);
+            Model.SemanticType = SemanticHelper.GetSemanticType(syntaxNode.Expression, SemanticModel, OriginalSemanticModel);
         }
     }
 }
