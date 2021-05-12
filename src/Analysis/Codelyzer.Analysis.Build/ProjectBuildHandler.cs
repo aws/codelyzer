@@ -337,7 +337,7 @@ namespace Codelyzer.Analysis.Build
             return projectBuildResult;
         }
 
-        public async Task<ProjectBuildResult> ReferenceOnlyBuild()
+        public ProjectBuildResult ReferenceOnlyBuild()
         {
             ProjectBuildResult projectBuildResult = new ProjectBuildResult
             {

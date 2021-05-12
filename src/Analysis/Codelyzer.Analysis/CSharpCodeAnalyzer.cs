@@ -81,32 +81,6 @@ namespace Codelyzer.Analysis
             await GenerateOptionalOutput(analyzerResults);
 
             return analyzerResults;
-
-            //var analyzerResult = new AnalyzerResult();
-
-            //await Task.Run(() =>
-            //{
-            //    List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
-
-            //    ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, path, oldReferences, references, AnalyzerConfiguration);
-            //    var projectBuildResult = projectBuildHandler.ReferenceOnlyBuild();
-
-            //    var workspaceResult = AnalyzeProject(projectBuildResult);
-            //    workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
-            //    workspaceResult.ProjectType = projectBuildResult.ProjectType;
-            //    workspaceResults.Add(workspaceResult);
-
-            //    //Generate Output result
-            //    if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
-            //    {
-            //        analyzerResult = new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult };
-            //    }
-            //    else
-            //    {
-            //        analyzerResult = new AnalyzerResult() { ProjectResult = workspaceResult };
-            //    }
-            //});
-            //return analyzerResult;
         }
 
         private async Task<List<AnalyzerResult>> Analyze(string path)
@@ -279,7 +253,6 @@ namespace Codelyzer.Analysis
 
             return result;
         }
-
         public override async Task<IDEProjectResult> AnalyzeFile(string projectPath, Dictionary<string, string> fileInfo, IEnumerable<PortableExecutableReference> frameworkMetaReferences, List<PortableExecutableReference> coreMetaReferences)
         {
             var result = new IDEProjectResult();
