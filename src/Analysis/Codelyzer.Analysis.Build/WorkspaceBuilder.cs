@@ -72,7 +72,7 @@ namespace Codelyzer.Analysis.Build
                     new ProjectBuildHandler(Logger, projectPath, oldRefs, refs, _analyzerConfiguration))
                     {
                         projectBuildHandler.ProjectAnalyzer = projectResult.ProjectAnalyzer;
-                        var result = await projectBuildHandler.ReferenceOnlyBuild();
+                        var result = projectBuildHandler.ReferenceOnlyBuild();
                         ProjectResults.Add(result);
                     }
                 }
