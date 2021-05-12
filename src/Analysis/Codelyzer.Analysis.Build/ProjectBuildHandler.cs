@@ -202,7 +202,6 @@ namespace Codelyzer.Analysis.Build
 
         private Compilation CreateManualCompilation(string projectPath, List<string> references)
         {
-            if(references == null || !references.Any()) { return null; }
             var trees = new List<SyntaxTree>();
             DirectoryInfo directory = new DirectoryInfo(Path.GetDirectoryName(projectPath));
 
@@ -356,7 +355,7 @@ namespace Codelyzer.Analysis.Build
             projectBuildResult.ProjectType = ProjectAnalyzer.ProjectInSolution != null ? ProjectAnalyzer.ProjectInSolution.ProjectType.ToString() : string.Empty;
 
 
-            foreach (var syntaxTree in Compilation.SyntaxTrees)
+            foreach (var syntaxTree in Compilation?.SyntaxTrees)
             {
                 var sourceFilePath = Path.GetRelativePath(projectBuildResult.ProjectRootPath, syntaxTree.FilePath);
                 var fileResult = new SourceFileBuildResult
