@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using System;
 
 namespace Codelyzer.Analysis.Model
 {
@@ -20,6 +21,30 @@ namespace Codelyzer.Analysis.Model
             : base(IdConstants.ClassIdName)
         {
             Reference = new Reference();
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is ClassDeclaration)
+            {
+                return Equals(obj as ClassDeclaration);
+            }
+            return false;
+        }
+
+        public bool Equals(ClassDeclaration compareNode)
+        {
+            return
+                compareNode != null &&
+                BaseType?.Equals(compareNode.BaseType) != false &&
+                BaseTypeOriginalDefinition?.Equals(compareNode.BaseTypeOriginalDefinition) != false &&
+                Modifiers?.Equals(compareNode.Modifiers) != false &&
+                SemanticAssembly?.Equals(compareNode.SemanticAssembly) != false &&
+                base.Equals(compareNode);
+
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(BaseType, BaseTypeOriginalDefinition, Modifiers, SemanticAssembly, base.GetHashCode());
         }
     }
 }

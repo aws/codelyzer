@@ -1,6 +1,7 @@
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging.Abstractions;
+using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Threading.Tasks;
 using Assert = NUnit.Framework.Assert;
 
@@ -50,7 +52,31 @@ namespace Codelyzer.Analysis.Tests
             DownloadFromGitHub(@"https://github.com/Duikmeester/MvcMusicStore/archive/e274968f2827c04cfefbe6493f0a784473f83f80.zip", "MvcMusicStore-e274968f2827c04cfefbe6493f0a784473f83f80");
             DownloadFromGitHub(@"https://github.com/nopSolutions/nopCommerce/archive/73567858b3e3ef281d1433d7ac79295ebed47ee6.zip", "nopCommerce-73567858b3e3ef281d1433d7ac79295ebed47ee6");
 
+            CopyTestResourcesToSolutionPath();
             //Directory.Move(dirs, Path.Combine(tempDirectory.FullName, "TestProjects"));
+        }
+
+        private void CopyTestResourcesToSolutionPath()
+        {
+            var resourceLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TestResources");
+
+            var solutions = Directory.EnumerateFiles(tempDir, "*.sln", SearchOption.AllDirectories).ToList();
+
+            solutions.ForEach(solutionFile => {
+                var solutionName = Path.GetFileNameWithoutExtension(solutionFile).ToLower();
+                var solutionDir = Path.GetDirectoryName(solutionFile);
+                var resourcesDir = Path.Combine(resourceLocation, solutionName);
+                if (Directory.Exists(resourcesDir))
+                {
+                    var zipFiles = Directory.EnumerateFiles(resourcesDir, "*.zip").ToList();
+                    zipFiles.ForEach(zipFile =>
+                    {
+                        ZipFile.ExtractToDirectory(zipFile, resourcesDir, true);
+                        File.Delete(zipFile);
+                    });                    
+                    CopyDirectory(new DirectoryInfo(resourcesDir), new DirectoryInfo(solutionDir));
+                }            
+            });
         }
 
 
@@ -748,6 +774,78 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(9, parenLambdas2Parameters.Count());
             results.ForEach(r => r.Dispose());
         }
+
+
+
+
+        [TestCase("SampleWebApi.sln")]
+        [TestCase("MvcMusicStore.sln")]
+        [TestCase("nopCommerce.sln")]
+        public async Task TestReferenceBuilds (string solutionName)
+        {
+            string solutionPath = Directory.EnumerateFiles(tempDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true
+                }
+            };
+
+            var solutionDir = Path.GetDirectoryName(solutionPath);
+            var metaReferences = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(
+                File.ReadAllText(Path.Combine(solutionDir, "deps.json")));            
+
+            metaReferences = metaReferences.ToDictionary(m => Path.Combine(solutionDir, m.Key), m => m.Value.Select(v => Path.Combine(solutionDir, v)).ToList());
+
+            //Files that are excluded from the list because they have more data in the reference analysis
+            var exclusionsFile = Path.Combine(solutionDir, "Exclusions.txt");
+            IEnumerable<string> exclusions = new List<string>();
+            if (File.Exists(exclusionsFile))
+            {
+                exclusions = File.ReadAllLines(exclusionsFile)
+                    .ToList().Select(l => l.Trim());
+            }
+
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            var results = (await analyzer.AnalyzeSolution(solutionPath, new Dictionary<string, List<string>>(), metaReferences)).ToList();
+            var resultsUsingBuild = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
+
+            var sourceFiles = results.SelectMany(r => r.ProjectResult.SourceFileResults)
+                .Where(s => !s.FileFullPath.Contains("AssemblyInfo.cs") && 
+                !s.FileFullPath.Contains(".cshtml.g") &&
+                !exclusions.Contains(Path.GetFileName(s.FileFullPath)));
+            var sourceFilesUsingBuild = resultsUsingBuild.SelectMany(r => r.ProjectResult.SourceFileResults)
+                .Where(s => !s.FileFullPath.Contains("AssemblyInfo.cs") && !exclusions.Contains(Path.GetFileName(s.FileFullPath)));
+
+            sourceFiles.ToList().ForEach(sourceFile =>
+            {
+                var sourceFileUsingBuild = sourceFilesUsingBuild.FirstOrDefault(s => s.FileFullPath == sourceFile.FileFullPath);
+                if (sourceFile.Equals(sourceFileUsingBuild))
+                Assert.True(sourceFile.Equals(sourceFileUsingBuild));                                
+            });
+        }
+
+
 
         [TearDown]
         public void Cleanup()

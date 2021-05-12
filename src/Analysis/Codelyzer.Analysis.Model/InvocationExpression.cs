@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace Codelyzer.Analysis.Model
@@ -62,6 +63,40 @@ namespace Codelyzer.Analysis.Model
             Parameters = new List<Parameter>();
             Arguments = new List<Argument>();
             Reference = new Reference();
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is InvocationExpression)
+            {
+                return Equals(obj as InvocationExpression);
+            }
+            return false;
+        }
+
+        public bool Equals(InvocationExpression compareNode)
+        {
+            return
+                compareNode != null &&
+                MethodName?.Equals(compareNode.MethodName) != false &&
+                Modifiers?.Equals(compareNode.Modifiers) != false &&
+                SemanticNamespace?.Equals(compareNode.SemanticNamespace) != false &&
+                CallerIdentifier?.Equals(compareNode.CallerIdentifier) != false &&
+                SemanticClassType?.Equals(compareNode.SemanticClassType) != false &&
+                SemanticMethodSignature?.Equals(compareNode.SemanticMethodSignature) != false &&
+                Parameters?.SequenceEqual(compareNode.Parameters) != false &&
+                Arguments?.SequenceEqual(compareNode.Arguments) != false &&
+                SemanticReturnType?.Equals(compareNode.SemanticReturnType) != false &&
+                SemanticOriginalDefinition?.Equals(compareNode.SemanticOriginalDefinition) != false &&
+                IsExtension == compareNode.IsExtension &&
+                base.Equals(compareNode);
+
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(
+                HashCode.Combine(MethodName, Modifiers, SemanticNamespace, CallerIdentifier, SemanticClassType, SemanticMethodSignature),
+                HashCode.Combine(Parameters, Arguments, SemanticReturnType, SemanticOriginalDefinition, IsExtension),
+                base.GetHashCode());
         }
     }
 }

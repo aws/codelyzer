@@ -96,7 +96,7 @@ namespace Codelyzer.Analysis.Build
         {
             PrePortCompilation = await SetPrePortCompilation();         
             Compilation = await Project.GetCompilationAsync();           
-
+            
             var errors = Compilation.GetDiagnostics()
                 .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
             if (errors.Any())
@@ -338,7 +338,7 @@ namespace Codelyzer.Analysis.Build
             return projectBuildResult;
         }
 
-        public ProjectBuildResult ReferenceOnlyBuild()
+        public async Task<ProjectBuildResult> ReferenceOnlyBuild()
         {
             ProjectBuildResult projectBuildResult = new ProjectBuildResult
             {
@@ -350,6 +350,11 @@ namespace Codelyzer.Analysis.Build
                 IsSyntaxAnalysis = isSyntaxAnalysis,
                 PreportReferences = PrePortMetaReferences
             };
+
+            GetTargetFrameworks(projectBuildResult, AnalyzerResult);
+            projectBuildResult.ProjectGuid = ProjectAnalyzer.ProjectGuid.ToString();
+            projectBuildResult.ProjectType = ProjectAnalyzer.ProjectInSolution != null ? ProjectAnalyzer.ProjectInSolution.ProjectType.ToString() : string.Empty;
+
 
             foreach (var syntaxTree in Compilation.SyntaxTrees)
             {
@@ -444,11 +449,19 @@ namespace Codelyzer.Analysis.Build
         }
         private void GetTargetFrameworks(ProjectBuildResult result, Buildalyzer.IAnalyzerResult analyzerResult)
         {
-            result.TargetFramework = analyzerResult.TargetFramework;
-            var targetFrameworks = analyzerResult.GetProperty(Constants.TargetFrameworks);
-            if (!string.IsNullOrEmpty(targetFrameworks))
+            if (analyzerResult != null)
             {
-                result.TargetFrameworks = targetFrameworks.Split(';').ToList();
+                result.TargetFramework = analyzerResult.TargetFramework;
+                var targetFrameworks = analyzerResult.GetProperty(Constants.TargetFrameworks);
+                if (!string.IsNullOrEmpty(targetFrameworks))
+                {
+                    result.TargetFrameworks = targetFrameworks.Split(';').ToList();
+                }
+            }
+            else
+            {
+                result.TargetFramework = ProjectAnalyzer.ProjectFile.TargetFrameworks.FirstOrDefault();
+                result.TargetFrameworks = ProjectAnalyzer.ProjectFile.TargetFrameworks.ToList();
             }
         }
 

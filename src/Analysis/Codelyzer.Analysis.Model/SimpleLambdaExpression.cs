@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using System;
 
 namespace Codelyzer.Analysis.Model
 {
@@ -13,6 +14,27 @@ namespace Codelyzer.Analysis.Model
         public SimpleLambdaExpression()
             : base(IdConstants.LambdaExpressionIdName)
         {
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is SimpleLambdaExpression)
+            {
+                return Equals(obj as SimpleLambdaExpression);
+            }
+            return false;
+        }
+
+        public bool Equals(SimpleLambdaExpression compareNode)
+        {
+            return
+                compareNode != null &&
+                Parameter?.Equals(compareNode.Parameter) != false &&
+                base.Equals(compareNode);
+
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Parameter, base.GetHashCode());
         }
     }
 }

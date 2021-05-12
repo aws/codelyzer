@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Newtonsoft.Json;
 
@@ -25,6 +26,29 @@ namespace Codelyzer.Analysis.Model
         {
             FilePath = filePath;
             FileFullPath = fileFullPath;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is RootUstNode)
+            {
+                return Equals((RootUstNode)obj);
+            }
+            else return false;
+        }
+
+        public bool Equals(RootUstNode compareNode)
+        {
+            return compareNode != null &&
+                Language?.Equals(compareNode.Language) != false
+                && FilePath?.Equals(compareNode.FilePath) != false
+                && FileFullPath?.Equals(compareNode.FileFullPath) != false
+                && base.Equals(compareNode);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Language, FilePath, FileFullPath, base.GetHashCode());
         }
     }
 }

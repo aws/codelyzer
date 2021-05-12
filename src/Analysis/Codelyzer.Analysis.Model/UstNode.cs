@@ -31,6 +31,28 @@ namespace Codelyzer.Analysis.Model
             type = nodeType;
             Children = new UstList<UstNode>();
         }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is UstNode)
+            {
+                return Equals((UstNode)obj);
+            }
+            else return false;
+        }
+
+        public bool Equals(UstNode compareNode)
+        {
+            return (NodeType?.Equals(compareNode.NodeType) != false)
+                && (Identifier?.Equals(compareNode.Identifier) != false)
+                && (TextSpan?.Equals(compareNode.TextSpan) != false)
+                && (Children?.Equals(compareNode.Children) != false);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(NodeType, Identifier, TextSpan, Parent, Children);
+        }
     }
 
     public partial class NodeType
@@ -61,6 +83,25 @@ namespace Codelyzer.Analysis.Model
 
         [JsonProperty("end-line-position")]
         public long EndLinePosition { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            return Equals((TextSpan)obj);
+        }
+
+        public bool Equals(TextSpan compareSpan)
+        {
+            return compareSpan != null &&
+                StartCharPosition == compareSpan.StartCharPosition
+                && EndCharPosition == compareSpan.EndCharPosition
+                && StartLinePosition == compareSpan.StartLinePosition
+                && EndLinePosition == compareSpan.EndLinePosition;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(StartCharPosition, EndCharPosition, StartLinePosition, EndLinePosition);
+        }
     }
 
     public partial class Parameter
@@ -73,6 +114,29 @@ namespace Codelyzer.Analysis.Model
         
         [JsonProperty("semantic-type")]
         public string SemanticType { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Parameter)
+            {
+                return Equals(obj as Parameter);
+            }
+            return false;
+        }
+
+        public bool Equals(Parameter compareNode)
+        {
+            return
+                compareNode != null &&
+                Name?.Equals(compareNode.Name) != false &&
+                Type?.Equals(compareNode.Type) != false &&
+                SemanticType?.Equals(compareNode.SemanticType) != false;
+
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Name, Type, SemanticType);
+        }
     }
     
 

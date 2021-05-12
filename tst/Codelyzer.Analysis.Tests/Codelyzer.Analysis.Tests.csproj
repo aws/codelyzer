@@ -21,4 +21,28 @@
       <ProjectReference Include="..\..\src\Analysis\Codelyzer.Analysis\Codelyzer.Analysis.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="TestResources\mvcmusicstore\deps.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="TestResources\mvcmusicstore\MvcMusicStoreReferences.zip">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="TestResources\nopcommerce\deps.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="TestResources\nopcommerce\Exclusions.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="TestResources\nopcommerce\NopReferences.zip">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="TestResources\samplewebapi\deps.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="TestResources\samplewebapi\SampleWebApiReferences.zip">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

@@ -23,13 +23,13 @@ namespace Codelyzer.Analysis.Build
 
         public async Task<List<ProjectBuildResult>> Build()
         {
-            using(var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
+            using (var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
             {
                 builder.Build();
 
-                foreach(var projectResult in builder.Projects)
+                foreach (var projectResult in builder.Projects)
                 {
-                    using (ProjectBuildHandler projectBuildHandler = 
+                    using (ProjectBuildHandler projectBuildHandler =
                         new ProjectBuildHandler(Logger, projectResult.Project, _analyzerConfiguration))
                     {
                         projectBuildHandler.AnalyzerResult = projectResult.AnalyzerResult;
@@ -56,5 +56,28 @@ namespace Codelyzer.Analysis.Build
             return ProjectResults;
         }
 
+        public async Task<List<ProjectBuildResult>> GenerateNoBuildAnalysis(Dictionary<string, List<string>> oldReferences, Dictionary<string, List<string>> references)
+        {
+            using (var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
+            {
+                builder.GenerateNoBuildAnalysis();
+
+                foreach (var projectResult in builder.Projects)
+                {
+                    var projectPath = projectResult.ProjectAnalyzer.ProjectFile.Path;
+                    var oldRefs = oldReferences.ContainsKey(projectPath) ? oldReferences[projectPath] : new List<string>();
+                    var refs = references.ContainsKey(projectPath) ? references[projectPath] : new List<string>();
+
+                    using (ProjectBuildHandler projectBuildHandler =
+                    new ProjectBuildHandler(Logger, projectPath, oldRefs, refs, _analyzerConfiguration))
+                    {
+                        projectBuildHandler.ProjectAnalyzer = projectResult.ProjectAnalyzer;
+                        var result = await projectBuildHandler.ReferenceOnlyBuild();
+                        ProjectResults.Add(result);
+                    }
+                }
+            }
+            return ProjectResults;
+        }
     }
 }
