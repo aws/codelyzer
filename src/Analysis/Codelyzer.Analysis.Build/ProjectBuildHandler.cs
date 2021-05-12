@@ -290,7 +290,7 @@ namespace Codelyzer.Analysis.Build
             _projectPath = projectPath;
 
             this.Compilation = CreateManualCompilation(projectPath, references);
-            this.PrePortCompilation = CreateManualCompilation(projectPath, oldReferences);
+            this.PrePortCompilation = oldReferences.Any() ? CreateManualCompilation(projectPath, oldReferences) : null;            
 
             Errors = new List<string>();
         }
