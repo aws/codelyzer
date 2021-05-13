@@ -134,7 +134,7 @@ namespace Codelyzer.Analysis.Build
                     Console.WriteLine(e);
                 }
             }
-        }
+        }   
 
         private void FallbackCompilation()
         {
@@ -290,7 +290,8 @@ namespace Codelyzer.Analysis.Build
             _projectPath = projectPath;
 
             this.Compilation = CreateManualCompilation(projectPath, references);
-            this.PrePortCompilation = oldReferences.Any() ? CreateManualCompilation(projectPath, oldReferences) : null;            
+            //We don't want a compilation if there are no older references, because it'll slow down the analysis
+            this.PrePortCompilation = oldReferences?.Any() == true ? CreateManualCompilation(projectPath, oldReferences) : null;            
 
             Errors = new List<string>();
         }

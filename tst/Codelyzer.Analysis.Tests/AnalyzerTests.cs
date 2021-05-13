@@ -822,12 +822,11 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             IEnumerable<string> exclusions = new List<string>();
             if (File.Exists(exclusionsFile))
             {
-                exclusions = File.ReadAllLines(exclusionsFile)
-                    .ToList().Select(l => l.Trim());
+                exclusions = File.ReadAllLines(exclusionsFile).ToList().Select(l => l.Trim());
             }
 
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
-            var results = (await analyzer.AnalyzeSolution(solutionPath, new Dictionary<string, List<string>>(), metaReferences)).ToList();
+            var results = (await analyzer.AnalyzeSolution(solutionPath, null, metaReferences)).ToList();
             var resultsUsingBuild = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
 
             var sourceFiles = results.SelectMany(r => r.ProjectResult.SourceFileResults)
@@ -839,9 +838,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
             sourceFiles.ToList().ForEach(sourceFile =>
             {
-                var sourceFileUsingBuild = sourceFilesUsingBuild.FirstOrDefault(s => s.FileFullPath == sourceFile.FileFullPath);
-                if (sourceFile.Equals(sourceFileUsingBuild))
-                Assert.True(sourceFile.Equals(sourceFileUsingBuild));                                
+                var sourceFileUsingBuild = sourceFilesUsingBuild.FirstOrDefault(s => s.FileFullPath == sourceFile.FileFullPath);               
+                Assert.True(sourceFile.Equals(sourceFileUsingBuild));
             });
         }
 

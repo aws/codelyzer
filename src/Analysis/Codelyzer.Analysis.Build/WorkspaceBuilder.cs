@@ -65,8 +65,8 @@ namespace Codelyzer.Analysis.Build
                 foreach (var projectResult in builder.Projects)
                 {
                     var projectPath = projectResult.ProjectAnalyzer.ProjectFile.Path;
-                    var oldRefs = oldReferences.ContainsKey(projectPath) ? oldReferences[projectPath] : new List<string>();
-                    var refs = references.ContainsKey(projectPath) ? references[projectPath] : new List<string>();
+                    var oldRefs = oldReferences?.ContainsKey(projectPath) == true ? oldReferences[projectPath] : null;
+                    var refs = references?.ContainsKey(projectPath) == true ? references[projectPath] : null;
 
                     using (ProjectBuildHandler projectBuildHandler =
                     new ProjectBuildHandler(Logger, projectPath, oldRefs, refs, _analyzerConfiguration))
