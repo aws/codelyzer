@@ -28,7 +28,7 @@ namespace Codelyzer.Analysis.Tests
         {
             Setup(GetType());
             tempDir = GetTstPath(Path.Combine(Constants.TempProjectDirectories));
-            DownloadTestProjects();
+            //DownloadTestProjects();
         }
 
         private void DownloadTestProjects()
@@ -793,7 +793,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                     GenerateJsonOutput = false,
                     OutputPath = @"/tmp/UnitTests"
                 },
-
+                ConcurrentThreads = 1,
                 MetaDataSettings =
                 {
                     LiteralExpressions = true,
@@ -807,7 +807,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                     InterfaceDeclarations = true,
                     ElementAccess = true,
                     LambdaMethods = true,
-                    InvocationArguments = true
+                    InvocationArguments = true                    
                 }
             };
 
@@ -830,7 +830,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             var resultsUsingBuild = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
 
             var sourceFiles = results.SelectMany(r => r.ProjectResult.SourceFileResults)
-                .Where(s => !s.FileFullPath.Contains("AssemblyInfo.cs") && 
+                .Where(s => !s.FileFullPath.Contains("AssemblyInfo.cs") &&
                 !s.FileFullPath.Contains(".cshtml.g") &&
                 !exclusions.Contains(Path.GetFileName(s.FileFullPath)));
             var sourceFilesUsingBuild = resultsUsingBuild.SelectMany(r => r.ProjectResult.SourceFileResults)
@@ -838,11 +838,18 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
             sourceFiles.ToList().ForEach(sourceFile =>
             {
-                var sourceFileUsingBuild = sourceFilesUsingBuild.FirstOrDefault(s => s.FileFullPath == sourceFile.FileFullPath);               
+                var sourceFileUsingBuild = sourceFilesUsingBuild.FirstOrDefault(s => s.FileFullPath == sourceFile.FileFullPath);
                 Assert.True(sourceFile.Equals(sourceFileUsingBuild));
             });
         }
 
+        private IEnumerable<RootUstNode> GetFilesFromDir(string dir)
+        {
+            var files = Directory.EnumerateFiles(dir).ToList();
+            var result = new List<RootUstNode>();
+            files.ForEach(file => result.Add(JsonConvert.DeserializeObject<RootUstNode>(File.ReadAllText(file), new JsonSerializerSettings() { MaxDepth = 300 })));
+            return result;
+        }
 
 
         [TearDown]
