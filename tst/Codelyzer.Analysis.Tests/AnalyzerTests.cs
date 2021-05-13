@@ -28,7 +28,7 @@ namespace Codelyzer.Analysis.Tests
         {
             Setup(GetType());
             tempDir = GetTstPath(Path.Combine(Constants.TempProjectDirectories));
-            //DownloadTestProjects();
+            DownloadTestProjects();
         }
 
         private void DownloadTestProjects()
