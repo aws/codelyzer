@@ -780,7 +780,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
         [TestCase("SampleWebApi.sln")]
         [TestCase("MvcMusicStore.sln")]
-        [TestCase("nopCommerce.sln")]
         public async Task TestReferenceBuilds (string solutionName)
         {
             string solutionPath = Directory.EnumerateFiles(tempDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
@@ -842,15 +841,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                 Assert.True(sourceFile.Equals(sourceFileUsingBuild));
             });
         }
-
-        private IEnumerable<RootUstNode> GetFilesFromDir(string dir)
-        {
-            var files = Directory.EnumerateFiles(dir).ToList();
-            var result = new List<RootUstNode>();
-            files.ForEach(file => result.Add(JsonConvert.DeserializeObject<RootUstNode>(File.ReadAllText(file), new JsonSerializerSettings() { MaxDepth = 300 })));
-            return result;
-        }
-
 
         [TearDown]
         public void Cleanup()
