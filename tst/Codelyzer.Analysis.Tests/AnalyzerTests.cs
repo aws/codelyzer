@@ -806,7 +806,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                     InterfaceDeclarations = true,
                     ElementAccess = true,
                     LambdaMethods = true,
-                    InvocationArguments = true                    
+                    InvocationArguments = true,
+                    GenerateBinFiles = true
                 }
             };
 

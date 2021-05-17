@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
@@ -506,7 +507,14 @@ namespace Codelyzer.Analysis.Build
                             AssemblyLocation = filePath
                         };
 
-                        if (symbol != null && symbol.Identity != null)
+                        if (symbol == null)
+                        {
+                            var assemblyName = AssemblyName.GetAssemblyName(externalReferenceMetaData.Display);
+                            externalReference.Identity = assemblyName?.Name;
+                            externalReference.Version = assemblyName?.Version?.ToString();
+                            name = assemblyName?.Name;
+                        }
+                        else if (symbol != null && symbol.Identity != null)
                         {
                             externalReference.Identity = symbol.Identity.Name;
                             externalReference.Version = symbol.Identity.Version != null ? symbol.Identity.Version.ToString() : string.Empty;
