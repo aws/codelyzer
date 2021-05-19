@@ -82,7 +82,7 @@ namespace Codelyzer.Analysis.Build
         {
             IEnumerable<PackageReference> packageReferences = new List<PackageReference>();
 
-            string packageConfig = Path.Combine(_projectDir, "packages.config");
+            string packageConfig = Path.Combine(_projectDir, Constants.PackagesConfig);
             if (File.Exists(packageConfig))
             {
                 try

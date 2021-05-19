@@ -18,6 +18,7 @@ namespace Codelyzer.Analysis.Common
         public const string Version = "Version";
         public const string PackagesFolder = "packages";
         public const string NupkgFileExtension = "*.nupkg";
+        public const string PackagesConfig = "packages.config";
 
         public static string PackagesDirectoryIdentifier
         {
