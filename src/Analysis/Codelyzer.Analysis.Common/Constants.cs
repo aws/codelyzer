@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 
 namespace Codelyzer.Analysis.Common
 {
@@ -19,6 +16,8 @@ namespace Codelyzer.Analysis.Common
 
         public const string TargetFrameworks = "TargetFrameworks";
         public const string Version = "Version";
+        public const string PackagesFolder = "packages";
+        public const string NupkgFileExtension = "*.nupkg";
 
         public static string PackagesDirectoryIdentifier
         {
@@ -26,7 +25,7 @@ namespace Codelyzer.Analysis.Common
             {
                 if (string.IsNullOrEmpty(_packagesDirectoryIdentifier))
                 {
-                    _packagesDirectoryIdentifier = string.Concat(Path.DirectorySeparatorChar, "packages", Path.DirectorySeparatorChar);
+                    _packagesDirectoryIdentifier = string.Concat(Path.DirectorySeparatorChar, PackagesFolder, Path.DirectorySeparatorChar);
                 }
                 return _packagesDirectoryIdentifier;
             }

@@ -34,51 +34,12 @@ namespace Codelyzer.Analysis.Tests
         private void DownloadTestProjects()
         {
             var tempDirectory = Directory.CreateDirectory(tempDir);
-            //var fileName = Path.Combine(tempDirectory.Parent.FullName, @"TestProjects.zip");
-            //CommonUtils.SaveFileFromGitHub(fileName, GithubInfo.TestGithubOwner, GithubInfo.TestGithubRepo, GithubInfo.TestGithubTag);
-            //ZipFile.ExtractToDirectory(fileName, tempDirectory.FullName, true);
-            ////Move file to a shorter dir name so it can build:
-            //var dirs = Directory.EnumerateDirectories(tempDirectory.FullName).FirstOrDefault();
-            //File.Delete(fileName);
-
-            ////Need to move because downloaded file name is long, and wouldn't build on windows
-            //var destDir = Path.Combine(tempDirectory.FullName, "TestProjects");
-            //if (Directory.Exists(destDir))
-            //{
-            //    Directory.Delete(destDir, true);
-            //}
 
             DownloadFromGitHub(@"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/671a629cab0382ecd6dec4833b3868f96f89da50.zip", "ASPNET-WebAPI-Sample-671a629cab0382ecd6dec4833b3868f96f89da50");
             DownloadFromGitHub(@"https://github.com/Duikmeester/MvcMusicStore/archive/e274968f2827c04cfefbe6493f0a784473f83f80.zip", "MvcMusicStore-e274968f2827c04cfefbe6493f0a784473f83f80");
             DownloadFromGitHub(@"https://github.com/nopSolutions/nopCommerce/archive/73567858b3e3ef281d1433d7ac79295ebed47ee6.zip", "nopCommerce-73567858b3e3ef281d1433d7ac79295ebed47ee6");
 
-            CopyTestResourcesToSolutionPath();
-            //Directory.Move(dirs, Path.Combine(tempDirectory.FullName, "TestProjects"));
         }
-
-        private void CopyTestResourcesToSolutionPath()
-        {
-            var resourceLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TestResources");
-
-            var solutions = Directory.EnumerateFiles(tempDir, "*.sln", SearchOption.AllDirectories).ToList();
-
-            solutions.ForEach(solutionFile => {
-                var solutionName = Path.GetFileNameWithoutExtension(solutionFile).ToLower();
-                var solutionDir = Path.GetDirectoryName(solutionFile);
-                var resourcesDir = Path.Combine(resourceLocation, solutionName);
-                if (Directory.Exists(resourcesDir))
-                {
-                    var zipFiles = Directory.EnumerateFiles(resourcesDir, "*.zip").ToList();
-                    zipFiles.ForEach(zipFile =>
-                    {
-                        ZipFile.ExtractToDirectory(zipFile, resourcesDir, true);
-                        File.Delete(zipFile);
-                    });                    
-                    CopyDirectory(new DirectoryInfo(resourcesDir), new DirectoryInfo(solutionDir));
-                }            
-            });
-        }
-
 
         private void DownloadFromGitHub(string link, string name)
         {
@@ -807,15 +768,23 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                     ElementAccess = true,
                     LambdaMethods = true,
                     InvocationArguments = true,
-                    GenerateBinFiles = true
+                    GenerateBinFiles = true,
+                    LoadBuildData = true
                 }
             };
 
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
             var solutionDir = Path.GetDirectoryName(solutionPath);
-            var metaReferences = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(
-                File.ReadAllText(Path.Combine(solutionDir, "deps.json")));            
 
-            metaReferences = metaReferences.ToDictionary(m => Path.Combine(solutionDir, m.Key), m => m.Value.Select(v => Path.Combine(solutionDir, v)).ToList());
+            var resultsUsingBuild = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
+
+            var metaReferences = new Dictionary<string, List<string>>()
+            {
+                { 
+                    resultsUsingBuild.FirstOrDefault().ProjectBuildResult.ProjectPath,
+                    resultsUsingBuild.FirstOrDefault().ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList()
+                }
+            };
 
             //Files that are excluded from the list because they have more data in the reference analysis
             var exclusionsFile = Path.Combine(solutionDir, "Exclusions.txt");
@@ -825,9 +794,18 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                 exclusions = File.ReadAllLines(exclusionsFile).ToList().Select(l => l.Trim());
             }
 
-            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
             var results = (await analyzer.AnalyzeSolution(solutionPath, null, metaReferences)).ToList();
-            var resultsUsingBuild = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
+
+            resultsUsingBuild.ForEach(resultUsingBuild => {
+                var result = results.FirstOrDefault(r => r.ProjectResult.ProjectFilePath == resultUsingBuild.ProjectResult.ProjectFilePath);
+                Assert.NotNull(result);
+                var externalReferenceBuild = resultUsingBuild.ProjectResult.ExternalReferences;
+                var externalReference = result.ProjectResult.ExternalReferences;
+                Assert.True(externalReference.NugetReferences.SequenceEqual(externalReferenceBuild.NugetReferences));
+                Assert.True(externalReference.NugetDependencies.SequenceEqual(externalReferenceBuild.NugetDependencies));
+                Assert.True(externalReference.SdkReferences.SequenceEqual(externalReferenceBuild.SdkReferences));
+                Assert.True(externalReference.ProjectReferences.SequenceEqual(externalReferenceBuild.ProjectReferences));
+            });
 
             var sourceFiles = results.SelectMany(r => r.ProjectResult.SourceFileResults)
                 .Where(s => !s.FileFullPath.Contains("AssemblyInfo.cs") &&

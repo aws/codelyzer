@@ -333,7 +333,7 @@ namespace Codelyzer.Analysis.Build
 
             if (_analyzerConfiguration != null && _analyzerConfiguration.MetaDataSettings.ReferenceData)
             {
-                projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult);
+                projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult?.Compilation, projectBuildResult?.Project, projectBuildResult?.Compilation?.References);
             }
 
             return projectBuildResult;
@@ -466,138 +466,16 @@ namespace Codelyzer.Analysis.Build
             }
         }
 
-        private ExternalReferences GetExternalReferences(ProjectBuildResult projectResult)
-        {
-            if (projectResult == null) return new ExternalReferences();
-            return GetExternalReferences(projectResult.Compilation, projectResult.Project, projectResult.Compilation?.ExternalReferences);
-        }
         private ExternalReferences GetExternalReferences(Compilation compilation, Project project, IEnumerable<MetadataReference> externalReferencesMetaData)
         {
-            ExternalReferences externalReferences = new ExternalReferences();
-            if (compilation != null)
-            {
-                var projectReferenceNames = new HashSet<string>();
-                if (project != null)
-                {
-                    var projectReferencesIds = project.ProjectReferences != null ? project.ProjectReferences.Select(pr => pr.ProjectId).ToList() : null;
-                    var projectReferences = projectReferencesIds != null ? project.Solution.Projects.Where(p => projectReferencesIds.Contains(p.Id)) : null;
-                    projectReferenceNames = projectReferences != null ? projectReferences.Select(p => p.Name).ToHashSet<string>() : null;
+            ExternalReferenceLoader externalReferenceLoader = new ExternalReferenceLoader(
+                Directory.GetParent(_projectPath).FullName,
+                compilation, 
+                project, 
+                AnalyzerResult?.PackageReferences, 
+                Logger);
 
-                    externalReferences.ProjectReferences.AddRange(projectReferences.Select(p => new ExternalReference()
-                    {
-                        Identity = p.Name,
-                        AssemblyLocation = p.FilePath,
-                        Version = p.Version.ToString()
-                    }));
-
-                    LoadProjectPackages(externalReferences, Directory.GetParent(_projectPath).FullName);
-                }
-
-
-                foreach (var externalReferenceMetaData in externalReferencesMetaData)
-                {
-                    try
-                    {
-                        var symbol = compilation.GetAssemblyOrModuleSymbol(externalReferenceMetaData) as IAssemblySymbol;
-
-                        var filePath = externalReferenceMetaData.Display;
-                        var name = Path.GetFileNameWithoutExtension(externalReferenceMetaData.Display);
-                        var externalReference = new ExternalReference()
-                        {
-                            AssemblyLocation = filePath
-                        };
-
-                        if (symbol == null)
-                        {
-                            var assemblyName = AssemblyName.GetAssemblyName(externalReferenceMetaData.Display);
-                            externalReference.Identity = assemblyName?.Name;
-                            externalReference.Version = assemblyName?.Version?.ToString();
-                            name = assemblyName?.Name;
-                        }
-                        else if (symbol != null && symbol.Identity != null)
-                        {
-                            externalReference.Identity = symbol.Identity.Name;
-                            externalReference.Version = symbol.Identity.Version != null ? symbol.Identity.Version.ToString() : string.Empty;
-                            name = symbol.Identity.Name;
-                        }
-
-                        var nugetRef = externalReferences.NugetReferences.FirstOrDefault(n => n.Identity == name);
-
-                        if (nugetRef == null)
-                        {
-                            nugetRef = externalReferences.NugetReferences.FirstOrDefault(n => filePath.ToLower().Contains(string.Concat(Constants.PackagesDirectoryIdentifier, n.Identity.ToLower(), ".", n.Version)));
-                        }
-
-                        if (nugetRef != null)
-                        {
-                            //Nuget with more than one dll?
-                            nugetRef.AssemblyLocation = filePath;
-
-                            //If version isn't resolved, get from external reference
-                            if (string.IsNullOrEmpty(nugetRef.Version) || !Regex.IsMatch(nugetRef.Version, @"([0-9])+(\.)([0-9])+(\.)([0-9])+"))
-                            {
-                                nugetRef.Version = externalReference.Version;
-                            }
-                        }
-                        else if (filePath.Contains(Common.Constants.PackagesDirectoryIdentifier, System.StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            externalReferences.NugetDependencies.Add(externalReference);
-                        }
-                        else if (!projectReferenceNames.Any(n => n.StartsWith(name)))
-                        {
-                            externalReferences.SdkReferences.Add(externalReference);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogError(ex, "Error while resolving reference {0}", externalReferenceMetaData);
-                    }
-                }
-            }
-            return externalReferences;
-        }
-        private void LoadProjectPackages(ExternalReferences externalReferences , string projectDir)
-        {
-            //Buildalyzer was able to get the packages, use that:
-            if(AnalyzerResult.PackageReferences != null && AnalyzerResult.PackageReferences.Count > 0)
-            {
-                externalReferences.NugetReferences.AddRange(AnalyzerResult.PackageReferences.Select(n => new ExternalReference()
-                {
-                    Identity = n.Key,
-                    Version = n.Value.GetValueOrDefault(Constants.Version)
-                }));
-
-            //Buildalyzer wasn't able to get the packages (old format). Use packages.config to load
-            } else
-            {
-                var nugets = LoadPackages(projectDir);
-                externalReferences.NugetReferences.AddRange(nugets.Select(n => new ExternalReference() { Identity = n.PackageIdentity.Id,Version = n.PackageIdentity.Version.OriginalVersion }));
-            }
-        }
-        private IEnumerable<PackageReference> LoadPackages(string projectDir)
-        {
-            IEnumerable<PackageReference> packageReferences = new List<PackageReference>();
-
-            string packagesFile = Path.Combine(projectDir, "packages.config");
-
-            if (File.Exists(packagesFile))
-            {
-                try
-                {
-                    XDocument xDocument = NuGet.Common.XmlUtility.Load(packagesFile);
-                    var reader = new PackagesConfigReader(xDocument);
-                    packageReferences = reader.GetPackages();
-                }
-                catch (XmlException ex)
-                {
-                    Logger.LogError(ex, "Error while parsing xml for file {0}", packagesFile);
-                }
-                catch(Exception ex)
-                {
-                    Logger.LogError(ex, "Error while parsing file {0}", packagesFile);
-                }
-            }
-            return packageReferences;
+            return externalReferenceLoader.Load();
         }
 
         public void Dispose()
