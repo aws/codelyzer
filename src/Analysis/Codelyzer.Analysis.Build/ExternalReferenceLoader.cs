@@ -63,19 +63,18 @@ namespace Codelyzer.Analysis.Build
 
         private void LoadFromBuildPackageReferences()
         {
-            if (_packageReferences != null)
+            _packageReferences?.ToList().ForEach(packageReference =>
             {
-                _packageReferences?.ToList().ForEach(packageReference => {
-                    var reference = new ExternalReference() {
-                        Identity = packageReference.Key,
-                        Version = packageReference.Value.GetValueOrDefault(Constants.Version)
-                    };
-                    if (_externalReferences.NugetReferences.Contains(reference))
-                    {
-                        _externalReferences.NugetReferences.Add(reference);
-                    }
-                });
-            }
+                var reference = new ExternalReference()
+                {
+                    Identity = packageReference.Key,
+                    Version = packageReference.Value.GetValueOrDefault(Constants.Version)
+                };
+                if (_externalReferences.NugetReferences.Contains(reference))
+                {
+                    _externalReferences.NugetReferences.Add(reference);
+                }
+            });
         }
 
         private void LoadFromPackagesConfig()
@@ -186,28 +185,27 @@ namespace Codelyzer.Analysis.Build
             {
                 var packageFolderName = packageDirSplit[1].Split(Path.DirectorySeparatorChar)[0];
                 var packageFolderDir = Path.Combine(packageDirSplit[0], Constants.PackagesFolder, packageFolderName);
-                var nupkg = Directory.EnumerateFiles(packageFolderDir, Constants.NupkgFileExtension, SearchOption.AllDirectories).ToList();
-                nupkg.ForEach(file => {
-                    var reader = new PackageArchiveReader(file);
-                    var package = reader.GetIdentity();
-                    if (package != null)
+                var nupkg = Directory.EnumerateFiles(packageFolderDir, Constants.NupkgFileExtension, SearchOption.AllDirectories).FirstOrDefault();
+                
+                var reader = new PackageArchiveReader(nupkg);
+                var package = reader.GetIdentity();
+                if (package != null)
+                {
+                    foundPackage = true;
+
+                    var reference = new ExternalReference() { AssemblyLocation = filePath, Identity = package.Id, Version = package.Version.OriginalVersion };
+                    var nugetExists = _externalReferences.NugetReferences.FirstOrDefault(f => f.Identity == reference.Identity && f.Version == reference.Version);
+
+                    if (nugetExists == null)
                     {
-                        foundPackage = true;
-
-                        var reference = new ExternalReference() { AssemblyLocation = filePath, Identity = package.Id, Version = package.Version.OriginalVersion };
-                        var nugetExists = _externalReferences.NugetReferences.FirstOrDefault(f => f.Identity == reference.Identity && f.Version == reference.Version);
-
-                        if (nugetExists == null)
-                        {
-                            _externalReferences.NugetReferences.Add(reference);
-                        }
-                        else if (!reference.Equals(nugetExists))
-                        {
-                            //Nuget was added, but doesn't have an assembly location
-                            nugetExists.AssemblyLocation = reference.AssemblyLocation;
-                        }
+                        _externalReferences.NugetReferences.Add(reference);
                     }
-                });
+                    else if (!reference.Equals(nugetExists))
+                    {
+                        //Nuget was added, but doesn't have an assembly location
+                        nugetExists.AssemblyLocation = reference.AssemblyLocation;
+                    }
+                }
             }
             return foundPackage;
         }

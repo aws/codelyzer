@@ -132,7 +132,6 @@ namespace Codelyzer.Analysis.Build
                 catch (Exception e)
                 {
                     Logger.LogError(e, "Error while running syntax analysis");
-                    Console.WriteLine(e);
                 }
             }
         }   
@@ -292,9 +291,26 @@ namespace Codelyzer.Analysis.Build
 
             this.Compilation = CreateManualCompilation(projectPath, references);
             //We don't want a compilation if there are no older references, because it'll slow down the analysis
-            this.PrePortCompilation = oldReferences?.Any() == true ? CreateManualCompilation(projectPath, oldReferences) : null;            
+            this.PrePortCompilation = oldReferences?.Any() == true ? CreateManualCompilation(projectPath, oldReferences) : null;
 
-            Errors = new List<string>();
+            var errors = Compilation.GetDiagnostics()
+               .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.GetMessage()?.Equals(KnownErrors.NoMainMethodMessage) != true);
+
+            if (errors.Any())
+            {
+                Logger.LogError($"Build Errors: {Compilation.AssemblyName}: {errors.Count()} " +
+                                $"compilation errors: \n\t{string.Join("\n\t", errors.Where(e => false).Select(e => e.ToString()))}");
+                Logger.LogDebug(String.Join("\n", errors));
+
+                foreach (var error in errors)
+                {
+                    Errors.Add(error.ToString());
+                }
+            }
+            else
+            {
+                Logger.LogInformation($"Project {Project.Name} compiled with no errors");
+            }
         }
         public async Task<ProjectBuildResult> Build()
         {
