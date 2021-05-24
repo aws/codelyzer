@@ -293,6 +293,8 @@ namespace Codelyzer.Analysis.Build
             //We don't want a compilation if there are no older references, because it'll slow down the analysis
             this.PrePortCompilation = oldReferences?.Any() == true ? CreateManualCompilation(projectPath, oldReferences) : null;
 
+            Errors = new List<string>();
+
             var errors = Compilation.GetDiagnostics()
                .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.GetMessage()?.Equals(KnownErrors.NoMainMethodMessage) != true);
 
@@ -309,7 +311,7 @@ namespace Codelyzer.Analysis.Build
             }
             else
             {
-                Logger.LogInformation($"Project {Project.Name} compiled with no errors");
+                Logger.LogInformation($"{Compilation.AssemblyName} compiled with no errors");
             }
         }
         public async Task<ProjectBuildResult> Build()
