@@ -360,10 +360,11 @@ namespace Codelyzer.Analysis.Build
             foreach (var syntaxTree in Compilation?.SyntaxTrees)
             {
                 var sourceFilePath = Path.GetRelativePath(projectBuildResult.ProjectRootPath, syntaxTree.FilePath);
+                var preportTree = PrePortCompilation?.SyntaxTrees?.FirstOrDefault(s => s.FilePath == syntaxTree.FilePath);
                 var fileResult = new SourceFileBuildResult
                 {
                     SyntaxTree = syntaxTree,
-                    PrePortSemanticModel = PrePortCompilation?.GetSemanticModel(PrePortCompilation.SyntaxTrees.FirstOrDefault(s => s.FilePath == syntaxTree.FilePath)),
+                    PrePortSemanticModel = preportTree != null ? PrePortCompilation?.GetSemanticModel(preportTree) : null,
                     SemanticModel = Compilation.GetSemanticModel(syntaxTree),
                     SourceFileFullPath = syntaxTree.FilePath,
                     SourceFilePath = sourceFilePath
