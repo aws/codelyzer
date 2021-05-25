@@ -51,7 +51,9 @@ namespace Codelyzer.Analysis.Model
             : base(typeName)
         {
             SemanticProperties = new List<string>();
+#pragma warning disable CS0618 // Type or member is obsolete
             Parameters = new List<Parameter>();
+#pragma warning restore CS0618 // Type or member is obsolete
             Arguments = new List<Argument>();
             Reference = new Reference();
         }
@@ -60,7 +62,9 @@ namespace Codelyzer.Analysis.Model
             : base(IdConstants.InvocationIdName)
         {
             SemanticProperties = new List<string>();
+#pragma warning disable CS0618 // Type or member is obsolete
             Parameters = new List<Parameter>();
+#pragma warning restore CS0618 // Type or member is obsolete
             Arguments = new List<Argument>();
             Reference = new Reference();
         }
@@ -83,7 +87,9 @@ namespace Codelyzer.Analysis.Model
                 CallerIdentifier?.Equals(compareNode.CallerIdentifier) != false &&
                 SemanticClassType?.Equals(compareNode.SemanticClassType) != false &&
                 SemanticMethodSignature?.Equals(compareNode.SemanticMethodSignature) != false &&
+#pragma warning disable CS0618 // Type or member is obsolete
                 Parameters?.SequenceEqual(compareNode.Parameters) != false &&
+#pragma warning restore CS0618 // Type or member is obsolete
                 Arguments?.SequenceEqual(compareNode.Arguments) != false &&
                 SemanticReturnType?.Equals(compareNode.SemanticReturnType) != false &&
                 SemanticOriginalDefinition?.Equals(compareNode.SemanticOriginalDefinition) != false &&
@@ -95,7 +101,9 @@ namespace Codelyzer.Analysis.Model
         {
             return HashCode.Combine(
                 HashCode.Combine(MethodName, Modifiers, SemanticNamespace, CallerIdentifier, SemanticClassType, SemanticMethodSignature),
+#pragma warning disable CS0618 // Type or member is obsolete
                 HashCode.Combine(Parameters, Arguments, SemanticReturnType, SemanticOriginalDefinition, IsExtension),
+#pragma warning restore CS0618 // Type or member is obsolete
                 base.GetHashCode());
         }
     }

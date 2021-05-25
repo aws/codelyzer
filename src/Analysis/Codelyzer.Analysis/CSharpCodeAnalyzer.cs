@@ -58,7 +58,7 @@ namespace Codelyzer.Analysis
 
             WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
 
-            var projectBuildResults = await builder.GenerateNoBuildAnalysis(oldReferences, references);
+            var projectBuildResults = builder.GenerateNoBuildAnalysis(oldReferences, references);
 
             foreach (var projectBuildResult in projectBuildResults)
             {

@@ -46,7 +46,7 @@ namespace Codelyzer.Analysis.CSharp
                 {
                     typeInfo = preportSemanticModel.GetTypeInfo(typeSyntax);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //When looking for a symbol, and the semantic model is not passed, this generates an error.
                     //We don't log this error because this is an expected behavior when there's no previous semantic models
@@ -82,7 +82,7 @@ namespace Codelyzer.Analysis.CSharp
                 {
                     typeInfo = preportSemanticModel.GetTypeInfo(expressionSyntax);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //When looking for a symbol, and the semantic model is not passed, this generates an error.
                     //We don't log this error because this is an expected behavior when there's no previous semantic models
@@ -110,7 +110,7 @@ namespace Codelyzer.Analysis.CSharp
                 {
                     symbol = preportSemanticModel.GetSymbolInfo(syntaxNode).Symbol;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //When looking for a symbol, and the semantic model is not passed, this generates an error.
                     //We don't log this error because this is an expected behavior when there's no previous semantic models
@@ -133,7 +133,7 @@ namespace Codelyzer.Analysis.CSharp
                 {
                     symbol = preportSemanticModel.GetDeclaredSymbol(syntaxNode) as INamedTypeSymbol;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //When looking for a symbol, and the semantic model is not passed, this generates an error.
                     //We don't log this error because this is an expected behavior when there's no previous semantic models
@@ -156,7 +156,7 @@ namespace Codelyzer.Analysis.CSharp
                 {
                     symbol = preportSemanticModel.GetDeclaredSymbol(syntaxNode);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //When looking for a symbol, and the semantic model is not passed, this generates an error.
                     //We don't log this error because this is an expected behavior when there's no previous semantic models
@@ -188,7 +188,7 @@ namespace Codelyzer.Analysis.CSharp
                 {
                     typeInfo = preportSemanticModel.GetTypeInfo(identifierNameSyntax);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     //When looking for a symbol, and the semantic model is not passed, this generates an error.
                     //We don't log this error because this is an expected behavior when there's no previous semantic models

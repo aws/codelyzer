@@ -56,7 +56,7 @@ namespace Codelyzer.Analysis.Build
             return ProjectResults;
         }
 
-        public async Task<List<ProjectBuildResult>> GenerateNoBuildAnalysis(Dictionary<string, List<string>> oldReferences, Dictionary<string, List<string>> references)
+        public List<ProjectBuildResult> GenerateNoBuildAnalysis(Dictionary<string, List<string>> oldReferences, Dictionary<string, List<string>> references)
         {
             using (var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
             {
