@@ -1,7 +1,6 @@
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging.Abstractions;
-using Newtonsoft.Json;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -9,7 +8,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Assert = NUnit.Framework.Assert;
 
@@ -98,13 +97,24 @@ namespace Codelyzer.Analysis.Tests
             Assert.True(result != null);
         }
 
+        private string CopySolutionFolderToTemp(string solutionName)
+        {
+            string solutionPath = Directory.EnumerateFiles(tempDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+            var newTempDir = Path.Combine(Directory.GetParent(solutionDir).FullName, Guid.NewGuid().ToString());
+            CopyDirectory(new DirectoryInfo(solutionDir), new DirectoryInfo(newTempDir));
+
+            solutionPath = Directory.EnumerateFiles(newTempDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
+            return solutionPath;
+        }
+
         [Test]
         public async Task TestSampleWebApi()
         {
-            string solutionPath = Directory.EnumerateFiles(tempDir, "SampleWebApi.sln", SearchOption.AllDirectories).FirstOrDefault();
-            FileAssert.Exists(solutionPath);
-
+            string solutionPath = CopySolutionFolderToTemp("SampleWebApi.sln");
             string solutionDir = Directory.GetParent(solutionPath).FullName;
+
+            FileAssert.Exists(solutionPath);
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
             {
@@ -223,7 +233,8 @@ namespace Codelyzer.Analysis.Tests
         [Test]
         public async Task TestMvcMusicStore()
         {
-            string solutionPath = Directory.EnumerateFiles(tempDir, "MvcMusicStore.sln", SearchOption.AllDirectories).FirstOrDefault();
+            string solutionPath = CopySolutionFolderToTemp("MvcMusicStore.sln");
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
             FileAssert.Exists(solutionPath);
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
@@ -313,7 +324,9 @@ namespace Codelyzer.Analysis.Tests
         [Test]
         public async Task TestMvcMusicStoreWithReferences()
         {
-            string solutionPath = Directory.EnumerateFiles(tempDir, "MvcMusicStore.sln", SearchOption.AllDirectories).FirstOrDefault();
+            string solutionPath = CopySolutionFolderToTemp("MvcMusicStore.sln");
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+
             FileAssert.Exists(solutionPath);
             string projectPath = Directory.EnumerateFiles(Path.GetDirectoryName(solutionPath), "*.csproj", SearchOption.AllDirectories).FirstOrDefault();
 
@@ -660,7 +673,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                     GenerateJsonOutput = false,
                     OutputPath = @"/tmp/UnitTests"
                 },
-
                 MetaDataSettings =
                 {
                     LiteralExpressions = true,
@@ -743,7 +755,9 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         [TestCase("MvcMusicStore.sln")]
         public async Task TestReferenceBuilds (string solutionName)
         {
-            string solutionPath = Directory.EnumerateFiles(tempDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
+            string solutionPath = CopySolutionFolderToTemp(solutionName);
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+
             FileAssert.Exists(solutionPath);
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
@@ -774,7 +788,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             };
 
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
-            var solutionDir = Path.GetDirectoryName(solutionPath);
 
             var resultsUsingBuild = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
 
@@ -824,7 +837,23 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         [TearDown]
         public void Cleanup()
         {
-            Directory.Delete(GetTstPath(Path.Combine("Projects", "Temp")), true);
+            DeleteDir(0);
+        }
+
+        private void DeleteDir(int retries)
+        {
+            if(retries <= 10)
+            {
+                try
+                {
+                    Directory.Delete(GetTstPath(Path.Combine("Projects", "Temp")), true);
+                }
+                catch (Exception)
+                {
+                    Thread.Sleep(10000);
+                    DeleteDir(retries + 1);
+                }
+            }
         }
     }
 }
