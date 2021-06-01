@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
@@ -96,7 +97,7 @@ namespace Codelyzer.Analysis.Build
         {
             PrePortCompilation = await SetPrePortCompilation();         
             Compilation = await Project.GetCompilationAsync();           
-
+            
             var errors = Compilation.GetDiagnostics()
                 .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
             if (errors.Any())
@@ -131,10 +132,9 @@ namespace Codelyzer.Analysis.Build
                 catch (Exception e)
                 {
                     Logger.LogError(e, "Error while running syntax analysis");
-                    Console.WriteLine(e);
                 }
             }
-        }
+        }   
 
         private void FallbackCompilation()
         {
@@ -202,7 +202,6 @@ namespace Codelyzer.Analysis.Build
 
         private Compilation CreateManualCompilation(string projectPath, List<string> references)
         {
-            if(references == null || !references.Any()) { return null; }
             var trees = new List<SyntaxTree>();
             DirectoryInfo directory = new DirectoryInfo(Path.GetDirectoryName(projectPath));
 
@@ -291,9 +290,29 @@ namespace Codelyzer.Analysis.Build
             _projectPath = projectPath;
 
             this.Compilation = CreateManualCompilation(projectPath, references);
-            this.PrePortCompilation = CreateManualCompilation(projectPath, oldReferences);
+            //We don't want a compilation if there are no older references, because it'll slow down the analysis
+            this.PrePortCompilation = oldReferences?.Any() == true ? CreateManualCompilation(projectPath, oldReferences) : null;
 
             Errors = new List<string>();
+
+            var errors = Compilation.GetDiagnostics()
+               .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.GetMessage()?.Equals(KnownErrors.NoMainMethodMessage) != true);
+
+            if (errors.Any())
+            {
+                Logger.LogError($"Build Errors: {Compilation.AssemblyName}: {errors.Count()} " +
+                                $"compilation errors: \n\t{string.Join("\n\t", errors.Where(e => false).Select(e => e.ToString()))}");
+                Logger.LogDebug(String.Join("\n", errors));
+
+                foreach (var error in errors)
+                {
+                    Errors.Add(error.ToString());
+                }
+            }
+            else
+            {
+                Logger.LogInformation($"{Compilation.AssemblyName} compiled with no errors");
+            }
         }
         public async Task<ProjectBuildResult> Build()
         {
@@ -332,7 +351,7 @@ namespace Codelyzer.Analysis.Build
 
             if (_analyzerConfiguration != null && _analyzerConfiguration.MetaDataSettings.ReferenceData)
             {
-                projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult);
+                projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult?.Compilation, projectBuildResult?.Project, projectBuildResult?.Compilation?.References);
             }
 
             return projectBuildResult;
@@ -351,13 +370,19 @@ namespace Codelyzer.Analysis.Build
                 PreportReferences = PrePortMetaReferences
             };
 
-            foreach (var syntaxTree in Compilation.SyntaxTrees)
+            GetTargetFrameworks(projectBuildResult, AnalyzerResult);
+            projectBuildResult.ProjectGuid = ProjectAnalyzer.ProjectGuid.ToString();
+            projectBuildResult.ProjectType = ProjectAnalyzer.ProjectInSolution != null ? ProjectAnalyzer.ProjectInSolution.ProjectType.ToString() : string.Empty;
+
+
+            foreach (var syntaxTree in Compilation?.SyntaxTrees)
             {
                 var sourceFilePath = Path.GetRelativePath(projectBuildResult.ProjectRootPath, syntaxTree.FilePath);
+                var preportTree = PrePortCompilation?.SyntaxTrees?.FirstOrDefault(s => s.FilePath == syntaxTree.FilePath);
                 var fileResult = new SourceFileBuildResult
                 {
                     SyntaxTree = syntaxTree,
-                    PrePortSemanticModel = PrePortCompilation?.GetSemanticModel(PrePortCompilation.SyntaxTrees.FirstOrDefault(s => s.FilePath == syntaxTree.FilePath)),
+                    PrePortSemanticModel = preportTree != null ? PrePortCompilation?.GetSemanticModel(preportTree) : null,
                     SemanticModel = Compilation.GetSemanticModel(syntaxTree),
                     SourceFileFullPath = syntaxTree.FilePath,
                     SourceFilePath = sourceFilePath
@@ -444,139 +469,32 @@ namespace Codelyzer.Analysis.Build
         }
         private void GetTargetFrameworks(ProjectBuildResult result, Buildalyzer.IAnalyzerResult analyzerResult)
         {
-            result.TargetFramework = analyzerResult.TargetFramework;
-            var targetFrameworks = analyzerResult.GetProperty(Constants.TargetFrameworks);
-            if (!string.IsNullOrEmpty(targetFrameworks))
+            if (analyzerResult != null)
             {
-                result.TargetFrameworks = targetFrameworks.Split(';').ToList();
+                result.TargetFramework = analyzerResult.TargetFramework;
+                var targetFrameworks = analyzerResult.GetProperty(Constants.TargetFrameworks);
+                if (!string.IsNullOrEmpty(targetFrameworks))
+                {
+                    result.TargetFrameworks = targetFrameworks.Split(';').ToList();
+                }
+            }
+            else
+            {
+                result.TargetFramework = ProjectAnalyzer.ProjectFile.TargetFrameworks.FirstOrDefault();
+                result.TargetFrameworks = ProjectAnalyzer.ProjectFile.TargetFrameworks.ToList();
             }
         }
 
-        private ExternalReferences GetExternalReferences(ProjectBuildResult projectResult)
-        {
-            if (projectResult == null) return new ExternalReferences();
-            return GetExternalReferences(projectResult.Compilation, projectResult.Project, projectResult.Compilation?.ExternalReferences);
-        }
         private ExternalReferences GetExternalReferences(Compilation compilation, Project project, IEnumerable<MetadataReference> externalReferencesMetaData)
         {
-            ExternalReferences externalReferences = new ExternalReferences();
-            if (compilation != null)
-            {
-                var projectReferenceNames = new HashSet<string>();
-                if (project != null)
-                {
-                    var projectReferencesIds = project.ProjectReferences != null ? project.ProjectReferences.Select(pr => pr.ProjectId).ToList() : null;
-                    var projectReferences = projectReferencesIds != null ? project.Solution.Projects.Where(p => projectReferencesIds.Contains(p.Id)) : null;
-                    projectReferenceNames = projectReferences != null ? projectReferences.Select(p => p.Name).ToHashSet<string>() : null;
+            ExternalReferenceLoader externalReferenceLoader = new ExternalReferenceLoader(
+                Directory.GetParent(_projectPath).FullName,
+                compilation, 
+                project, 
+                AnalyzerResult?.PackageReferences, 
+                Logger);
 
-                    externalReferences.ProjectReferences.AddRange(projectReferences.Select(p => new ExternalReference()
-                    {
-                        Identity = p.Name,
-                        AssemblyLocation = p.FilePath,
-                        Version = p.Version.ToString()
-                    }));
-
-                    LoadProjectPackages(externalReferences, Directory.GetParent(_projectPath).FullName);
-                }
-
-
-                foreach (var externalReferenceMetaData in externalReferencesMetaData)
-                {
-                    try
-                    {
-                        var symbol = compilation.GetAssemblyOrModuleSymbol(externalReferenceMetaData) as IAssemblySymbol;
-
-                        var filePath = externalReferenceMetaData.Display;
-                        var name = Path.GetFileNameWithoutExtension(externalReferenceMetaData.Display);
-                        var externalReference = new ExternalReference()
-                        {
-                            AssemblyLocation = filePath
-                        };
-
-                        if (symbol != null && symbol.Identity != null)
-                        {
-                            externalReference.Identity = symbol.Identity.Name;
-                            externalReference.Version = symbol.Identity.Version != null ? symbol.Identity.Version.ToString() : string.Empty;
-                            name = symbol.Identity.Name;
-                        }
-
-                        var nugetRef = externalReferences.NugetReferences.FirstOrDefault(n => n.Identity == name);
-
-                        if (nugetRef == null)
-                        {
-                            nugetRef = externalReferences.NugetReferences.FirstOrDefault(n => filePath.ToLower().Contains(string.Concat(Constants.PackagesDirectoryIdentifier, n.Identity.ToLower(), ".", n.Version)));
-                        }
-
-                        if (nugetRef != null)
-                        {
-                            //Nuget with more than one dll?
-                            nugetRef.AssemblyLocation = filePath;
-
-                            //If version isn't resolved, get from external reference
-                            if (string.IsNullOrEmpty(nugetRef.Version) || !Regex.IsMatch(nugetRef.Version, @"([0-9])+(\.)([0-9])+(\.)([0-9])+"))
-                            {
-                                nugetRef.Version = externalReference.Version;
-                            }
-                        }
-                        else if (filePath.Contains(Common.Constants.PackagesDirectoryIdentifier, System.StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            externalReferences.NugetDependencies.Add(externalReference);
-                        }
-                        else if (!projectReferenceNames.Any(n => n.StartsWith(name)))
-                        {
-                            externalReferences.SdkReferences.Add(externalReference);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogError(ex, "Error while resolving reference {0}", externalReferenceMetaData);
-                    }
-                }
-            }
-            return externalReferences;
-        }
-        private void LoadProjectPackages(ExternalReferences externalReferences , string projectDir)
-        {
-            //Buildalyzer was able to get the packages, use that:
-            if(AnalyzerResult.PackageReferences != null && AnalyzerResult.PackageReferences.Count > 0)
-            {
-                externalReferences.NugetReferences.AddRange(AnalyzerResult.PackageReferences.Select(n => new ExternalReference()
-                {
-                    Identity = n.Key,
-                    Version = n.Value.GetValueOrDefault(Constants.Version)
-                }));
-
-            //Buildalyzer wasn't able to get the packages (old format). Use packages.config to load
-            } else
-            {
-                var nugets = LoadPackages(projectDir);
-                externalReferences.NugetReferences.AddRange(nugets.Select(n => new ExternalReference() { Identity = n.PackageIdentity.Id,Version = n.PackageIdentity.Version.OriginalVersion }));
-            }
-        }
-        private IEnumerable<PackageReference> LoadPackages(string projectDir)
-        {
-            IEnumerable<PackageReference> packageReferences = new List<PackageReference>();
-
-            string packagesFile = Path.Combine(projectDir, "packages.config");
-
-            if (File.Exists(packagesFile))
-            {
-                try
-                {
-                    XDocument xDocument = NuGet.Common.XmlUtility.Load(packagesFile);
-                    var reader = new PackagesConfigReader(xDocument);
-                    packageReferences = reader.GetPackages();
-                }
-                catch (XmlException ex)
-                {
-                    Logger.LogError(ex, "Error while parsing xml for file {0}", packagesFile);
-                }
-                catch(Exception ex)
-                {
-                    Logger.LogError(ex, "Error while parsing file {0}", packagesFile);
-                }
-            }
-            return packageReferences;
+            return externalReferenceLoader.Load();
         }
 
         public void Dispose()

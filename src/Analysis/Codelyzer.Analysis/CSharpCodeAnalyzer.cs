@@ -30,8 +30,8 @@ namespace Codelyzer.Analysis
         }
         public override async Task<AnalyzerResult> AnalyzeProject(string projectPath, List<string> oldReferences, List<string> references)
         {
-            var analyzerResult = await AnalyzeProjectWithReferences(projectPath, oldReferences , references);
-            return analyzerResult;
+            var analyzerResult = await AnalyzeWithReferences(projectPath, oldReferences?.ToDictionary(r => projectPath, r => oldReferences), references?.ToDictionary(r => projectPath, r => references));
+            return analyzerResult.FirstOrDefault();
         }
 
         ///<inheritdoc/>
@@ -42,32 +42,27 @@ namespace Codelyzer.Analysis
         ///<inheritdoc/>
         public override async Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath, Dictionary<string, List<string>> oldReferences, Dictionary<string, List<string>> references)
         {
-            var analyzerResults = new List<AnalyzerResult>();
-            foreach (var project in references)
-            {
-                var analyzerResult = await AnalyzeProjectWithReferences(project.Key, oldReferences.ContainsKey(project.Key) ? oldReferences[project.Key] : null, project.Value);
-                analyzerResults.Add(analyzerResult);
-            }
+            var analyzerResults = await AnalyzeWithReferences(solutionPath, oldReferences, references);
             return analyzerResults;
         }
 
-        private async Task<AnalyzerResult> AnalyzeProjectWithReferences(string path, List<string> oldReferences, List<string> references)
+        private async Task<List<AnalyzerResult>> AnalyzeWithReferences(string path, Dictionary<string, List<string>> oldReferences, Dictionary<string, List<string>> references)
         {
             if (!File.Exists(path))
             {
                 throw new FileNotFoundException(path);
             }
 
-            var analyzerResult = new AnalyzerResult();
+            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
+            var analyzerResults = new List<AnalyzerResult>();
 
-            await Task.Run(() =>
+            WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
+
+            var projectBuildResults = builder.GenerateNoBuildAnalysis(oldReferences, references);
+
+            foreach (var projectBuildResult in projectBuildResults)
             {
-                List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
-
-                ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, path, oldReferences, references, AnalyzerConfiguration);
-                var projectBuildResult = projectBuildHandler.ReferenceOnlyBuild();
-
-                var workspaceResult = AnalyzeProject(projectBuildResult);
+                var workspaceResult = await Task.Run(() => AnalyzeProject(projectBuildResult));
                 workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
                 workspaceResult.ProjectType = projectBuildResult.ProjectType;
                 workspaceResults.Add(workspaceResult);
@@ -75,14 +70,17 @@ namespace Codelyzer.Analysis
                 //Generate Output result
                 if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
                 {
-                    analyzerResult = new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult };
+                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
                 }
                 else
                 {
-                    analyzerResult = new AnalyzerResult() { ProjectResult = workspaceResult };
+                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult });
                 }
-            });
-            return analyzerResult;
+            }
+
+            await GenerateOptionalOutput(analyzerResults);
+
+            return analyzerResults;
         }
 
         private async Task<List<AnalyzerResult>> Analyze(string path)
@@ -255,7 +253,6 @@ namespace Codelyzer.Analysis
 
             return result;
         }
-
         public override async Task<IDEProjectResult> AnalyzeFile(string projectPath, Dictionary<string, string> fileInfo, IEnumerable<PortableExecutableReference> frameworkMetaReferences, List<PortableExecutableReference> coreMetaReferences)
         {
             var result = new IDEProjectResult();

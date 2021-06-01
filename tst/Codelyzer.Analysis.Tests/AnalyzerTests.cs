@@ -8,6 +8,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Assert = NUnit.Framework.Assert;
 
@@ -32,27 +33,12 @@ namespace Codelyzer.Analysis.Tests
         private void DownloadTestProjects()
         {
             var tempDirectory = Directory.CreateDirectory(tempDir);
-            //var fileName = Path.Combine(tempDirectory.Parent.FullName, @"TestProjects.zip");
-            //CommonUtils.SaveFileFromGitHub(fileName, GithubInfo.TestGithubOwner, GithubInfo.TestGithubRepo, GithubInfo.TestGithubTag);
-            //ZipFile.ExtractToDirectory(fileName, tempDirectory.FullName, true);
-            ////Move file to a shorter dir name so it can build:
-            //var dirs = Directory.EnumerateDirectories(tempDirectory.FullName).FirstOrDefault();
-            //File.Delete(fileName);
-
-            ////Need to move because downloaded file name is long, and wouldn't build on windows
-            //var destDir = Path.Combine(tempDirectory.FullName, "TestProjects");
-            //if (Directory.Exists(destDir))
-            //{
-            //    Directory.Delete(destDir, true);
-            //}
 
             DownloadFromGitHub(@"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/671a629cab0382ecd6dec4833b3868f96f89da50.zip", "ASPNET-WebAPI-Sample-671a629cab0382ecd6dec4833b3868f96f89da50");
             DownloadFromGitHub(@"https://github.com/Duikmeester/MvcMusicStore/archive/e274968f2827c04cfefbe6493f0a784473f83f80.zip", "MvcMusicStore-e274968f2827c04cfefbe6493f0a784473f83f80");
             DownloadFromGitHub(@"https://github.com/nopSolutions/nopCommerce/archive/73567858b3e3ef281d1433d7ac79295ebed47ee6.zip", "nopCommerce-73567858b3e3ef281d1433d7ac79295ebed47ee6");
 
-            //Directory.Move(dirs, Path.Combine(tempDirectory.FullName, "TestProjects"));
         }
-
 
         private void DownloadFromGitHub(string link, string name)
         {
@@ -111,13 +97,24 @@ namespace Codelyzer.Analysis.Tests
             Assert.True(result != null);
         }
 
+        private string CopySolutionFolderToTemp(string solutionName)
+        {
+            string solutionPath = Directory.EnumerateFiles(tempDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+            var newTempDir = Path.Combine(Directory.GetParent(solutionDir).FullName, Guid.NewGuid().ToString());
+            CopyDirectory(new DirectoryInfo(solutionDir), new DirectoryInfo(newTempDir));
+
+            solutionPath = Directory.EnumerateFiles(newTempDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
+            return solutionPath;
+        }
+
         [Test]
         public async Task TestSampleWebApi()
         {
-            string solutionPath = Directory.EnumerateFiles(tempDir, "SampleWebApi.sln", SearchOption.AllDirectories).FirstOrDefault();
-            FileAssert.Exists(solutionPath);
-
+            string solutionPath = CopySolutionFolderToTemp("SampleWebApi.sln");
             string solutionDir = Directory.GetParent(solutionPath).FullName;
+
+            FileAssert.Exists(solutionPath);
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
             {
@@ -236,7 +233,8 @@ namespace Codelyzer.Analysis.Tests
         [Test]
         public async Task TestMvcMusicStore()
         {
-            string solutionPath = Directory.EnumerateFiles(tempDir, "MvcMusicStore.sln", SearchOption.AllDirectories).FirstOrDefault();
+            string solutionPath = CopySolutionFolderToTemp("MvcMusicStore.sln");
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
             FileAssert.Exists(solutionPath);
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
@@ -326,7 +324,9 @@ namespace Codelyzer.Analysis.Tests
         [Test]
         public async Task TestMvcMusicStoreWithReferences()
         {
-            string solutionPath = Directory.EnumerateFiles(tempDir, "MvcMusicStore.sln", SearchOption.AllDirectories).FirstOrDefault();
+            string solutionPath = CopySolutionFolderToTemp("MvcMusicStore.sln");
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+
             FileAssert.Exists(solutionPath);
             string projectPath = Directory.EnumerateFiles(Path.GetDirectoryName(solutionPath), "*.csproj", SearchOption.AllDirectories).FirstOrDefault();
 
@@ -673,7 +673,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                     GenerateJsonOutput = false,
                     OutputPath = @"/tmp/UnitTests"
                 },
-
                 MetaDataSettings =
                 {
                     LiteralExpressions = true,
@@ -749,10 +748,112 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             results.ForEach(r => r.Dispose());
         }
 
+
+
+
+        [TestCase("SampleWebApi.sln")]
+        [TestCase("MvcMusicStore.sln")]
+        public async Task TestReferenceBuilds (string solutionName)
+        {
+            string solutionPath = CopySolutionFolderToTemp(solutionName);
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                ConcurrentThreads = 1,
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true,
+                    GenerateBinFiles = true,
+                    LoadBuildData = true
+                }
+            };
+
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+
+            var resultsUsingBuild = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
+
+            var metaReferences = new Dictionary<string, List<string>>()
+            {
+                { 
+                    resultsUsingBuild.FirstOrDefault().ProjectBuildResult.ProjectPath,
+                    resultsUsingBuild.FirstOrDefault().ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList()
+                }
+            };
+
+            //Files that are excluded from the list because they have more data in the reference analysis
+            var exclusionsFile = Path.Combine(solutionDir, "Exclusions.txt");
+            IEnumerable<string> exclusions = new List<string>();
+            if (File.Exists(exclusionsFile))
+            {
+                exclusions = File.ReadAllLines(exclusionsFile).ToList().Select(l => l.Trim());
+            }
+
+            var results = (await analyzer.AnalyzeSolution(solutionPath, null, metaReferences)).ToList();
+
+            resultsUsingBuild.ForEach(resultUsingBuild => {
+                var result = results.FirstOrDefault(r => r.ProjectResult.ProjectFilePath == resultUsingBuild.ProjectResult.ProjectFilePath);
+                Assert.NotNull(result);
+                var externalReferenceBuild = resultUsingBuild.ProjectResult.ExternalReferences;
+                var externalReference = result.ProjectResult.ExternalReferences;
+                Assert.True(externalReference.NugetReferences.SequenceEqual(externalReferenceBuild.NugetReferences));
+                Assert.True(externalReference.NugetDependencies.SequenceEqual(externalReferenceBuild.NugetDependencies));
+                Assert.True(externalReference.SdkReferences.SequenceEqual(externalReferenceBuild.SdkReferences));
+                Assert.True(externalReference.ProjectReferences.SequenceEqual(externalReferenceBuild.ProjectReferences));
+            });
+
+            var sourceFiles = results.SelectMany(r => r.ProjectResult.SourceFileResults)
+                .Where(s => !s.FileFullPath.Contains("AssemblyInfo.cs") &&
+                !s.FileFullPath.Contains(".cshtml.g") &&
+                !exclusions.Contains(Path.GetFileName(s.FileFullPath)));
+            var sourceFilesUsingBuild = resultsUsingBuild.SelectMany(r => r.ProjectResult.SourceFileResults)
+                .Where(s => !s.FileFullPath.Contains("AssemblyInfo.cs") && !exclusions.Contains(Path.GetFileName(s.FileFullPath)));
+
+            sourceFiles.ToList().ForEach(sourceFile =>
+            {
+                var sourceFileUsingBuild = sourceFilesUsingBuild.FirstOrDefault(s => s.FileFullPath == sourceFile.FileFullPath);
+                Assert.True(sourceFile.Equals(sourceFileUsingBuild));
+            });
+        }
+
         [TearDown]
         public void Cleanup()
         {
-            Directory.Delete(GetTstPath(Path.Combine("Projects", "Temp")), true);
+            DeleteDir(0);
+        }
+
+        private void DeleteDir(int retries)
+        {
+            if(retries <= 10)
+            {
+                try
+                {
+                    Directory.Delete(GetTstPath(Path.Combine("Projects", "Temp")), true);
+                }
+                catch (Exception)
+                {
+                    Thread.Sleep(10000);
+                    DeleteDir(retries + 1);
+                }
+            }
         }
     }
 }

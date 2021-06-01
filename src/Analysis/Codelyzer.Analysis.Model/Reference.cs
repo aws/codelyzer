@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Newtonsoft.Json;
+using System;
 
 namespace Codelyzer.Analysis.Model
 {
@@ -24,7 +25,7 @@ namespace Codelyzer.Analysis.Model
         }
         public override int GetHashCode()
         {
-            return base.GetHashCode();
+            return HashCode.Combine(Namespace, Assembly);
         }
     }
 }

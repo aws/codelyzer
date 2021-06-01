@@ -153,6 +153,50 @@ namespace Codelyzer.Analysis.Build
             ProcessLog(writer.ToString());
         }
 
+
+        public void GenerateNoBuildAnalysis()
+        {
+            var sb = new StringBuilder();
+            var writer = new StringWriter(sb);
+
+            if (IsSolutionFile())
+            {
+                Logger.LogInformation("Loading the Workspace (Solution): " + WorkspacePath);
+
+                AnalyzerManager analyzerManager = new AnalyzerManager(WorkspacePath,
+                   new AnalyzerManagerOptions
+                   {
+                       LogWriter = writer
+                   });
+
+                analyzerManager.Projects.Values.ToList().ForEach(projectAnalyzer => {
+                    Projects.Add(new ProjectAnalysisResult() { 
+                        ProjectAnalyzer = projectAnalyzer
+                    });
+                });
+
+                Logger.LogInformation("Loading the Solution Done: " + WorkspacePath);
+            }
+            else
+            {
+                AnalyzerManager analyzerManager = new AnalyzerManager(new AnalyzerManagerOptions
+                {
+                    LogWriter = writer
+                });
+
+                IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(WorkspacePath);
+                Projects.Add(new ProjectAnalysisResult()
+                {
+                    ProjectAnalyzer = projectAnalyzer
+                });
+            }
+
+            Logger.LogDebug(sb.ToString());
+            writer.Flush();
+            writer.Close();
+            ProcessLog(writer.ToString());
+        }
+
         private void ProcessLog(string currentLog)
         {
             if (currentLog.Contains(KnownErrors.MsBuildMissing))

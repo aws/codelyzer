@@ -45,7 +45,9 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 parameter.SemanticType =
                     SemanticHelper.GetSemanticType(argumentSyntax.Expression, SemanticModel);
 
+#pragma warning disable CS0618 // Type or member is obsolete
                 Model.Parameters.Add(parameter);
+#pragma warning restore CS0618 // Type or member is obsolete
 
                 var argument = new Argument
                 {

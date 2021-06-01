@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace Codelyzer.Analysis.Model
@@ -50,7 +51,9 @@ namespace Codelyzer.Analysis.Model
             : base(typeName)
         {
             SemanticProperties = new List<string>();
+#pragma warning disable CS0618 // Type or member is obsolete
             Parameters = new List<Parameter>();
+#pragma warning restore CS0618 // Type or member is obsolete
             Arguments = new List<Argument>();
             Reference = new Reference();
         }
@@ -59,9 +62,49 @@ namespace Codelyzer.Analysis.Model
             : base(IdConstants.InvocationIdName)
         {
             SemanticProperties = new List<string>();
+#pragma warning disable CS0618 // Type or member is obsolete
             Parameters = new List<Parameter>();
+#pragma warning restore CS0618 // Type or member is obsolete
             Arguments = new List<Argument>();
             Reference = new Reference();
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is InvocationExpression)
+            {
+                return Equals(obj as InvocationExpression);
+            }
+            return false;
+        }
+
+        public bool Equals(InvocationExpression compareNode)
+        {
+            return
+                compareNode != null &&
+                MethodName?.Equals(compareNode.MethodName) != false &&
+                Modifiers?.Equals(compareNode.Modifiers) != false &&
+                SemanticNamespace?.Equals(compareNode.SemanticNamespace) != false &&
+                CallerIdentifier?.Equals(compareNode.CallerIdentifier) != false &&
+                SemanticClassType?.Equals(compareNode.SemanticClassType) != false &&
+                SemanticMethodSignature?.Equals(compareNode.SemanticMethodSignature) != false &&
+#pragma warning disable CS0618 // Type or member is obsolete
+                Parameters?.SequenceEqual(compareNode.Parameters) != false &&
+#pragma warning restore CS0618 // Type or member is obsolete
+                Arguments?.SequenceEqual(compareNode.Arguments) != false &&
+                SemanticReturnType?.Equals(compareNode.SemanticReturnType) != false &&
+                SemanticOriginalDefinition?.Equals(compareNode.SemanticOriginalDefinition) != false &&
+                IsExtension == compareNode.IsExtension &&
+                base.Equals(compareNode);
+
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(
+                HashCode.Combine(MethodName, Modifiers, SemanticNamespace, CallerIdentifier, SemanticClassType, SemanticMethodSignature),
+#pragma warning disable CS0618 // Type or member is obsolete
+                HashCode.Combine(Parameters, Arguments, SemanticReturnType, SemanticOriginalDefinition, IsExtension),
+#pragma warning restore CS0618 // Type or member is obsolete
+                base.GetHashCode());
         }
     }
 }
