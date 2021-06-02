@@ -56,24 +56,23 @@ namespace Codelyzer.Analysis.Build
                 && d.FirstAttribute?.Name == "Label" && d.FirstAttribute?.Value == "PortingInfo");
 
                 var fileReferences = portingNode?.FirstNode?.ToString()
-                    .Split(new string[] { Environment.NewLine, "\t", "\\t" }, StringSplitOptions.RemoveEmptyEntries)?
-                    .Where(s => !(s.Contains("<!-") || s.Contains("-->"))).Select(s=>s?.Trim()).ToList();
+                    .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)?
+                    .Where(s => !(s.Contains("<!-") || s.Contains("-->")))
+                    .Select(s=>s.Trim())
+                    .ToList();
 
-                if (fileReferences != null)
+                fileReferences?.ForEach(fileRef =>
                 {
-                    fileReferences.ForEach(fileRef =>
+                    try
                     {
-                        try
-                        {
-                            references.Add(MetadataReference.CreateFromFile(fileRef));
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.LogError(ex, "Error while parsing metadata file");
-                        }
+                        references.Add(MetadataReference.CreateFromFile(fileRef));
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Error while parsing metadata file");
+                    }
 
-                    });
-                }
+                });
             }
 
             return references;
