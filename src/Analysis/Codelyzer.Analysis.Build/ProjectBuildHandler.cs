@@ -51,33 +51,43 @@ namespace Codelyzer.Analysis.Build
                 Logger.LogError(ex, "Error loading project file");
             }   
 
-            if (projectFile != null)
+            var fileReferences = ExtractFileReferencesFromProject(projectFile);
+            fileReferences?.ForEach(fileRef =>
             {
-                var portingNode = projectFile.Descendants().FirstOrDefault(d => d.Name.LocalName == "ItemGroup"
-                && d.FirstAttribute?.Name == "Label" && d.FirstAttribute?.Value == "PortingInfo");
-
-                var fileReferences = portingNode?.FirstNode?.ToString()
-                    .Split(new string[] { Environment.NewLine, "\t", "\\t" }, StringSplitOptions.RemoveEmptyEntries)?
-                    .Where(s => !(s.Contains("<!-") || s.Contains("-->"))).Select(s=>s?.Trim()).ToList();
-
-                if (fileReferences != null)
+                try
                 {
-                    fileReferences.ForEach(fileRef =>
-                    {
-                        try
-                        {
-                            references.Add(MetadataReference.CreateFromFile(fileRef));
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.LogError(ex, "Error while parsing metadata file");
-                        }
-
-                    });
+                    references.Add(MetadataReference.CreateFromFile(fileRef));
                 }
-            }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Error while parsing metadata file");
+                }
+
+            });
 
             return references;
+        }
+
+        private List<string> ExtractFileReferencesFromProject(XDocument projectFileContents)
+        {
+            if (projectFileContents == null)
+            {
+                return null;
+            }
+
+            var portingNode = projectFileContents.Descendants()
+                .FirstOrDefault(d => 
+                    d.Name.LocalName == "ItemGroup"
+                    && d.FirstAttribute?.Name == "Label" 
+                    && d.FirstAttribute?.Value == "PortingInfo");
+
+            var fileReferences = portingNode?.FirstNode?.ToString()
+                .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)?
+                .Where(s => !(s.Contains("<!-") || s.Contains("-->")))
+                .Select(s => s.Trim())
+                .ToList();
+
+            return fileReferences;
         }
 
         private async Task<Compilation> SetPrePortCompilation()
