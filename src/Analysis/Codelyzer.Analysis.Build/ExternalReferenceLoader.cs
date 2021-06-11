@@ -70,7 +70,7 @@ namespace Codelyzer.Analysis.Build
                     Identity = packageReference.Key,
                     Version = packageReference.Value.GetValueOrDefault(Constants.Version)
                 };
-                if (_externalReferences.NugetReferences.Contains(reference))
+                if (!_externalReferences.NugetReferences.Contains(reference))
                 {
                     _externalReferences.NugetReferences.Add(reference);
                 }
