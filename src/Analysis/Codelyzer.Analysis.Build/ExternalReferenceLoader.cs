@@ -120,7 +120,7 @@ namespace Codelyzer.Analysis.Build
                         var filePath = externalReferenceMetaData.Display;
 
                         //We were able to find a nupkg file and load the package, we don't need to do manual processing
-                        if (LoadFromNugetFile(filePath)) continue;
+                        //if (LoadFromNugetFile(filePath)) continue;
 
                         var name = Path.GetFileNameWithoutExtension(externalReferenceMetaData.Display);
                         var externalReference = new ExternalReference()
@@ -194,7 +194,7 @@ namespace Codelyzer.Analysis.Build
                     foundPackage = true;
 
                     var reference = new ExternalReference() { AssemblyLocation = filePath, Identity = package.Id, Version = package.Version.OriginalVersion };
-                    var nugetExists = _externalReferences.NugetReferences.FirstOrDefault(f => f.Identity == reference.Identity && f.Version == reference.Version);
+                    var nugetExists = _externalReferences.NugetReferences.FirstOrDefault(f => f.Identity == reference.Identity);
 
                     if (nugetExists == null)
                     {
