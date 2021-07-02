@@ -299,7 +299,7 @@ namespace Codelyzer.Analysis.Tests
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
 
 
-            var resultEnumerator = analyzer.AnalyzeSolutionGenerator(solutionPath).GetAsyncEnumerator();
+            var resultEnumerator = analyzer.AnalyzeSolutionGeneratorAsync(solutionPath).GetAsyncEnumerator();
 
             if (await resultEnumerator.MoveNextAsync())
             {

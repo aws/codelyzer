@@ -46,7 +46,7 @@ namespace Codelyzer.Analysis
         /// </summary>
         /// <param name="solutionPath">The path to the solution file</param>
         /// <returns></returns>        
-        public abstract IAsyncEnumerable<AnalyzerResult> AnalyzeSolutionGenerator(string solutionPath);
+        public abstract IAsyncEnumerable<AnalyzerResult> AnalyzeSolutionGeneratorAsync(string solutionPath);
         
         /// <summary>
         /// Runs analysis on a solution

@@ -41,9 +41,9 @@ namespace Codelyzer.Analysis
         }
 
         ///<inheritdoc/>
-        public override async IAsyncEnumerable<AnalyzerResult> AnalyzeSolutionGenerator(string solutionPath)
+        public override async IAsyncEnumerable<AnalyzerResult> AnalyzeSolutionGeneratorAsync(string solutionPath)
         {
-            var result = AnalyzeGenerator(solutionPath).GetAsyncEnumerator();
+            var result = AnalyzeGeneratorAsync(solutionPath).GetAsyncEnumerator();
             
             while(await result.MoveNextAsync())
             {
@@ -131,7 +131,7 @@ namespace Codelyzer.Analysis
 
             return analyzerResults;
         }
-        private async IAsyncEnumerable<AnalyzerResult> AnalyzeGenerator(string path)
+        private async IAsyncEnumerable<AnalyzerResult> AnalyzeGeneratorAsync(string path)
         {
             if (!File.Exists(path))
             {
@@ -158,7 +158,7 @@ namespace Codelyzer.Analysis
                 }
                 else
                 {
-                    yield return new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult };
+                    yield return new AnalyzerResult() { ProjectResult = workspaceResult };
                 }
             }
         }
