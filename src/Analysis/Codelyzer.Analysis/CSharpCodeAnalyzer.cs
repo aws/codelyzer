@@ -39,6 +39,18 @@ namespace Codelyzer.Analysis
         {
             return await Analyze(solutionPath);
         }
+
+        ///<inheritdoc/>
+        public override async IAsyncEnumerable<AnalyzerResult> AnalyzeSolutionGeneratorAsync(string solutionPath)
+        {
+            var result = AnalyzeGeneratorAsync(solutionPath).GetAsyncEnumerator();
+            
+            while(await result.MoveNextAsync())
+            {
+                yield return result.Current;
+            }
+        }
+
         ///<inheritdoc/>
         public override async Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath, Dictionary<string, List<string>> oldReferences, Dictionary<string, List<string>> references)
         {
@@ -118,6 +130,37 @@ namespace Codelyzer.Analysis
             await GenerateOptionalOutput(analyzerResults);
 
             return analyzerResults;
+        }
+        private async IAsyncEnumerable<AnalyzerResult> AnalyzeGeneratorAsync(string path)
+        {
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException(path);
+            }
+
+            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
+            var analyzerResults = new List<AnalyzerResult>();
+
+            WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
+
+            var projectBuildResults = await builder.Build();
+
+            foreach (var projectBuildResult in projectBuildResults)
+            {
+                var workspaceResult = AnalyzeProject(projectBuildResult);
+                workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
+                workspaceResult.ProjectType = projectBuildResult.ProjectType;
+                workspaceResults.Add(workspaceResult);
+
+                if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+                {
+                    yield return new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult };
+                }
+                else
+                {
+                    yield return new AnalyzerResult() { ProjectResult = workspaceResult };
+                }
+            }
         }
 
         private async Task GenerateOptionalOutput(List<AnalyzerResult> analyzerResults)
@@ -207,7 +250,6 @@ namespace Codelyzer.Analysis
 
             return analyzerResult;
         }
-
         public override async Task<List<AnalyzerResult>> AnalyzeFile(string filePath, List<AnalyzerResult> analyzerResults)
         {
             var analyzerResult = analyzerResults.First(analyzerResults => analyzerResults.ProjectBuildResult.SourceFileBuildResults.Any(s => s.SourceFileFullPath == filePath));

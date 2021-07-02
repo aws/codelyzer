@@ -45,6 +45,13 @@ namespace Codelyzer.Analysis
         /// Runs analysis on a solution
         /// </summary>
         /// <param name="solutionPath">The path to the solution file</param>
+        /// <returns></returns>        
+        public abstract IAsyncEnumerable<AnalyzerResult> AnalyzeSolutionGeneratorAsync(string solutionPath);
+        
+        /// <summary>
+        /// Runs analysis on a solution
+        /// </summary>
+        /// <param name="solutionPath">The path to the solution file</param>
         /// <returns></returns>
         public abstract Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath, Dictionary<string, List<string>> originalReferences, Dictionary<string, List<string>> references);
 

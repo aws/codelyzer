@@ -261,6 +261,56 @@ namespace Codelyzer.Analysis.Tests
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
             using var result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
 
+            ValidateMvcMusicStoreResult(result);
+
+            var accountController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("AccountController.cs")).FirstOrDefault();
+            await TestMvcMusicStoreIncrementalBuildWithAnalyzer(analyzer, result, accountController);
+        }
+
+
+        [Test]
+        public async Task TestMvcMusicStoreUsingGenerator()
+        {
+            string solutionPath = CopySolutionFolderToTemp("MvcMusicStore.sln");
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    LoadBuildData = true,
+                    ElementAccess = true,
+                    MemberAccess = true
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+
+
+            var resultEnumerator = analyzer.AnalyzeSolutionGeneratorAsync(solutionPath).GetAsyncEnumerator();
+
+            if (await resultEnumerator.MoveNextAsync())
+            {
+                using var result = resultEnumerator.Current;
+
+                ValidateMvcMusicStoreResult(result);
+            }
+        }
+
+        private void ValidateMvcMusicStoreResult(AnalyzerResult result)
+        {
             Assert.True(result != null);
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
@@ -289,7 +339,7 @@ namespace Codelyzer.Analysis.Tests
 
             var declarationNodes = classDeclaration.AllDeclarationNodes();
             var methodDeclarations = classDeclaration.AllMethods();
-            
+
             var elementAccess = accountClassDeclaration.AllElementAccessExpressions();
             var memberAccess = accountClassDeclaration.AllMemberAccessExpressions();
 
@@ -309,15 +359,13 @@ namespace Codelyzer.Analysis.Tests
 
             var authorizeAttribute = storeManagerController.AllAnnotations().First(a => a.Identifier == "Authorize");
             var authorizeAttributeArgument = authorizeAttribute.AllAttributeArguments().First();
-            Assert.AreEqual("Roles",authorizeAttributeArgument.ArgumentName);
-            Assert.AreEqual("\"Administrator\"",authorizeAttributeArgument.ArgumentExpression);
+            Assert.AreEqual("Roles", authorizeAttributeArgument.ArgumentName);
+            Assert.AreEqual("\"Administrator\"", authorizeAttributeArgument.ArgumentExpression);
 
             var actionNameAttribute = storeManagerController.AllAnnotations().First(a => a.Identifier == "ActionName");
             var actionNameAttributeArgument = actionNameAttribute.AllAttributeArguments().First();
             Assert.IsNull(actionNameAttributeArgument.ArgumentName);
             Assert.AreEqual("\"Delete\"", actionNameAttributeArgument.ArgumentExpression);
-
-            await TestMvcMusicStoreIncrementalBuildWithAnalzyer(analyzer, result, accountController);
         }
 
 
@@ -435,7 +483,7 @@ namespace Codelyzer.Analysis.Tests
             await TestMvcMusicStoreIncrementalBuild(projectPath, references, analyzer, accountController);
         }
 
-        private async Task TestMvcMusicStoreIncrementalBuildWithAnalzyer(CodeAnalyzer analyzer, AnalyzerResult result, RootUstNode accountController)
+        private async Task TestMvcMusicStoreIncrementalBuildWithAnalyzer(CodeAnalyzer analyzer, AnalyzerResult result, RootUstNode accountController)
         {
             File.WriteAllText(accountController.FileFullPath, @"using System;
 using System.Collections.Generic;
