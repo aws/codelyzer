@@ -1,0 +1,11 @@
+# When someone opens a pull request that only
+# modifies the files specified below, notification will
+# be sent to owner(s) for a review.
+
+
+/src/Analysis/Codelyzer.Analysis/CodeAnalyzer.cs @marknfawaz @kanikaul-amazon
+/src/Analysis/Codelyzer.Analysis/AnalyzerResult.cs @marknfawaz @kanikaul-amazon
+/src/Analysis/Codelyzer.Analysis.Model/ProjectWorkspace.cs @marknfawaz @kanikaul-amazon
+/src/Analysis/Codelyzer.Analysis.Build/Models/ProjectBuildResult.cs @marknfawaz @kanikaul-amazon
+/src/Analysis/Codelyzer.Analysis/AnalyzerCLI.cs @marknfawaz @kanikaul-amazon
+/src/Analysis/Codelyzer.Analysis.Common/AnalyzerConfiguration.cs @marknfawaz @kanikaul-amazon
