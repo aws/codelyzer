@@ -37,30 +37,45 @@ namespace Codelyzer.Analysis.Build
 
         private const string syntaxAnalysisError = "Build Errors: Encountered an unknown build issue. Falling back to syntax analysis";
 
-        private List<PortableExecutableReference> LoadMetadataReferences()
+        private XDocument LoadProjectFile(string projectFilePath)
         {
-            XDocument projectFile = null;
-            var references = new List<PortableExecutableReference>();
-            
+            if (!File.Exists(projectFilePath))
+            {
+                return null;
+            }
             try
             {
-                projectFile = XDocument.Load(Project.FilePath);
+                return XDocument.Load(projectFilePath);
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error loading project file");
-            }   
+                Logger.LogError(ex, "Error loading project file {}", projectFilePath);
+                return null;
+            }
+
+        }
+        private List<PortableExecutableReference> LoadMetadataReferences(XDocument projectFile)
+        {
+            var references = new List<PortableExecutableReference>();
+
+            if (projectFile == null) {
+                return references;
+            }
 
             var fileReferences = ExtractFileReferencesFromProject(projectFile);
             fileReferences?.ForEach(fileRef =>
             {
+                if(!File.Exists(fileRef)) {
+                    Logger.LogWarning("Assembly {} referenced does not exist.", fileRef);
+                    return;
+                }
                 try
                 {
                     references.Add(MetadataReference.CreateFromFile(fileRef));
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Error while parsing metadata file");
+                    Logger.LogError(ex, "Error while parsing metadata reference {}.", fileRef);
                 }
 
             });
@@ -92,7 +107,7 @@ namespace Codelyzer.Analysis.Build
 
         private async Task<Compilation> SetPrePortCompilation()
         {
-            var preportReferences = LoadMetadataReferences();
+            var preportReferences = LoadMetadataReferences(LoadProjectFile(Project.FilePath));
             if (preportReferences.Count > 0)
             {
                 var preportProject = Project.WithMetadataReferences(preportReferences);
