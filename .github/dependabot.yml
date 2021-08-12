@@ -1,0 +1,56 @@
+version: 2
+registries:
+  porting-assistant-nuget:
+    type: nuget-feed
+    url: https://s3-us-west-2.amazonaws.com/aws.portingassistant.dotnet.download/nuget/index.json
+  nuget-org:
+    type: nuget-feed
+    url: https://api.nuget.org/v3/index.json
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/src/Analysis/Codelyzer.Analysis"
+    registries:
+      - porting-assistant-nuget
+      - nuget-org
+    schedule:
+      interval: "daily"
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/src/Analysis/Codelyzer.Analysis.Build"
+    registries:
+      - porting-assistant-nuget
+      - nuget-org
+    schedule:
+      interval: "daily"
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/src/Analysis/Codelyzer.Analysis.Common"
+    registries:
+      - porting-assistant-nuget
+      - nuget-org
+    schedule:
+      interval: "daily"
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/src/Analysis/Codelyzer.Analysis.CSharp"
+    registries:
+      - porting-assistant-nuget
+      - nuget-org
+    schedule:
+      interval: "daily"
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/src/Analysis/Codelyzer.Analysis.Model"
+    registries:
+      - porting-assistant-nuget
+      - nuget-org
+    schedule:
+      interval: "daily"
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/tst/Codelyzer.Analysis.Tests"
+    registries:
+      - porting-assistant-nuget
+      - nuget-org
+    schedule:
+      interval: "daily"
