@@ -25,6 +25,7 @@ namespace Codelyzer.Analysis.Build
         private Compilation Compilation;
         private Compilation PrePortCompilation;
         private List<string> PrePortMetaReferences;
+        private List<string> MissingMetaReferences { get; set; }
 
         private List<string> Errors { get; set; }
         private ILogger Logger;
@@ -66,6 +67,7 @@ namespace Codelyzer.Analysis.Build
             fileReferences?.ForEach(fileRef =>
             {
                 if(!File.Exists(fileRef)) {
+                    MissingMetaReferences.Add(fileRef);
                     Logger.LogWarning("Assembly {} referenced does not exist.", fileRef);
                     return;
                 }
@@ -275,6 +277,7 @@ namespace Codelyzer.Analysis.Build
             _metaReferences = metaReferences;
 
             Errors = new List<string>();
+            MissingMetaReferences = new List<string>();
         }
         public ProjectBuildHandler(ILogger logger, Project project, AnalyzerConfiguration analyzerConfiguration = null)
         {
@@ -296,6 +299,7 @@ namespace Codelyzer.Analysis.Build
             this.Project = project.WithCompilationOptions(options);
             _projectPath = project.FilePath;
             Errors = new List<string>();
+            MissingMetaReferences = new List<string>();
         }
         public ProjectBuildHandler(ILogger logger, Project project, Compilation compilation, Compilation preportCompilation, AnalyzerConfiguration analyzerConfiguration = null)
         {
@@ -306,6 +310,7 @@ namespace Codelyzer.Analysis.Build
             this.Compilation = compilation;
             this.PrePortCompilation = preportCompilation;
             Errors = new List<string>();
+            MissingMetaReferences = new List<string>();
         }
 
         public ProjectBuildHandler(ILogger logger, string projectPath, List<string> oldReferences, List<string> references, AnalyzerConfiguration analyzerConfiguration = null)
@@ -319,6 +324,7 @@ namespace Codelyzer.Analysis.Build
             this.PrePortCompilation = oldReferences?.Any() == true ? CreateManualCompilation(projectPath, oldReferences) : null;
 
             Errors = new List<string>();
+            MissingMetaReferences = new List<string>();
 
             var errors = Compilation.GetDiagnostics()
                .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.GetMessage()?.Equals(KnownErrors.NoMainMethodMessage) != true);
@@ -351,7 +357,8 @@ namespace Codelyzer.Analysis.Build
                 Compilation = Compilation,
                 PrePortCompilation = PrePortCompilation,
                 IsSyntaxAnalysis = isSyntaxAnalysis,
-                PreportReferences = PrePortMetaReferences
+                PreportReferences = PrePortMetaReferences,
+                MissingReferences = MissingMetaReferences
             };
 
             GetTargetFrameworks(projectBuildResult, AnalyzerResult);
@@ -393,7 +400,8 @@ namespace Codelyzer.Analysis.Build
                 Compilation = Compilation,
                 PrePortCompilation = PrePortCompilation,
                 IsSyntaxAnalysis = isSyntaxAnalysis,
-                PreportReferences = PrePortMetaReferences
+                PreportReferences = PrePortMetaReferences,
+                MissingReferences = MissingMetaReferences
             };
 
             GetTargetFrameworks(projectBuildResult, AnalyzerResult);

@@ -150,8 +150,13 @@ namespace Codelyzer.Analysis.Tests
             // Invoke method and read contents of method output
             var metadataReferences = (List<PortableExecutableReference>)loadMetadataReferencesMethod.Invoke(projectBuildHandlerInstance, new object[] { projectFileDoc });
             var expectedMetadataReferences = new List<PortableExecutableReference>();
-
             CollectionAssert.AreEquivalent(expectedMetadataReferences, metadataReferences);
+
+            // Validate MissingMetaReferences
+            var prop = TestUtils.GetPrivateProperty(projectBuildHandlerInstance.GetType(), "MissingMetaReferences");
+            List<string> missingMetaReferences = (List<string>)prop.GetValue(projectBuildHandlerInstance);
+            List<string> expectedMissingMetaReferences = new List<string> { @"C:\\RandomFile.dll", @"C:\\this\\is\\some\\path\\to\\Some.dll" };
+            CollectionAssert.AreEquivalent(expectedMissingMetaReferences, missingMetaReferences);
         }
 
         [Test]
@@ -193,6 +198,12 @@ namespace Codelyzer.Analysis.Tests
             // Invoke method and read contents of method output
             var metadataReferences = (List<PortableExecutableReference>)loadMetadataReferencesMethod.Invoke(projectBuildHandlerInstance, new object[] { projectFileDoc });
             Assert.AreEqual(1, metadataReferences.Count);
+
+            // Validate MissingMetaReferences
+            var prop = TestUtils.GetPrivateProperty(projectBuildHandlerInstance.GetType(), "MissingMetaReferences");
+            List<string> missingMetaReferences = (List<string>)prop.GetValue(projectBuildHandlerInstance);
+            List<string> expectedMissingMetaReferences = new List<string> { @"C:\\RandomFile.dll" };
+            CollectionAssert.AreEquivalent(expectedMissingMetaReferences, missingMetaReferences);
         }
     }
 }
