@@ -3,7 +3,6 @@ using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace Codelyzer.Analysis.Build
 {
@@ -22,6 +21,7 @@ namespace Codelyzer.Analysis.Build
         public string TargetFramework { get; set; }
         public List<string> TargetFrameworks { get; set; }
         public List<string> PreportReferences { get; set; }
+        public List<string> MissingReferences { get; set; }
         public string ProjectGuid { get; set; }        
         public string ProjectType { get; set; }
         public bool IsSyntaxAnalysis { get; set; }
@@ -32,6 +32,7 @@ namespace Codelyzer.Analysis.Build
             SourceFiles = new List<string>();
             TargetFrameworks = new List<string>();
             PreportReferences = new List<string>();
+            MissingReferences = new List<string>();
         }
 
         public bool IsBuildSuccess()

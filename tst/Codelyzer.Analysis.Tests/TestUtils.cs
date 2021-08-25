@@ -18,5 +18,18 @@ namespace Codelyzer.Analysis.Tests
 
             return method;
         }
+
+        public static PropertyInfo GetPrivateProperty(Type type, string propertyName)
+        {
+            if (string.IsNullOrWhiteSpace(propertyName))
+                Assert.Fail("propertyName cannot be null or whitespace");
+
+            PropertyInfo property = type.GetProperty(propertyName, BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (property == null)
+                Assert.Fail("{0} property not found", propertyName);
+
+            return property;
+        }
     }
 }
