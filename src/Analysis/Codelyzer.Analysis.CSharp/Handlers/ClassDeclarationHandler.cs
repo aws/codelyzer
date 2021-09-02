@@ -2,6 +2,7 @@ using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Linq;
 
 namespace Codelyzer.Analysis.CSharp.Handlers
 {
@@ -21,6 +22,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             if (classSymbol != null && classSymbol.BaseType != null)
             {
                 ClassDeclaration.BaseType = classSymbol.BaseType.ToString();
+                ClassDeclaration.Interfaces = classSymbol.AllInterfaces.Select(i => i.Name).ToList();
                 ClassDeclaration.BaseTypeOriginalDefinition = GetBaseTypOriginalDefinition(classSymbol); 
                 ClassDeclaration.Reference.Namespace = GetNamespace(classSymbol);
                 ClassDeclaration.Reference.Assembly = GetAssembly(classSymbol);

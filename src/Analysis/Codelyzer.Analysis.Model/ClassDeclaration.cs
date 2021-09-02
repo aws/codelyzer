@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 
 namespace Codelyzer.Analysis.Model
 {
@@ -16,6 +17,7 @@ namespace Codelyzer.Analysis.Model
 
         [JsonProperty("references", Order = 99)]
         public Reference Reference { get; set; }
+        public List<string> Interfaces { get; set; }
         public string SemanticAssembly { get; set; }
         public ClassDeclaration()
             : base(IdConstants.ClassIdName)
