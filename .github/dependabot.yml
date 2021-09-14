@@ -22,6 +22,8 @@ updates:
       - nuget-org
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "Buildalyzer*"
 updates:
   - package-ecosystem: "nuget"
     directory: "/src/Analysis/Codelyzer.Analysis.Common"
