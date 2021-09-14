@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Buildalyzer" Version="3.2.2" />
+      <PackageReference Include="Buildalyzer" Version="3.2.3" />
       <PackageReference Include="Buildalyzer.Logger" Version="3.2.2" />
       <PackageReference Include="Buildalyzer.Workspaces" Version="3.2.2" />
       <PackageReference Include="NuGet.Packaging" Version="5.11.0" />
