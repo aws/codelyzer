@@ -56,3 +56,5 @@ updates:
       - nuget-org
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "Buildalyzer*"      
