@@ -2,6 +2,7 @@ using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Linq;
 
 namespace Codelyzer.Analysis.CSharp.Handlers
 {
@@ -18,14 +19,22 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             ClassDeclaration.Identifier = syntaxNode.Identifier.ToString();
             ClassDeclaration.Modifiers = syntaxNode.Modifiers.ToString();
 
-            if (classSymbol != null && classSymbol.BaseType != null)
+            if (classSymbol != null)
             {
-                ClassDeclaration.BaseType = classSymbol.BaseType.ToString();
-                ClassDeclaration.BaseTypeOriginalDefinition = GetBaseTypOriginalDefinition(classSymbol); 
-                ClassDeclaration.Reference.Namespace = GetNamespace(classSymbol);
-                ClassDeclaration.Reference.Assembly = GetAssembly(classSymbol);
-                ClassDeclaration.Reference.Version = GetAssemblyVersion(classSymbol);
-                ClassDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
+                if(classSymbol.BaseType != null)
+                {
+                    ClassDeclaration.BaseType = classSymbol.BaseType.ToString();               
+                    ClassDeclaration.BaseTypeOriginalDefinition = GetBaseTypOriginalDefinition(classSymbol);
+                    ClassDeclaration.Reference.Namespace = GetNamespace(classSymbol);
+                    ClassDeclaration.Reference.Assembly = GetAssembly(classSymbol);
+                    ClassDeclaration.Reference.Version = GetAssemblyVersion(classSymbol);
+                    ClassDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
+                }
+                
+                if(classSymbol.Interfaces != null)
+                {
+                    ClassDeclaration.BaseList = classSymbol.Interfaces.Select(x => x.ToString())?.ToList();
+                }
             }
         }
     }
