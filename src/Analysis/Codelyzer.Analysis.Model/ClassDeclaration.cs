@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 
 namespace Codelyzer.Analysis.Model
 {
@@ -10,6 +11,9 @@ namespace Codelyzer.Analysis.Model
 
         [JsonProperty("base-type-original-def", Order = 11)]
         public string BaseTypeOriginalDefinition { get; set; }
+
+        [JsonProperty("base-list", Order = 12)]
+        public List<string> BaseList { get; set; }
 
         [JsonProperty("modifiers", Order = 20)]
         public string Modifiers { get; set; }
