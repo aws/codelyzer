@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Codelyzer.Analysis.Build
@@ -23,10 +24,12 @@ namespace Codelyzer.Analysis.Build
         private const string TargetFrameworkVersion = nameof(TargetFrameworkVersion);
         private const string Configuration = nameof(Configuration);
         private readonly AnalyzerConfiguration _analyzerConfiguration;
+        private readonly AnalyzerManager _analyzerManager;
+        private readonly AdhocWorkspace _workspaceIncremental;
 
         internal List<ProjectAnalysisResult> Projects;
         internal List<ProjectAnalysisResult> FailedProjects;
-
+        private Dictionary<Guid, IAnalyzerResult> DictAnalysisResult;
         private ILogger Logger { get; set; }
 
         public WorkspaceBuilderHelper(ILogger logger, string workspacePath, AnalyzerConfiguration analyzerConfiguration = null)
@@ -35,7 +38,18 @@ namespace Codelyzer.Analysis.Build
             this.WorkspacePath = workspacePath;
             this.Projects = new List<ProjectAnalysisResult>();
             this.FailedProjects = new List<ProjectAnalysisResult>();
+            this.DictAnalysisResult = new Dictionary<Guid, IAnalyzerResult>();
             _analyzerConfiguration = analyzerConfiguration;
+
+            var sb = new StringBuilder();
+            var writer = new StringWriter(sb);
+
+            _analyzerManager = new AnalyzerManager(WorkspacePath,
+               new AnalyzerManagerOptions
+               {
+                   LogWriter = writer
+               });
+            _workspaceIncremental = new AdhocWorkspace();
         }
 
         private string WorkspacePath { get; }
@@ -45,11 +59,86 @@ namespace Codelyzer.Analysis.Build
             return WorkspacePath.EndsWith("sln");
         }
 
+        public async IAsyncEnumerable<ProjectAnalysisResult> BuildProjectIncremental()
+        {
+            using (SemaphoreSlim concurrencySemaphore = new SemaphoreSlim(1))
+            {
+                foreach (var p in _analyzerManager.Projects.Values)
+                {
+                    // if it is part of analyzer manager
+                    concurrencySemaphore.Wait();
+                    var t = Task.Run(() =>
+                    {
+                        try
+                        {
+                            return RunTask(p);
+                        }
+                        finally
+                        {
+                            concurrencySemaphore.Release();
+                        }
+                    });
+                    yield return t.Result;
+                }
+            }
+
+        }
+
+        private ProjectAnalysisResult RunTask(IProjectAnalyzer p)
+        {
+            IProjectAnalyzer projectAnalyzerResult = null;
+            Logger.LogDebug("Building the project : " + p.ProjectFile.Path);
+            var project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.FilePath == p.ProjectFile.Path);
+
+            if (project != null)
+            {
+                Guid projectGuid = project.Id.Id;
+
+                if (DictAnalysisResult.ContainsKey(projectGuid))
+                {
+                    projectAnalyzerResult = _analyzerManager.Projects.Values.FirstOrDefault(p => p.ProjectGuid.Equals(projectGuid));
+                    return new ProjectAnalysisResult()
+                    {
+                        Project = project,
+                        AnalyzerResult = DictAnalysisResult[projectGuid],
+                        ProjectAnalyzer = projectAnalyzerResult
+                    };
+                }
+            }
+
+
+            var buildResult = BuildProject(p);
+            if (buildResult == null)
+            {
+                Logger.LogDebug("Building complete for {0} - {1}", p.ProjectFile.Path, "Fail");
+                return new ProjectAnalysisResult()
+                {
+                    ProjectAnalyzer = p
+                };
+            }
+            else
+            {
+                Logger.LogDebug("Building complete for {0} - {1}", p.ProjectFile.Path, buildResult.Succeeded ? "Success" : "Fail");
+                buildResult.AddToWorkspace(_workspaceIncremental);
+                projectAnalyzerResult = _analyzerManager.Projects.Values.FirstOrDefault(p => p.ProjectGuid.Equals(buildResult.ProjectGuid));
+                DictAnalysisResult.Add(buildResult.ProjectGuid, buildResult);
+            }
+
+
+            return new ProjectAnalysisResult()
+            {
+                Project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.Id.Id == buildResult.ProjectGuid),
+                AnalyzerResult = buildResult,
+                ProjectAnalyzer = projectAnalyzerResult
+            };
+        }
+
+
         public void Build()
         {
             var sb = new StringBuilder();
             var writer = new StringWriter(sb);
-            
+
             /* Uncomment the below code to debug issues with msbuild */
             /*var writer = new StreamWriter(Console.OpenStandardOutput());
             writer.AutoFlush = true;
@@ -147,7 +236,7 @@ namespace Codelyzer.Analysis.Build
                 }
             }
 
-            Logger.LogDebug(sb.ToString());            
+            Logger.LogDebug(sb.ToString());
             writer.Flush();
             writer.Close();
             ProcessLog(writer.ToString());
@@ -170,7 +259,8 @@ namespace Codelyzer.Analysis.Build
                    });
 
                 analyzerManager.Projects.Values.ToList().ForEach(projectAnalyzer => {
-                    Projects.Add(new ProjectAnalysisResult() { 
+                    Projects.Add(new ProjectAnalysisResult()
+                    {
                         ProjectAnalyzer = projectAnalyzer
                     });
                 });
