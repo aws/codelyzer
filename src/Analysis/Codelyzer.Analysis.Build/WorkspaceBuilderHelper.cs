@@ -26,6 +26,8 @@ namespace Codelyzer.Analysis.Build
         private readonly AnalyzerConfiguration _analyzerConfiguration;
         private readonly AnalyzerManager _analyzerManager;
         private readonly AdhocWorkspace _workspaceIncremental;
+        private StringBuilder _sb;
+        private StringWriter _writer;
 
         internal List<ProjectAnalysisResult> Projects;
         internal List<ProjectAnalysisResult> FailedProjects;
@@ -40,16 +42,10 @@ namespace Codelyzer.Analysis.Build
             this.FailedProjects = new List<ProjectAnalysisResult>();
             this.DictAnalysisResult = new Dictionary<Guid, IAnalyzerResult>();
             _analyzerConfiguration = analyzerConfiguration;
-
-            var sb = new StringBuilder();
-            var writer = new StringWriter(sb);
-
-            _analyzerManager = new AnalyzerManager(WorkspacePath,
-               new AnalyzerManagerOptions
-               {
-                   LogWriter = writer
-               });
             _workspaceIncremental = new AdhocWorkspace();
+            _sb = new StringBuilder();
+            _writer = new StringWriter(_sb);
+            _analyzerManager = GetAnalyzerManager();
         }
 
         private string WorkspacePath { get; }
@@ -61,27 +57,86 @@ namespace Codelyzer.Analysis.Build
 
         public async IAsyncEnumerable<ProjectAnalysisResult> BuildProjectIncremental()
         {
-            using (SemaphoreSlim concurrencySemaphore = new SemaphoreSlim(1))
+            if (IsSolutionFile())
             {
-                foreach (var p in _analyzerManager.Projects.Values)
+                using (SemaphoreSlim concurrencySemaphore = new SemaphoreSlim(1))
                 {
-                    // if it is part of analyzer manager
-                    concurrencySemaphore.Wait();
-                    var t = Task.Run(() =>
+                    foreach (var p in _analyzerManager.Projects.Values)
                     {
-                        try
+                        // if it is part of analyzer manager
+                        concurrencySemaphore.Wait();
+                        var result = await Task.Run(() =>
                         {
-                            return RunTask(p);
-                        }
-                        finally
+                            try
+                            {
+                                return RunTask(p);
+                            }
+                            finally
+                            {
+                                concurrencySemaphore.Release();
+                            }
+                        });
+                        yield return result;
+                    }
+                }
+            }
+            else
+            {
+                Queue<string> queue = new Queue<string>();
+                ISet<string> existing = new HashSet<string>();
+
+                queue.Enqueue(WorkspacePath);
+                existing.Add(WorkspacePath);
+
+                /*
+                 * We need to resolve all the project dependencies to avoid compilation errors.
+                 * If we have compilation errors, we might miss some of the semantic values.
+                 */
+                while (queue.Count > 0)
+                {
+                    var path = queue.Dequeue();
+                    Logger.LogInformation("Building: " + path);
+
+                    IProjectAnalyzer projectAnalyzer = _analyzerManager.GetProject(path);
+                    IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile));
+                    IAnalyzerResult analyzerResult = analyzerResults.First();
+
+                    if (analyzerResult == null)
+                    {
+                        yield return new ProjectAnalysisResult()
                         {
-                            concurrencySemaphore.Release();
+                            ProjectAnalyzer = projectAnalyzer
+                        };
+                    }
+
+                    if(!DictAnalysisResult.ContainsKey(analyzerResult.ProjectGuid))
+                    {
+                        DictAnalysisResult[analyzerResult.ProjectGuid] = analyzerResult;
+                        analyzerResult.AddToWorkspace(_workspaceIncremental);
+
+                        foreach (var pref in analyzerResult.ProjectReferences)
+                        {
+                            if (!existing.Contains(pref))
+                            {
+                                existing.Add(pref);
+                                queue.Enqueue(pref);
+                            }
                         }
-                    });
-                    yield return t.Result;
+
+                        yield return new ProjectAnalysisResult()
+                        {
+                            Project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.Id.Id == analyzerResult.ProjectGuid),
+                            AnalyzerResult = analyzerResult,
+                            ProjectAnalyzer = _analyzerManager.Projects.Values.FirstOrDefault(p => p.ProjectGuid.Equals(analyzerResult.ProjectGuid))
+                        };
+                    }                   
                 }
             }
 
+            Logger.LogDebug(_sb.ToString());
+            _writer.Flush();
+            _writer.Close();
+             ProcessLog(_writer.ToString());
         }
 
         private ProjectAnalysisResult RunTask(IProjectAnalyzer p)
@@ -136,9 +191,6 @@ namespace Codelyzer.Analysis.Build
 
         public void Build()
         {
-            var sb = new StringBuilder();
-            var writer = new StringWriter(sb);
-
             /* Uncomment the below code to debug issues with msbuild */
             /*var writer = new StreamWriter(Console.OpenStandardOutput());
             writer.AutoFlush = true;
@@ -153,7 +205,7 @@ namespace Codelyzer.Analysis.Build
                 AnalyzerManager analyzerManager = new AnalyzerManager(WorkspacePath,
                    new AnalyzerManagerOptions
                    {
-                       LogWriter = writer
+                       LogWriter = _writer
                    });
 
                 Logger.LogInformation("Loading the Solution Done: " + WorkspacePath);
@@ -166,7 +218,7 @@ namespace Codelyzer.Analysis.Build
             {
                 AnalyzerManager analyzerManager = new AnalyzerManager(new AnalyzerManagerOptions
                 {
-                    LogWriter = writer
+                    LogWriter = _writer
                 });
 
                 var dict = new Dictionary<Guid, IAnalyzerResult>();
@@ -236,18 +288,15 @@ namespace Codelyzer.Analysis.Build
                 }
             }
 
-            Logger.LogDebug(sb.ToString());
-            writer.Flush();
-            writer.Close();
-            ProcessLog(writer.ToString());
+            Logger.LogDebug(_sb.ToString());
+            _writer.Flush();
+            _writer.Close();
+            ProcessLog(_writer.ToString());
         }
 
 
         public void GenerateNoBuildAnalysis()
         {
-            var sb = new StringBuilder();
-            var writer = new StringWriter(sb);
-
             if (IsSolutionFile())
             {
                 Logger.LogInformation("Loading the Workspace (Solution): " + WorkspacePath);
@@ -255,10 +304,11 @@ namespace Codelyzer.Analysis.Build
                 AnalyzerManager analyzerManager = new AnalyzerManager(WorkspacePath,
                    new AnalyzerManagerOptions
                    {
-                       LogWriter = writer
+                       LogWriter = _writer
                    });
 
-                analyzerManager.Projects.Values.ToList().ForEach(projectAnalyzer => {
+                analyzerManager.Projects.Values.ToList().ForEach(projectAnalyzer =>
+                {
                     Projects.Add(new ProjectAnalysisResult()
                     {
                         ProjectAnalyzer = projectAnalyzer
@@ -271,7 +321,7 @@ namespace Codelyzer.Analysis.Build
             {
                 AnalyzerManager analyzerManager = new AnalyzerManager(new AnalyzerManagerOptions
                 {
-                    LogWriter = writer
+                    LogWriter = _writer
                 });
 
                 IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(WorkspacePath);
@@ -281,10 +331,10 @@ namespace Codelyzer.Analysis.Build
                 });
             }
 
-            Logger.LogDebug(sb.ToString());
-            writer.Flush();
-            writer.Close();
-            ProcessLog(writer.ToString());
+            Logger.LogDebug(_sb.ToString());
+            _writer.Flush();
+            _writer.Close();
+            ProcessLog(_writer.ToString());
         }
 
         private void ProcessLog(string currentLog)
@@ -451,6 +501,28 @@ namespace Codelyzer.Analysis.Build
                 return OSPlatform.OSX;
             }
             return OSPlatform.Create("None");
+        }
+
+        private AnalyzerManager GetAnalyzerManager()
+        {
+            AnalyzerManager analyzerManager;
+            if (IsSolutionFile())
+            {
+                analyzerManager = new AnalyzerManager(WorkspacePath,
+                                                new AnalyzerManagerOptions
+                                                {
+                                                    LogWriter = _writer
+                                                });
+            }
+            else
+            {
+                analyzerManager = new AnalyzerManager(new AnalyzerManagerOptions
+                {
+                    LogWriter = _writer
+                });
+
+            }
+            return analyzerManager;
         }
 
         public void Dispose()

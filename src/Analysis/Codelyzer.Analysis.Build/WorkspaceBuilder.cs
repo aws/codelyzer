@@ -22,7 +22,7 @@ namespace Codelyzer.Analysis.Build
         }
 
         public async IAsyncEnumerable<ProjectBuildResult> BuildProject()
-        {
+        {         
             using (var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
             {
                 var projectResultEnumerator = builder.BuildProjectIncremental().GetAsyncEnumerator();
