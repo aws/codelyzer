@@ -21,6 +21,50 @@ namespace Codelyzer.Analysis.Build
             _analyzerConfiguration = analyzerConfiguration;
         }
 
+        public async IAsyncEnumerable<ProjectBuildResult> BuildProject()
+        {         
+            using (var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
+            {
+                var projectResultEnumerator = builder.BuildProjectIncremental().GetAsyncEnumerator();
+
+                try
+                {
+                    while (await projectResultEnumerator.MoveNextAsync().ConfigureAwait(false))
+                    {
+                        var result = projectResultEnumerator.Current;
+
+                        if (result.AnalyzerResult != null)
+                        {
+                            using (ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, result.Project, _analyzerConfiguration))
+                            {
+                                projectBuildHandler.AnalyzerResult = result.AnalyzerResult;
+                                projectBuildHandler.ProjectAnalyzer = result.ProjectAnalyzer;
+                                var projectBuildResult = await projectBuildHandler.Build();
+                                yield return projectBuildResult;
+                            }
+                        }
+                        else
+                        {
+                            if (_analyzerConfiguration.AnalyzeFailedProjects)
+                            {
+                                using (ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, _analyzerConfiguration))
+                                {
+                                    projectBuildHandler.ProjectAnalyzer = result.ProjectAnalyzer;
+                                    var projectBuildResult = projectBuildHandler.SyntaxOnlyBuild();
+                                    yield return projectBuildResult;
+                                }
+                            }
+                        }
+
+                    }
+                }
+                finally
+                {
+                    await projectResultEnumerator.DisposeAsync();
+                }
+            }
+        }
+
         public async Task<List<ProjectBuildResult>> Build()
         {
             using (var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))

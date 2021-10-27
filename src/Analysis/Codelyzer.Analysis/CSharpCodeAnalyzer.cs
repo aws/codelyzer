@@ -44,10 +44,16 @@ namespace Codelyzer.Analysis
         public override async IAsyncEnumerable<AnalyzerResult> AnalyzeSolutionGeneratorAsync(string solutionPath)
         {
             var result = AnalyzeGeneratorAsync(solutionPath).GetAsyncEnumerator();
-            
-            while(await result.MoveNextAsync())
+            try
             {
-                yield return result.Current;
+                while (await result.MoveNextAsync().ConfigureAwait(false))
+                {
+                    yield return result.Current;
+                }
+            }
+            finally
+            {
+                await result.DisposeAsync();
             }
         }
 
@@ -139,27 +145,35 @@ namespace Codelyzer.Analysis
             }
 
             List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
-            var analyzerResults = new List<AnalyzerResult>();
 
             WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
 
-            var projectBuildResults = await builder.Build();
 
-            foreach (var projectBuildResult in projectBuildResults)
+            var projectBuildResultEnumerator = builder.BuildProject().GetAsyncEnumerator();
+            try
             {
-                var workspaceResult = AnalyzeProject(projectBuildResult);
-                workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
-                workspaceResult.ProjectType = projectBuildResult.ProjectType;
-                workspaceResults.Add(workspaceResult);
 
-                if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+                while (await projectBuildResultEnumerator.MoveNextAsync().ConfigureAwait(false))
                 {
-                    yield return new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult };
+                    var projectBuildResult = projectBuildResultEnumerator.Current;
+                    var workspaceResult = AnalyzeProject(projectBuildResult);
+                    workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
+                    workspaceResult.ProjectType = projectBuildResult.ProjectType;
+                    workspaceResults.Add(workspaceResult);
+
+                    if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+                    {
+                        yield return new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult };
+                    }
+                    else
+                    {
+                        yield return new AnalyzerResult() { ProjectResult = workspaceResult };
+                    }
                 }
-                else
-                {
-                    yield return new AnalyzerResult() { ProjectResult = workspaceResult };
-                }
+            }
+            finally
+            {
+                await projectBuildResultEnumerator.DisposeAsync();
             }
         }
 
@@ -172,7 +186,7 @@ namespace Codelyzer.Analysis
                 {
                     Logger.LogDebug("Generating Json file for " + analyzerResult.ProjectResult.ProjectName);
                     var jsonOutput = SerializeUtils.ToJson<ProjectWorkspace>(analyzerResult.ProjectResult);
-                    var jsonFilePath = await FileUtils.WriteFileAsync(AnalyzerConfiguration.ExportSettings.OutputPath, 
+                    var jsonFilePath = await FileUtils.WriteFileAsync(AnalyzerConfiguration.ExportSettings.OutputPath,
                         analyzerResult.ProjectResult.ProjectName+".json", jsonOutput);
                     analyzerResult.OutputJsonFilePath = jsonFilePath;
                     Logger.LogDebug("Generated Json file  " + jsonFilePath);
@@ -202,7 +216,7 @@ namespace Codelyzer.Analysis
                 var fileAnalysis = AnalyzeFile(fileBuildResult, workspace.ProjectRootPath);
                 workspace.SourceFileResults.Add(fileAnalysis);
             }
-            
+
             return workspace;
         }
 
@@ -241,7 +255,7 @@ namespace Codelyzer.Analysis
                 analyzerResult.ProjectBuildResult.Compilation,
                 analyzerResult.ProjectBuildResult.PrePortCompilation,
                 AnalyzerConfiguration);
-            
+
             analyzerResult.ProjectBuildResult = await projectBuildHandler.IncrementalBuild(filePath, analyzerResult.ProjectBuildResult);
             var newSourceFileBuildResult = projectBuildResult.SourceFileBuildResults.FirstOrDefault(sourceFile => sourceFile.SourceFileFullPath == filePath);
 
