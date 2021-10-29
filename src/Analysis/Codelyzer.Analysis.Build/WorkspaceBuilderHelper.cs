@@ -59,13 +59,25 @@ namespace Codelyzer.Analysis.Build
         {
             if (IsSolutionFile())
             {
-                foreach (var p in _analyzerManager.Projects.Values)
+                using (SemaphoreSlim concurrencySemaphore = new SemaphoreSlim(1))
                 {
-                    var result = await Task.Run(() =>
+                    foreach (var p in _analyzerManager.Projects.Values)
                     {
-                        return RunTask(p);
-                    });
-                    yield return result;
+                        // if it is part of analyzer manager
+                        concurrencySemaphore.Wait();
+                        var result = await Task.Run(() =>
+                        {
+                            try
+                            {
+                                return RunTask(p);
+                            }
+                            finally
+                            {
+                                concurrencySemaphore.Release();
+                            }
+                        });
+                        yield return result;
+                    }
                 }
             }
             else
