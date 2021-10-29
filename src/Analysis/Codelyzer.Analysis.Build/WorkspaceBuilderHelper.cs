@@ -59,78 +59,19 @@ namespace Codelyzer.Analysis.Build
         {
             if (IsSolutionFile())
             {
-                using (SemaphoreSlim concurrencySemaphore = new SemaphoreSlim(1))
+                foreach (var p in _analyzerManager.Projects.Values)
                 {
-                    foreach (var p in _analyzerManager.Projects.Values)
+                    var result = await Task.Run(() =>
                     {
-                        // if it is part of analyzer manager
-                        concurrencySemaphore.Wait();
-                        var result = await Task.Run(() =>
-                        {
-                            try
-                            {
-                                return RunTask(p);
-                            }
-                            finally
-                            {
-                                concurrencySemaphore.Release();
-                            }
-                        });
-                        yield return result;
-                    }
+                        return RunTask(p);
+                    });
+                    yield return result;
                 }
             }
             else
             {
-                Queue<string> queue = new Queue<string>();
-                ISet<string> existing = new HashSet<string>();
 
-                queue.Enqueue(WorkspacePath);
-                existing.Add(WorkspacePath);
-
-                /*
-                 * We need to resolve all the project dependencies to avoid compilation errors.
-                 * If we have compilation errors, we might miss some of the semantic values.
-                 */
-                while (queue.Count > 0)
-                {
-                    var path = queue.Dequeue();
-                    Logger.LogInformation("Building: " + path);
-
-                    IProjectAnalyzer projectAnalyzer = _analyzerManager.GetProject(path);
-                    IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile));
-                    IAnalyzerResult analyzerResult = analyzerResults.First();
-
-                    if (analyzerResult == null)
-                    {
-                        yield return new ProjectAnalysisResult()
-                        {
-                            ProjectAnalyzer = projectAnalyzer
-                        };
-                    }
-
-                    if(!DictAnalysisResult.ContainsKey(analyzerResult.ProjectGuid))
-                    {
-                        DictAnalysisResult[analyzerResult.ProjectGuid] = analyzerResult;
-                        analyzerResult.AddToWorkspace(_workspaceIncremental);
-
-                        foreach (var pref in analyzerResult.ProjectReferences)
-                        {
-                            if (!existing.Contains(pref))
-                            {
-                                existing.Add(pref);
-                                queue.Enqueue(pref);
-                            }
-                        }
-
-                        yield return new ProjectAnalysisResult()
-                        {
-                            Project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.Id.Id == analyzerResult.ProjectGuid),
-                            AnalyzerResult = analyzerResult,
-                            ProjectAnalyzer = _analyzerManager.Projects.Values.FirstOrDefault(p => p.ProjectGuid.Equals(analyzerResult.ProjectGuid))
-                        };
-                    }                   
-                }
+                yield return BuildIncremental(WorkspacePath);
             }
 
             Logger.LogDebug(_sb.ToString());
@@ -161,30 +102,62 @@ namespace Codelyzer.Analysis.Build
                 }
             }
 
+            return BuildIncremental(p.ProjectFile.Path);
+        }
 
-            var buildResult = BuildProject(p);
-            if (buildResult == null)
+        private ProjectAnalysisResult BuildIncremental(string WorkspacePath)
+        {
+            Queue<string> queue = new Queue<string>();
+            ISet<string> existing = new HashSet<string>();
+
+            queue.Enqueue(WorkspacePath);
+            existing.Add(WorkspacePath);
+
+            /*
+             * We need to resolve all the project dependencies to avoid compilation errors.
+             * If we have compilation errors, we might miss some of the semantic values.
+             */
+            while (queue.Count > 0)
             {
-                Logger.LogDebug("Building complete for {0} - {1}", p.ProjectFile.Path, "Fail");
-                return new ProjectAnalysisResult()
+                var path = queue.Dequeue();
+                Logger.LogInformation("Building: " + path);
+
+                IProjectAnalyzer projectAnalyzer = _analyzerManager.GetProject(path);
+                IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile));
+                IAnalyzerResult analyzerResult = analyzerResults.First();
+
+                if (analyzerResult == null)
                 {
-                    ProjectAnalyzer = p
-                };
-            }
-            else
-            {
-                Logger.LogDebug("Building complete for {0} - {1}", p.ProjectFile.Path, buildResult.Succeeded ? "Success" : "Fail");
-                buildResult.AddToWorkspace(_workspaceIncremental);
-                projectAnalyzerResult = _analyzerManager.Projects.Values.FirstOrDefault(p => p.ProjectGuid.Equals(buildResult.ProjectGuid));
-                DictAnalysisResult.Add(buildResult.ProjectGuid, buildResult);
-            }
+                    Logger.LogDebug("Building complete for {0} - {1}", path, "Fail");
+                    return new ProjectAnalysisResult()
+                    {
+                        ProjectAnalyzer = projectAnalyzer
+                    };
+                }
 
+                if(!DictAnalysisResult.ContainsKey(analyzerResult.ProjectGuid))
+                {
+                    DictAnalysisResult[analyzerResult.ProjectGuid] = analyzerResult;
+                    analyzerResult.AddToWorkspace(_workspaceIncremental);
 
+                    foreach (var pref in analyzerResult.ProjectReferences)
+                    {
+                        if (!existing.Contains(pref))
+                        {
+                            existing.Add(pref);
+                            queue.Enqueue(pref);
+                        }
+                    }                   
+                }
+            }
+            
+            Project project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.FilePath.Equals(WorkspacePath));
+            Logger.LogDebug("Building complete for {0} - {1}", WorkspacePath, DictAnalysisResult[project.Id.Id].Succeeded ? "Success" : "Fail");
             return new ProjectAnalysisResult()
             {
-                Project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.Id.Id == buildResult.ProjectGuid),
-                AnalyzerResult = buildResult,
-                ProjectAnalyzer = projectAnalyzerResult
+                Project = project,
+                AnalyzerResult = DictAnalysisResult[project.Id.Id],
+                ProjectAnalyzer = _analyzerManager.Projects.Values.FirstOrDefault(p => p.ProjectGuid.Equals(project.Id.Id))
             };
         }
 
