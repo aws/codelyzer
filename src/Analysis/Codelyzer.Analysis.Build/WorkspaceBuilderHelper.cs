@@ -3,6 +3,7 @@ using Buildalyzer.Construction;
 using Buildalyzer.Environment;
 using Buildalyzer.Workspaces;
 using Codelyzer.Analysis.Common;
+using Microsoft.Build.Construction;
 using Microsoft.Build.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
@@ -61,7 +62,9 @@ namespace Codelyzer.Analysis.Build
             {
                 using (SemaphoreSlim concurrencySemaphore = new SemaphoreSlim(1))
                 {
-                    foreach (var p in _analyzerManager.Projects.Values)
+                    string solutionFilePath = NormalizePath(WorkspacePath);
+                    SolutionFile solutionFile = SolutionFile.Parse(solutionFilePath);
+                    foreach (var project in solutionFile.ProjectsInOrder)
                     {
                         // if it is part of analyzer manager
                         concurrencySemaphore.Wait();
@@ -69,7 +72,7 @@ namespace Codelyzer.Analysis.Build
                         {
                             try
                             {
-                                return RunTask(p);
+                                return RunTask(project.AbsolutePath);
                             }
                             finally
                             {
@@ -92,11 +95,10 @@ namespace Codelyzer.Analysis.Build
              ProcessLog(_writer.ToString());
         }
 
-        private ProjectAnalysisResult RunTask(IProjectAnalyzer p)
+        private ProjectAnalysisResult RunTask(string projectPath)
         {
-            IProjectAnalyzer projectAnalyzerResult = null;
-            Logger.LogDebug("Building the project : " + p.ProjectFile.Path);
-            var project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.FilePath == p.ProjectFile.Path);
+            Logger.LogDebug("Building the project : " + projectPath);
+            var project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.FilePath == projectPath);
 
             if (project != null)
             {
@@ -104,7 +106,7 @@ namespace Codelyzer.Analysis.Build
 
                 if (DictAnalysisResult.ContainsKey(projectGuid))
                 {
-                    projectAnalyzerResult = _analyzerManager.Projects.Values.FirstOrDefault(p => p.ProjectGuid.Equals(projectGuid));
+                    IProjectAnalyzer projectAnalyzerResult = _analyzerManager.Projects.Values.FirstOrDefault(p => p.ProjectGuid.Equals(projectGuid));
                     return new ProjectAnalysisResult()
                     {
                         Project = project,
@@ -114,7 +116,7 @@ namespace Codelyzer.Analysis.Build
                 }
             }
 
-            return BuildIncremental(p.ProjectFile.Path);
+            return BuildIncremental(projectPath);
         }
 
         private ProjectAnalysisResult BuildIncremental(string WorkspacePath)
@@ -135,8 +137,7 @@ namespace Codelyzer.Analysis.Build
                 Logger.LogInformation("Building: " + path);
 
                 IProjectAnalyzer projectAnalyzer = _analyzerManager.GetProject(path);
-                IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile));
-                IAnalyzerResult analyzerResult = analyzerResults.First();
+                IAnalyzerResult analyzerResult = projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile)).FirstOrDefault();
 
                 if (analyzerResult == null)
                 {
@@ -150,7 +151,7 @@ namespace Codelyzer.Analysis.Build
                 if(!DictAnalysisResult.ContainsKey(analyzerResult.ProjectGuid))
                 {
                     DictAnalysisResult[analyzerResult.ProjectGuid] = analyzerResult;
-                    analyzerResult.AddToWorkspace(_workspaceIncremental);
+                    projectAnalyzer.AddToWorkspace(_workspaceIncremental);
 
                     foreach (var pref in analyzerResult.ProjectReferences)
                     {
@@ -515,5 +516,8 @@ namespace Codelyzer.Analysis.Build
             Projects?.ForEach(p => p.Dispose());
             Projects = null;
         }
+
+        private string NormalizePath(string path) =>
+            path == null ? null : Path.GetFullPath(path.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar));
     }
 }
