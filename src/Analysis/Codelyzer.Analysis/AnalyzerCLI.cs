@@ -11,7 +11,7 @@ namespace Codelyzer.Analysis
     {
         [Option('p', "project-path", Required = false, HelpText = "Project file path.")]
         public string ProjectPath { get; set; }
-        
+
         [Option('s', "solution-path", Required = false, HelpText = "Solution file path.")]
         public string SolutionPath { get; set; }
 
@@ -35,6 +35,9 @@ namespace Codelyzer.Analysis
 
         [Option('f', "analyze-failed", Required = false, HelpText = "Analyze projects that fail design build")]
         public string AnalyzeFailed { get; set; }
+
+        [Option('m', "meta-data", Required = false, HelpText = "metadata string, e:g: 'EnumDeclarations=true,StructDeclarations=true,Annotations=true'")]
+        public string MetaDataDetails { get; set; }
 
     }
 
@@ -111,6 +114,10 @@ namespace Codelyzer.Analysis
                         Configuration.MetaDataSettings.ElementAccess = result;
                         Configuration.MetaDataSettings.MemberAccess = result;
                     }
+                    else if (!string.IsNullOrEmpty(o.MetaDataDetails))
+                    {
+                        ConfigureMetaDataDetails(o.MetaDataDetails, Configuration.MetaDataSettings);
+                    }
 
                     if (!string.IsNullOrEmpty(o.ConcurrentThreads))
                     {
@@ -130,10 +137,10 @@ namespace Codelyzer.Analysis
                 Environment.Exit(-1);
             }
         }
-        
+
         static void HandleParseError(IEnumerable<Error> errs)
         {
-            Environment.Exit( -1 );
+            Environment.Exit(-1);
         }
 
         public override string ToString()
@@ -143,7 +150,23 @@ namespace Codelyzer.Analysis
             sb.Append($"\nConfiguration: {SerializeUtils.ToJson(Configuration)}");
             return sb.ToString();
         }
+
+        private void ConfigureMetaDataDetails(string metaDataDetails, MetaDataSettings metaDataSettings)
+        {
+            var metaDatas = metaDataDetails.Split(",");
+            Type MDType = typeof(MetaDataSettings);
+            foreach (string md in metaDatas)
+            {
+                string[] eachEntry = md.Split("=");
+                if (eachEntry != null && eachEntry.Length > 1)
+                {
+                    string metadataField = eachEntry[0].Trim();
+                    bool metadataVal = eachEntry[1].Trim().Equals(bool.TrueString, StringComparison.OrdinalIgnoreCase) ? true : false;
+                    MDType.GetField(metadataField)?.SetValue(metaDataSettings, metadataVal);
+                }
+            }
+        }
     }
-    
-    
+
+
 }

@@ -66,6 +66,28 @@ namespace Codelyzer.Analysis.Tests
             Assert.NotNull(cli.Configuration);
         }
 
+        [Test, TestCaseSource(nameof(TestCliMetaDataSource))]
+        public async Task TestCliForMetaDataStringsAsync(string mdArgument, int enumNumbers, int ifaceNumbers)
+        {
+            string projectPath = string.Concat(GetTstPath(Path.Combine(new[] { "Projects", "CodelyzerDummy", "CodelyzerDummy" })), ".csproj");
+            string[] args = { "-p", projectPath, "-m", mdArgument };
+            AnalyzerCLI cli = new AnalyzerCLI();
+            cli.HandleCommand(args);
+            Assert.NotNull(cli);
+            Assert.NotNull(cli.FilePath);
+            Assert.NotNull(cli.Project);
+            Assert.NotNull(cli.Configuration);
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(cli.Configuration, NullLogger.Instance);
+            AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
+            Assert.True(result != null);
+            var testClassRootNode = result.ProjectResult.SourceFileResults
+                    .First(s => s.FileFullPath.EndsWith("Class2.cs"))
+                as UstNode;
+            Assert.AreEqual(enumNumbers, testClassRootNode.AllEnumDeclarations().Count);
+            var ifaceTestNode = result.ProjectResult.SourceFileResults.First(s => s.FileFullPath.EndsWith("ITest.cs"));
+            Assert.AreEqual(ifaceNumbers, ifaceTestNode.AllInterfaces().Count);
+        }
+
         [Test]
         public async Task TestAnalyzer()
         {
@@ -888,6 +910,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             DeleteDir(0);
         }
 
+        #region private methods
         private void DeleteDir(int retries)
         {
             if(retries <= 10)
@@ -903,5 +926,20 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                 }
             }
         }
+
+        private static IEnumerable<TestCaseData> TestCliMetaDataSource
+        {
+            get
+            {
+                yield return new TestCaseData("EnumDeclarations = true", 1, 0); // the space is deliberate
+                yield return new TestCaseData("EnumDeclarations=true,InterfaceDeclarations=true", 1, 1);
+                yield return new TestCaseData("EnumDeclarations=false,InterfaceDeclarations=true", 0, 1);
+                yield return new TestCaseData("EnumDeclarations=true, InterfaceDeclarations=true", 1, 1);
+                yield return new TestCaseData("InterfaceDeclarations=true", 0, 1);
+                yield return new TestCaseData("", 0, 0);
+            }
+
+        }
+        #endregion
     }
 }
