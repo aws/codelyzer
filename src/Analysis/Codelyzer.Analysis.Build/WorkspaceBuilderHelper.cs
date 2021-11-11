@@ -56,6 +56,11 @@ namespace Codelyzer.Analysis.Build
             return WorkspacePath.EndsWith("sln");
         }
 
+        private bool IsProjectFile(string projectPath)
+        {
+            return projectPath.EndsWith("csproj");
+        }
+
         public async IAsyncEnumerable<ProjectAnalysisResult> BuildProjectIncremental()
         {
             if (IsSolutionFile())
@@ -66,20 +71,24 @@ namespace Codelyzer.Analysis.Build
                     SolutionFile solutionFile = SolutionFile.Parse(solutionFilePath);
                     foreach (var project in solutionFile.ProjectsInOrder)
                     {
-                        // if it is part of analyzer manager
-                        concurrencySemaphore.Wait();
-                        var result = await Task.Run(() =>
+                        string projectPath = project.AbsolutePath;
+                        if (IsProjectFile(projectPath))
                         {
-                            try
+                            // if it is part of analyzer manager
+                            concurrencySemaphore.Wait();
+                            var result = await Task.Run(() =>
                             {
-                                return RunTask(project.AbsolutePath);
-                            }
-                            finally
-                            {
-                                concurrencySemaphore.Release();
-                            }
-                        });
-                        yield return result;
+                                try
+                                {
+                                    return RunTask(projectPath);
+                                }
+                                finally
+                                {
+                                    concurrencySemaphore.Release();
+                                }
+                            });
+                            yield return result;
+                        }                      
                     }
                 }
             }
