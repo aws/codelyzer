@@ -4,12 +4,14 @@ using Buildalyzer.Environment;
 using Buildalyzer.Workspaces;
 using Codelyzer.Analysis.Common;
 using Microsoft.Build.Construction;
+using Microsoft.Build.Locator;
 using Microsoft.Build.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -457,6 +459,40 @@ namespace Codelyzer.Analysis.Build
                 {
                     options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, Constants.MsBuildCommandName);
                 }
+            }
+
+            try
+            {
+                MSBuildLocator.RegisterDefaults();
+            }
+            catch (System.InvalidOperationException)
+            {
+                var enviroment = System.Environment.CurrentDirectory;
+                string projectDirectory = Directory.GetParent(enviroment).Parent.FullName;
+                var proc = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = Path.Combine(projectDirectory, "vswhere.exe"),
+                        Arguments = "-latest -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe",
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        CreateNoWindow = true,
+                        WorkingDirectory = ""
+                    }
+                };
+                proc.Start();
+                var msbuildExe = "";
+                while (!proc.StandardOutput.EndOfStream)
+                {
+                    msbuildExe = proc.StandardOutput.ReadLine();
+                }
+                options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
+            }
+            catch
+            {
+                var error = "No instances of MSBuild could be detected.";
+                throw new InvalidOperationException(error);
             }
 
             options.EnvironmentVariables.Add(Constants.EnableNuGetPackageRestore, Boolean.TrueString.ToLower());
