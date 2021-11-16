@@ -467,27 +467,12 @@ namespace Codelyzer.Analysis.Build
             }
             catch (System.InvalidOperationException)
             {
-                var enviroment = System.Environment.CurrentDirectory;
-                string projectDirectory = Directory.GetParent(enviroment).Parent.FullName;
-                var proc = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = Path.Combine(projectDirectory, "vswhere.exe"),
-                        Arguments = "-latest -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe",
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        CreateNoWindow = true,
-                        WorkingDirectory = ""
-                    }
-                };
-                proc.Start();
                 var msbuildExe = "";
-                while (!proc.StandardOutput.EndOfStream)
-                {
-                    msbuildExe = proc.StandardOutput.ReadLine();
-                }
-                options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
+                var editions = new string[] { "Enterprise", "Professional", "Community" };
+                var targets = new string[] { "Microsoft.CSharp.targets", "Microsoft.CSharp.CurrentVersion.targets", "Microsoft.CSharp.CrossTargeting.targets" };
+
+                msbuildExe = GetLatestVSMSBuildPath();
+                Environment.SetEnvironmentVariable("MSBUILD_EXE_PATH", msbuildExe);
             }
             catch
             {
@@ -564,5 +549,71 @@ namespace Codelyzer.Analysis.Build
 
         private string NormalizePath(string path) =>
             path == null ? null : Path.GetFullPath(path.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar));
+
+        public static string GetLatestVSMSBuildPath()
+        {
+            var programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            var windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+
+            var editions = new string[] { "Enterprise", "Professional", "Community" };
+            var targets = new string[] { "Microsoft.CSharp.targets", "Microsoft.CSharp.CurrentVersion.targets", "Microsoft.CSharp.CrossTargeting.targets" };
+
+            foreach (string editionType in editions)
+            {
+                var vsPath2022 = Path.Combine(programFiles, @"Microsoft Visual Studio\2022\" + editionType + @"\MSBuild\Current\Bin\");
+                var vsPath2019 = Path.Combine(programFilesX86, @"Microsoft Visual Studio\2019\" + editionType + @"\MSBuild\Current\Bin\");
+                var vsPath2017 = Path.Combine(programFilesX86, @"Microsoft Visual Studio\2017\" + editionType + @"\MSBuild\15.0\Bin\");
+
+                var msBuild2022 = Path.Combine(vsPath2022, "MSBuild.exe");
+                var msBuild2019 = Path.Combine(vsPath2019, "MSBuild.exe");
+                var msBuild2017 = Path.Combine(vsPath2017, "MSBuild.exe");
+
+                if (File.Exists(msBuild2022))
+                {
+                    Console.WriteLine("here");
+                    var targetsWithPath = GetTargetsWithPath(vsPath2022, targets);
+                    if (targetsWithPath.TrueForAll(File.Exists)) return msBuild2022;
+                }
+                else if (File.Exists(msBuild2019))
+                {
+
+                    var targetsWithPath = GetTargetsWithPath(vsPath2019, targets);
+                    if (targetsWithPath.TrueForAll(File.Exists)) return msBuild2019;
+                }
+                else if (File.Exists(msBuild2017))
+                {
+
+                    var targetsWithPath = GetTargetsWithPath(vsPath2017, targets);
+                    if (targetsWithPath.TrueForAll(File.Exists)) return msBuild2017;
+                }
+            }
+            var vspath14 = @"msbuild\14.0\bin\";
+            var vspath12 = @"msbuild\12.0\bin\msbuild.exe";
+
+            var msbuild14 = Path.Combine(vspath14, "msbuild.exe");
+            var msbuild12 = Path.Combine(vspath12, "msbuild.exe");
+            if (File.Exists(msbuild14))
+            {
+                var targetsWithPath = GetTargetsWithPath(vspath14, targets);
+                if (targetsWithPath.TrueForAll(File.Exists)) return msbuild14;
+            }
+            else if (File.Exists(vspath12))
+            {
+                var targetsWithPath = GetTargetsWithPath(vspath12, targets);
+                if (targetsWithPath.TrueForAll(File.Exists)) return msbuild12;
+            }
+            return "";
+        }
+
+        public static List<string> GetTargetsWithPath(string vsPath, string[] targets)
+        {
+            List<string> targetsWithPath = new List<string>();
+            foreach (string target in targets)
+            {
+                targetsWithPath.Add(Path.Combine(vsPath, target));
+            }
+            return targetsWithPath;
+        }
     }
 }
