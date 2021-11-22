@@ -356,7 +356,7 @@ namespace Codelyzer.Analysis.Tests
             var accountClassDeclaration = accountController.Children.OfType<NamespaceDeclaration>().FirstOrDefault();
             Assert.NotNull(accountClassDeclaration);
 
-            var classDeclaration = homeController.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault().Children[0];
+            var classDeclaration = homeController.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault().Children.OfType<Codelyzer.Analysis.Model.ClassDeclaration>().FirstOrDefault();
             Assert.NotNull(classDeclaration);
 
             var declarationNodes = classDeclaration.AllDeclarationNodes();
