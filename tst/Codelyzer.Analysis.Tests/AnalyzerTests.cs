@@ -464,8 +464,8 @@ namespace Codelyzer.Analysis.Tests
             var accountClassDeclarationOld = accountControllerOld.Children.OfType<NamespaceDeclaration>().FirstOrDefault();
             Assert.NotNull(accountClassDeclaration);
 
-            var classDeclaration = homeController.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault().Children[0];
-            var classDeclarationOld = homeControllerOld.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault().Children[0];
+            var classDeclaration = homeController.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault().Children.OfType<Codelyzer.Analysis.Model.ClassDeclaration>().FirstOrDefault();
+            var classDeclarationOld = homeControllerOld.Children.OfType<Codelyzer.Analysis.Model.NamespaceDeclaration>().FirstOrDefault().Children.OfType<Codelyzer.Analysis.Model.ClassDeclaration>().FirstOrDefault();
             Assert.NotNull(classDeclaration);
 
             var declarationNodes = classDeclaration.AllDeclarationNodes();
@@ -680,7 +680,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.NotNull(updatedSourceFile);
             Assert.AreEqual(3, updatedSourceFile.AllMethods().Count);
             Assert.AreEqual(5, updatedSourceFile.AllLiterals().Count);
-            Assert.AreEqual(5, updatedSourceFile.AllDeclarationNodes().Count);
+            Assert.AreEqual(24, updatedSourceFile.AllDeclarationNodes().Count);
         }
 
         [Test]
