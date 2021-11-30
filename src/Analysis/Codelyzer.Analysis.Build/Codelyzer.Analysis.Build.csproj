@@ -10,7 +10,6 @@
       <PackageReference Include="Buildalyzer" Version="3.2.2" />
       <PackageReference Include="Buildalyzer.Logger" Version="3.2.2" />
       <PackageReference Include="Buildalyzer.Workspaces" Version="3.2.2" />
-      <PackageReference Include="Microsoft.Build.Locator" Version="1.4.1" />
       <PackageReference Include="NuGet.Packaging" Version="5.11.0" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
     </ItemGroup>

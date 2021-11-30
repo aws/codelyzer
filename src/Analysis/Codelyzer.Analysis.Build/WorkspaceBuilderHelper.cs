@@ -4,8 +4,6 @@ using Buildalyzer.Environment;
 using Buildalyzer.Workspaces;
 using Codelyzer.Analysis.Common;
 using Microsoft.Build.Construction;
-using Microsoft.Build.Locator;
-using Microsoft.Build.Logging;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using System;
@@ -465,7 +463,7 @@ namespace Codelyzer.Analysis.Build
             {
                 var msbuildExe = "";
                 msbuildExe = GetFrameworkMsBuildExePath();
-                options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
+                if (!String.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
             }
             catch
             {
