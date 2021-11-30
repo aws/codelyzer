@@ -461,13 +461,12 @@ namespace Codelyzer.Analysis.Build
 
             try
             {
-                var msbuildExe = "";
-                msbuildExe = GetFrameworkMsBuildExePath();
+                var msbuildExe = GetFrameworkMsBuildExePath();
                 if (!String.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
             }
             catch
             {
-                Logger.LogError("Build error: Missing MSBuild Path");
+                Logger.LogError("Build error: Codelyzer wasn't able to retrieve the MSBuild path");
             }
 
             options.EnvironmentVariables.Add(Constants.EnableNuGetPackageRestore, Boolean.TrueString.ToLower());
@@ -549,7 +548,7 @@ namespace Codelyzer.Analysis.Build
             var targets = new string[] { "Microsoft.CSharp.targets", "Microsoft.CSharp.CurrentVersion.targets", "Microsoft.Common.targets" };
             // "Microsoft.CSharp.CrossTargeting.targets"
             var msbuildpath = "";
-            //2020
+            //2022
             var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
             DirectoryInfo vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
             msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
@@ -624,10 +623,10 @@ namespace Codelyzer.Analysis.Build
 
         public static string GetEditionType(string vsPath, List<string> editions)
         {
-            string[] elements = vsPath.ToLower().Split(@"\");
+            string[] elements = vsPath.Split(Path.DirectorySeparatorChar);
             foreach (var edition in editions)
             {
-                if (elements.Contains(edition.ToLower()))
+                if (elements.Contains(edition))
                 {
                     return edition;
                 }
@@ -637,7 +636,7 @@ namespace Codelyzer.Analysis.Build
 
         public static string GetVersionFolder(string vsPath)
         {
-            List<string> elements = vsPath.Split(@"\").ToList();
+            List<string> elements = vsPath.Split(Path.DirectorySeparatorChar).ToList();
             var folderIdx = elements.IndexOf("MSBuild");
             return elements[folderIdx + 1];
         }
