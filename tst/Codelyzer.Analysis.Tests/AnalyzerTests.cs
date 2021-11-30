@@ -230,7 +230,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(2, houseMapper.AllInvocationExpressions().Count);
 
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
-            Assert.AreEqual(dllFiles.Count(), 16);
+            Assert.AreEqual(16, dllFiles.Count());
 
             await RunAgainWithChangedFile(solutionPath, result.ProjectBuildResult.ProjectPath, configuration, analyzer);
         }
