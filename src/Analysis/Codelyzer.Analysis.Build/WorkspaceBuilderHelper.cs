@@ -146,7 +146,12 @@ namespace Codelyzer.Analysis.Build
                 Logger.LogInformation("Building: " + path);
 
                 IProjectAnalyzer projectAnalyzer = _analyzerManager.GetProject(path);
-                IAnalyzerResult analyzerResult = projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile)).FirstOrDefault();
+
+                if (!TryGetRequiresNetFramework(projectAnalyzer.ProjectFile, out bool requiresNetFramework))
+                {
+                    continue;
+                }
+                IAnalyzerResult analyzerResult = projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework)).FirstOrDefault();
 
                 if (analyzerResult == null)
                 {
@@ -235,7 +240,13 @@ namespace Codelyzer.Analysis.Build
                         Logger.LogInformation("Building: " + path);
 
                         IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(path);
-                        IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile));
+
+                        if (!TryGetRequiresNetFramework(projectAnalyzer.ProjectFile, out bool requiresNetFramework))
+                        {
+                            continue;
+                        }
+
+                        IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework));
                         IAnalyzerResult analyzerResult = analyzerResults.First();
 
                         if (analyzerResult == null)
@@ -417,7 +428,11 @@ namespace Codelyzer.Analysis.Build
         {
             try
             {
-                return projectAnalyzer.Build(GetEnvironmentOptions(projectAnalyzer.ProjectFile)).FirstOrDefault();
+                if (!TryGetRequiresNetFramework(projectAnalyzer.ProjectFile, out bool requiresNetFramework))
+                {
+                    return null;
+                }
+                return projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework)).FirstOrDefault();
             }
             catch (Exception e)
             {
@@ -433,26 +448,32 @@ namespace Codelyzer.Analysis.Build
             return null;
         }
 
-        private EnvironmentOptions GetEnvironmentOptions(IProjectFile projectFile)
+        private bool TryGetRequiresNetFramework(IProjectFile projectFile, out bool requiresNetFramework)
+        {
+            requiresNetFramework = false;
+            /*
+                We need to have this property in a try/catch because there are cases when there are additional Import or LanguageTarget tags
+                with unexpected (or missing) attributes. This avoids a NPE in buildalyzer code retrieving this property                  
+                */
+            try
+            {
+                requiresNetFramework = projectFile.RequiresNetFramework;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error while checking if project is a framework project. Buildalyzer does not support this type of project");
+                return false;
+            }
+            return true;
+        }
+
+        private EnvironmentOptions GetEnvironmentOptions(bool requiresNetFramework)
         {
             var os = DetermineOSPlatform();
             EnvironmentOptions options = new EnvironmentOptions();
 
             if (os == OSPlatform.Linux || os == OSPlatform.OSX)
             {
-                var requiresNetFramework = false;
-                /*
-                    We need to have this property in a try/catch because there are cases when there are additional Import or LanguageTarget tags
-                    with unexpected (or missing) attributes. This avoids a NPE in buildalyzer code retrieving this property                  
-                 */
-                try
-                {
-                    requiresNetFramework = projectFile.RequiresNetFramework;
-                }
-                catch(Exception ex)
-                {
-                    Logger.LogError(ex, "Error while checking if project is a framework project");
-                }
                 if (requiresNetFramework)
                 {
                     options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, Constants.MsBuildCommandName);
