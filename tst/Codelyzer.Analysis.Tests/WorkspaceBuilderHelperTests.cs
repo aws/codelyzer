@@ -113,8 +113,6 @@ namespace Codelyzer.Analysis.Tests
         {
             string actualMsBuildPath = Path.Combine(testvs2022Path, Constants.vs2022MSBuildPath);
             string msbuildpath = WorkspaceBuilderHelper.GetFrameworkMsBuildExePath(programFilesPath: Path.Combine(testvs2022Path, Constants.programFiles), programFilesX86Path: Path.Combine(testvs2022Path, Constants.programFilesx86));
-            Console.WriteLine(actualMsBuildPath);
-            Console.WriteLine(msbuildpath);
             Assert.AreEqual(actualMsBuildPath,msbuildpath);
         }
 
@@ -123,8 +121,6 @@ namespace Codelyzer.Analysis.Tests
         {
             string actualMsBuildPath = Path.Combine(testvs2019Path, Constants.vs2019MSBuildPath);
             string msbuildpath = WorkspaceBuilderHelper.GetFrameworkMsBuildExePath(programFilesPath: Path.Combine(testvs2019Path, Constants.programFiles), programFilesX86Path: Path.Combine(testvs2019Path, Constants.programFilesx86));
-            Console.WriteLine(actualMsBuildPath);
-            Console.WriteLine(msbuildpath);
             Assert.AreEqual(actualMsBuildPath, msbuildpath);
         }
 
@@ -133,8 +129,6 @@ namespace Codelyzer.Analysis.Tests
         {
             string actualMsBuildPath = Path.Combine(testvs2017And19BuildToolsPath, Constants.vs2019BuildToolsMSBuildPath);
             string msbuildpath = WorkspaceBuilderHelper.GetFrameworkMsBuildExePath(programFilesPath: Path.Combine(testvs2017And19BuildToolsPath, Constants.programFiles), programFilesX86Path: Path.Combine(testvs2017And19BuildToolsPath, Constants.programFilesx86));
-            Console.WriteLine(actualMsBuildPath);
-            Console.WriteLine(msbuildpath);
             Assert.AreEqual(actualMsBuildPath, msbuildpath);
         }
 
@@ -143,8 +137,6 @@ namespace Codelyzer.Analysis.Tests
         {
             string actualMsBuildPath = Path.Combine(testvs2022MissingTargetsPath, Constants.vs2019MSBuildPath);
             string msbuildpath = WorkspaceBuilderHelper.GetFrameworkMsBuildExePath(programFilesPath: Path.Combine(testvs2022MissingTargetsPath, Constants.programFiles), programFilesX86Path: Path.Combine(testvs2022MissingTargetsPath, Constants.programFilesx86));
-            Console.WriteLine(actualMsBuildPath);
-            Console.WriteLine(msbuildpath);
             Assert.AreEqual(actualMsBuildPath, msbuildpath);
         }
 
@@ -153,8 +145,6 @@ namespace Codelyzer.Analysis.Tests
         {
             string actualMsBuildPath = Path.Combine(testMSBuild14Path, Constants.MSBuild14Path);
             string msbuildpath = WorkspaceBuilderHelper.GetFrameworkMsBuildExePath(programFilesPath: Path.Combine(testMSBuild14Path, Constants.programFiles), programFilesX86Path: Path.Combine(testMSBuild14Path, Constants.programFilesx86));
-            Console.WriteLine(actualMsBuildPath);
-            Console.WriteLine(msbuildpath);
             Assert.AreEqual(actualMsBuildPath, msbuildpath);
         }
 
@@ -162,7 +152,6 @@ namespace Codelyzer.Analysis.Tests
         public void TestMissingTargets()
         {
             string msbuildpath = WorkspaceBuilderHelper.GetFrameworkMsBuildExePath(programFilesPath: Path.Combine(testMissingTargetsPath, Constants.programFiles), programFilesX86Path: Path.Combine(testMissingTargetsPath, Constants.programFilesx86));
-            Console.WriteLine(msbuildpath);
             Assert.AreEqual("", msbuildpath);
         }
     }
