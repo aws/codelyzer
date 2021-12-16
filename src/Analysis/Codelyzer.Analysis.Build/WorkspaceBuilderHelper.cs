@@ -484,6 +484,7 @@ namespace Codelyzer.Analysis.Build
             {
                 var msbuildExe = GetFrameworkMsBuildExePath();
                 if (!String.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
+                else { throw new Exception(); }
             }
             catch
             {
@@ -560,7 +561,7 @@ namespace Codelyzer.Analysis.Build
         private string NormalizePath(string path) =>
             path == null ? null : Path.GetFullPath(path.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar));
 
-        public static string GetFrameworkMsBuildExePath()
+        public static string GetFrameworkMsBuildExePath(string programFilesPath = null, string programFilesX86Path = null)
         {
             // Could not find the tools path, possibly due to https://github.com/Microsoft/msbuild/issues/2369
             // Try to poll for it. From https://github.com/KirillOsenkov/MSBuildStructuredLog/blob/4649f55f900a324421bad5a714a2584926a02138/src/StructuredLogViewer/MSBuildLocator.cs
@@ -570,13 +571,13 @@ namespace Codelyzer.Analysis.Build
             // "Microsoft.CSharp.CrossTargeting.targets"
             var msbuildpath = "";
             //2022
-            var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            var programFiles = programFilesPath ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
             DirectoryInfo vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
             msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
             if (!String.IsNullOrEmpty(msbuildpath)) return msbuildpath;
 
             // 2019, 2017
-            string programFilesX86 = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86);
+            string programFilesX86 = programFilesX86Path?? System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86);
             vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "Microsoft Visual Studio"));
             msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
             if (!String.IsNullOrEmpty(msbuildpath)) return msbuildpath;
@@ -591,8 +592,7 @@ namespace Codelyzer.Analysis.Build
         public static string GetMsBuildPathFromVSDirectory(DirectoryInfo vsDirectory, List<string> editions, string[] targets)
         {
             if (vsDirectory.Exists)
-            {
-                List<FileInfo> msBuildExePath = vsDirectory
+            {   List<FileInfo> msBuildExePath = vsDirectory
                     .GetDirectories("MSBuild", SearchOption.AllDirectories)
                     .SelectMany(msBuildDir => msBuildDir.GetFiles("MSBuild.exe", SearchOption.AllDirectories))
                     .OrderByDescending(msbuild => FileVersionInfo.GetVersionInfo(msbuild.FullName).FileVersion)
@@ -600,7 +600,7 @@ namespace Codelyzer.Analysis.Build
                     .ThenBy(msbuild =>
                     {
                         var folderName = GetVersionFolder(msbuild.FullName);
-                        if (folderName.ToLower() == "current") return 1;
+                        if (folderName.ToLower() == "current") return -100;
                         else return -Convert.ToDouble(folderName);
 
                     })
@@ -611,7 +611,7 @@ namespace Codelyzer.Analysis.Build
                         return false;
                     })
                     .ToList();
-                return msBuildExePath?.First().FullName;
+                return msBuildExePath?.FirstOrDefault()?.FullName;
             };
             return "";
         }
