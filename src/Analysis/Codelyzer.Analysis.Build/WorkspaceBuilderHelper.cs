@@ -486,9 +486,9 @@ namespace Codelyzer.Analysis.Build
                 if (!String.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
                 else { throw new Exception(); }
             }
-            catch
+            catch(Exception ex)
             {
-                Logger.LogError("Build error: Codelyzer wasn't able to retrieve the MSBuild path");
+                Logger.LogError(ex, "Build error: Codelyzer wasn't able to retrieve the MSBuild path");
             }
 
             options.EnvironmentVariables.Add(Constants.EnableNuGetPackageRestore, Boolean.TrueString.ToLower());
@@ -572,13 +572,13 @@ namespace Codelyzer.Analysis.Build
 
             var msbuildpath = "";
             DirectoryInfo vsDirectory;
-#if NET6_0_OR_GREATER
+
             //2022
             var programFiles = programFilesPath ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
             vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
             msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
             if (!String.IsNullOrEmpty(msbuildpath)) return msbuildpath;
-#endif
+
             // 2019, 2017
             string programFilesX86 = programFilesX86Path?? System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86);
             vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "Microsoft Visual Studio"));
@@ -604,8 +604,14 @@ namespace Codelyzer.Analysis.Build
                     {
                         var folderName = GetVersionFolder(msbuild.FullName);
                         if (folderName.ToLower() == "current") return -100;
-                        else return -Convert.ToDouble(folderName);
-
+                        else
+                        {
+                            if(double.TryParse(folderName, out double result))
+                            {
+                                return -1 * result;
+                            }
+                            return -100;
+                        }
                     })
                     .Where(msbuild =>
                     {
