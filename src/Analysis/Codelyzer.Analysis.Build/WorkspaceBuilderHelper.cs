@@ -488,7 +488,7 @@ namespace Codelyzer.Analysis.Build
             }
             catch(Exception ex)
             {
-                Logger.LogError("Build error: Codelyzer wasn't able to retrieve the MSBuild path");
+                Logger.LogError(ex, "Build error: Codelyzer wasn't able to retrieve the MSBuild path");
             }
 
             options.EnvironmentVariables.Add(Constants.EnableNuGetPackageRestore, Boolean.TrueString.ToLower());
