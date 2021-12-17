@@ -569,13 +569,16 @@ namespace Codelyzer.Analysis.Build
             List<string> editions = new List<string> { "Enterprise", "Professional", "Community", "BuildTools" };
             var targets = new string[] { "Microsoft.CSharp.targets", "Microsoft.CSharp.CurrentVersion.targets", "Microsoft.Common.targets" };
             // "Microsoft.CSharp.CrossTargeting.targets"
+
             var msbuildpath = "";
+            DirectoryInfo vsDirectory;
+#if NET6_0_OR_GREATER
             //2022
             var programFiles = programFilesPath ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            DirectoryInfo vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
+            vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
             msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
             if (!String.IsNullOrEmpty(msbuildpath)) return msbuildpath;
-
+#endif
             // 2019, 2017
             string programFilesX86 = programFilesX86Path?? System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86);
             vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "Microsoft Visual Studio"));
