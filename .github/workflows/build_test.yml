@@ -23,7 +23,7 @@ jobs:
         dotnet-version: |
           3.1.301
           5.0.404
-          6.0.1
+          6.0.0
     - name: Install dependencies
       run: dotnet restore src/Codelyzer.sln
     - name: Build
