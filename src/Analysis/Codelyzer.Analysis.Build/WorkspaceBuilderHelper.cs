@@ -488,7 +488,7 @@ namespace Codelyzer.Analysis.Build
             }
             catch(Exception ex)
             {
-                Logger.LogError("Build error: Codelyzer wasn't able to retrieve the MSBuild path");
+                Logger.LogError(ex, "Build error: Codelyzer wasn't able to retrieve the MSBuild path");
             }
 
             options.EnvironmentVariables.Add(Constants.EnableNuGetPackageRestore, Boolean.TrueString.ToLower());
@@ -611,14 +611,12 @@ namespace Codelyzer.Analysis.Build
                         if (folderName.ToLower() == "current") return -100;
                         else
                         {
-                            if (double.TryParse(folderName, out double result))
+                            if(double.TryParse(folderName, out double result))
                             {
                                 return -1 * result;
                             }
-                             
+                            return -100;
                         }
-                        return -100;
-                   
                     })
                     .Where(msbuild =>
                     {
