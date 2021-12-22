@@ -1,5 +1,8 @@
+using Microsoft.Build.Construction;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Codelyzer.Analysis.Common
@@ -38,6 +41,29 @@ namespace Codelyzer.Analysis.Common
             
             var path = filePath.Replace(dirPathSeparator, "");
             return path;
+        }
+
+        public static IEnumerable<string> GetProjectPathsFromSolutionFile(string solutionPath)
+        {
+            if (solutionPath.Contains(".sln") && File.Exists(solutionPath))
+            {
+                string solutionDir = Directory.GetParent(solutionPath).FullName;
+                IEnumerable<string> projectPaths = null;
+                try
+                {
+                    SolutionFile solution = SolutionFile.Parse(solutionPath);
+                    projectPaths = solution.ProjectsInOrder.Select(p => p.AbsolutePath);
+                }
+                catch (Exception ex)
+                {
+                    //Should include the logger here
+                    //LogHelper.LogError(ex, $"Error while parsing solution file {solutionPath} falling back to directory parsing.");
+                    projectPaths = Directory.EnumerateFiles(solutionDir, "*.csproj", SearchOption.AllDirectories);
+                }
+
+                return projectPaths;
+            }
+            return new List<string>();
         }
     }
 }
