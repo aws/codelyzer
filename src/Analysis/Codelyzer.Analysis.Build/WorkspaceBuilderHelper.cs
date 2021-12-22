@@ -590,14 +590,6 @@ namespace Codelyzer.Analysis.Build
             {
                 return msbuildpath;
             }
-
-            //2022
-            vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
-            msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
-            if (!string.IsNullOrEmpty(msbuildpath))
-            {
-                return msbuildpath;
-            }
             
             // 14.0, 12.0 
             vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "MSBuild"));
