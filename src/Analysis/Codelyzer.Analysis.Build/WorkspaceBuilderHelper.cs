@@ -35,7 +35,7 @@ namespace Codelyzer.Analysis.Build
         private Dictionary<Guid, IAnalyzerResult> DictAnalysisResult;
         private ILogger Logger { get; set; }
 
-        private static List<SolutionProjectType> AcceptedProjectTypes = new List<SolutionProjectType>()
+        private static HashSet<SolutionProjectType> AcceptedProjectTypes = new HashSet<SolutionProjectType>()
         {
             SolutionProjectType.KnownToBeMSBuildFormat,
             SolutionProjectType.WebDeploymentProject,
