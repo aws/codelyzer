@@ -2,9 +2,12 @@
 {
     internal class Constants
     {
-        // Do not change these values without updating the corresponding line in .gitignore:  **/Projects/Temp
+        // Do not change these values without updating the corresponding line in .gitignore:
+        //  **/Projects/Temp
+        //  **/Projects/Downloads
         // This is to prevent test projects from being picked up in git after failed unit tests.
         internal static readonly string[] TempProjectDirectories = { "Projects", "Temp" };
+        internal static readonly string[] TempProjectDownloadDirectories = { "Projects", "Downloads" };
 
         internal static string programFiles = "Program Files";
         internal static string programFilesx86 = "Program Files (x86)";

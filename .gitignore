@@ -52,6 +52,9 @@ TestResult.xml
 # Test project directory
 **/Projects/Temp/
 
+# Test project downloads directory
+**/Projects/Downloads/
+
 # Build Results of an ATL Project
 [Dd]ebugPS/
 [Rr]eleasePS/
