@@ -4,7 +4,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <IsTestProject>true</IsTestProject>
         <IsPackable>false</IsPackable>
-        <RootNamespace>AwsCodeAnalyzerTests</RootNamespace>
+        <RootNamespace>Codelyzer.Analysis.Tests</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
