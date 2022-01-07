@@ -37,7 +37,7 @@ namespace Codelyzer.Analysis.Tests
             DownloadFromGitHub(@"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/671a629cab0382ecd6dec4833b3868f96f89da50.zip", "ASPNET-WebAPI-Sample-671a629cab0382ecd6dec4833b3868f96f89da50");
             DownloadFromGitHub(@"https://github.com/Duikmeester/MvcMusicStore/archive/e274968f2827c04cfefbe6493f0a784473f83f80.zip", "MvcMusicStore-e274968f2827c04cfefbe6493f0a784473f83f80");
             DownloadFromGitHub(@"https://github.com/nopSolutions/nopCommerce/archive/73567858b3e3ef281d1433d7ac79295ebed47ee6.zip", "nopCommerce-73567858b3e3ef281d1433d7ac79295ebed47ee6");
-
+            DownloadFromGitHub(@"https://github.com/marknfawaz/TestProjects/zipball/master/", "TestProjects-latest");
         }
 
         private void DownloadFromGitHub(string link, string name)
@@ -88,11 +88,14 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(ifaceNumbers, ifaceTestNode.AllInterfaces().Count);
         }
 
-        [Test]
-        public async Task TestAnalyzer()
+        // netcoreapp3.1 project
+        [TestCase("CoreWebApi.sln")]
+        // net472 project with project references in csproj file
+        [TestCase(@"NetFrameworkWithProjectReferences.sln")]
+        public async Task TestAnalyzer_Builds_Projects_Successfully(string solutionFileName)
         {
-            string projectPath = string.Concat(GetTstPath(Path.Combine(new[] { "Projects", "CodelyzerDummy", "CodelyzerDummy" })), ".csproj");
-
+            var solutionPath = CopySolutionFolderToTemp(solutionFileName);
+            
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
             {
                 ExportSettings =
@@ -115,8 +118,11 @@ namespace Codelyzer.Analysis.Tests
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
-            using AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
-            Assert.True(result != null);
+            var results = await analyzer.AnalyzeSolution(solutionPath);
+            var allBuildErrors = results.SelectMany(r => r.ProjectBuildResult.BuildErrors);
+
+            CollectionAssert.IsNotEmpty(results);
+            CollectionAssert.IsEmpty(allBuildErrors);
         }
 
         private string CopySolutionFolderToTemp(string solutionName)
