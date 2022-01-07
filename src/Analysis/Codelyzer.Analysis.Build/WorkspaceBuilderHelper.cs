@@ -29,7 +29,6 @@ namespace Codelyzer.Analysis.Build
         private readonly AdhocWorkspace _workspaceIncremental;
         private StringBuilder _sb;
         private StringWriter _writer;
-        private bool _projectUsesSDK;
 
         internal List<ProjectAnalysisResult> Projects;
         internal List<ProjectAnalysisResult> FailedProjects;
@@ -48,7 +47,6 @@ namespace Codelyzer.Analysis.Build
             _sb = new StringBuilder();
             _writer = new StringWriter(_sb);
             _analyzerManager = GetAnalyzerManager();
-            _projectUsesSDK = false;
         }
 
         private string WorkspacePath { get; }
@@ -434,7 +432,6 @@ namespace Codelyzer.Analysis.Build
                 {
                     return null;
                 }
-                _projectUsesSDK = projectAnalyzer.ProjectFile.UsesSdk;
                 return projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework)).FirstOrDefault();
             }
             catch (Exception e)
@@ -485,7 +482,7 @@ namespace Codelyzer.Analysis.Build
 
             try
             {
-                var msbuildExe = GetFrameworkMsBuildExePath(_projectUsesSDK);
+                var msbuildExe = GetFrameworkMsBuildExePath();
                 if (!String.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
                 else { throw new Exception(); }
             }
@@ -536,20 +533,19 @@ namespace Codelyzer.Analysis.Build
         private AnalyzerManager GetAnalyzerManager()
         {
             AnalyzerManager analyzerManager;
+            var analyzerManagerOptions = new AnalyzerManagerOptions
+            {
+                LogWriter = _writer
+            };
+
             if (IsSolutionFile())
             {
-                analyzerManager = new AnalyzerManager(WorkspacePath,
-                                                new AnalyzerManagerOptions
-                                                {
-                                                    LogWriter = _writer
-                                                });
+                
+                analyzerManager = new AnalyzerManager(WorkspacePath, analyzerManagerOptions);
             }
             else
             {
-                analyzerManager = new AnalyzerManager(new AnalyzerManagerOptions
-                {
-                    LogWriter = _writer
-                });
+                analyzerManager = new AnalyzerManager(analyzerManagerOptions);
 
             }
             return analyzerManager;
@@ -564,7 +560,7 @@ namespace Codelyzer.Analysis.Build
         private string NormalizePath(string path) =>
             path == null ? null : Path.GetFullPath(path.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar));
 
-        public static string GetFrameworkMsBuildExePath(bool projectUsesSdk = false,string programFilesPath = null, string programFilesX86Path = null)
+        public static string GetFrameworkMsBuildExePath(string programFilesPath = null, string programFilesX86Path = null)
         {
             // Could not find the tools path, possibly due to https://github.com/Microsoft/msbuild/issues/2369
             // Try to poll for it. From https://github.com/KirillOsenkov/MSBuildStructuredLog/blob/4649f55f900a324421bad5a714a2584926a02138/src/StructuredLogViewer/MSBuildLocator.cs
@@ -578,41 +574,31 @@ namespace Codelyzer.Analysis.Build
             var programFiles = programFilesPath ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
             string programFilesX86 = programFilesX86Path ?? System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86);
 
-
-            if (projectUsesSdk)
-            {
-                //2022              
-                vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
-                msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
-                if (!String.IsNullOrEmpty(msbuildpath)) return msbuildpath;
-
-                // 2019, 2017
-                vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "Microsoft Visual Studio"));
-                msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
-                if (!String.IsNullOrEmpty(msbuildpath)) return msbuildpath;
-            }
-            else
-            {
-                // Ordering of MSBuild path search is changed because of the potential issue that will be fixed in future release
-                // Issue: If the application is created using legacy .net frameworks which does include references to packages in .csproj
-                // might fail to build using vs2022 msbuild current version
-
-                // 2019, 2017
-                vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "Microsoft Visual Studio"));
-                msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
-                if (!String.IsNullOrEmpty(msbuildpath)) return msbuildpath;
-
-                //2022
-                vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
-                msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
-                if (!String.IsNullOrEmpty(msbuildpath)) return msbuildpath;
-            }
            
+            //2022              
+            vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
+            msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
+            if (!string.IsNullOrEmpty(msbuildpath))
+            {
+                return msbuildpath;
+            }
 
+            // 2019, 2017
+            vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "Microsoft Visual Studio"));
+            msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
+            if (!string.IsNullOrEmpty(msbuildpath))
+            {
+                return msbuildpath;
+            }
+            
             // 14.0, 12.0 
             vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "MSBuild"));
             msbuildpath = GetMsBuildPathFromVSDirectoryBelow15(vsDirectory, editions, targets);
-            if (!String.IsNullOrEmpty(msbuildpath)) return msbuildpath;
+            if (!string.IsNullOrEmpty(msbuildpath))
+            {
+                return msbuildpath;
+            }
+
             return msbuildpath;
         }
 

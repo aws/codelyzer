@@ -111,16 +111,9 @@ namespace Codelyzer.Analysis.Tests
         [Test]
         public void TestVS2022()
         {
-#if NET6_0_OR_GREATER
             string actualMsBuildPath = Path.Combine(testvs2022Path, Constants.vs2022MSBuildPath);
             string msbuildpath = WorkspaceBuilderHelper.GetFrameworkMsBuildExePath(programFilesPath: Path.Combine(testvs2022Path, Constants.programFiles), programFilesX86Path: Path.Combine(testvs2022Path, Constants.programFilesx86));
             Assert.AreEqual(actualMsBuildPath,msbuildpath);
-#else
-            // Fall back to VS2019 if it is available and if targeting below .NET 6
-            string actualMsBuildPath = Path.Combine(testvs2019Path, Constants.vs2019MSBuildPath);
-            string msbuildpath = WorkspaceBuilderHelper.GetFrameworkMsBuildExePath(programFilesPath: Path.Combine(testvs2019Path, Constants.programFiles), programFilesX86Path: Path.Combine(testvs2019Path, Constants.programFilesx86));
-            Assert.AreEqual(actualMsBuildPath, msbuildpath);
-#endif
         }
 
         [Test]
