@@ -89,7 +89,7 @@ namespace Codelyzer.Analysis.Tests
         }
 
         [Test]
-        public async Task TestAnalyzer()
+        public async Task TestFrameworkProjectWithSdkProjectFile()
         {
             string projectPath = string.Concat(GetTstPath(Path.Combine(new[] { "Projects", "CodelyzerDummy", "CodelyzerDummy" })), ".csproj");
 
@@ -116,7 +116,9 @@ namespace Codelyzer.Analysis.Tests
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
             using AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
+            
             Assert.True(result != null);
+            CollectionAssert.IsEmpty(result.ProjectBuildResult.BuildErrors);
         }
 
         private string CopySolutionFolderToTemp(string solutionName)
