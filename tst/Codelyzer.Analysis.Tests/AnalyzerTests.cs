@@ -20,20 +20,31 @@ namespace Codelyzer.Analysis.Tests
     [NonParallelizable]
     public class AwsAnalyzerTests : AwsBaseTest
     {
-        public string tempDir = "";
+        public string downloadsDir = ""; // A place to download example solutions one time for all tests
+        public string tempDir = ""; // A place to copy example solutions for each test (as needed)
 
-        [SetUp]
-        public void Setup()
+        [OneTimeSetUp]
+        public void OneTimeSetup()
         {
             Setup(GetType());
             tempDir = GetTstPath(Path.Combine(Constants.TempProjectDirectories));
+            downloadsDir = GetTstPath(Path.Combine(Constants.TempProjectDownloadDirectories));
+            DeleteDir(tempDir);
+            DeleteDir(downloadsDir);
+            Directory.CreateDirectory(tempDir);
+            Directory.CreateDirectory(downloadsDir);
             DownloadTestProjects();
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown()
+        {
+            DeleteDir(tempDir);
+            DeleteDir(downloadsDir);
         }
 
         private void DownloadTestProjects()
         {
-            var tempDirectory = Directory.CreateDirectory(tempDir);
-
             DownloadFromGitHub(@"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/671a629cab0382ecd6dec4833b3868f96f89da50.zip", "ASPNET-WebAPI-Sample-671a629cab0382ecd6dec4833b3868f96f89da50");
             DownloadFromGitHub(@"https://github.com/Duikmeester/MvcMusicStore/archive/e274968f2827c04cfefbe6493f0a784473f83f80.zip", "MvcMusicStore-e274968f2827c04cfefbe6493f0a784473f83f80");
             DownloadFromGitHub(@"https://github.com/nopSolutions/nopCommerce/archive/73567858b3e3ef281d1433d7ac79295ebed47ee6.zip", "nopCommerce-73567858b3e3ef281d1433d7ac79295ebed47ee6");
@@ -45,10 +56,9 @@ namespace Codelyzer.Analysis.Tests
             using (var client = new HttpClient())
             {
                 var content = client.GetByteArrayAsync(link).Result;
-                var tempDirectory = Directory.CreateDirectory(GetTstPath(Path.Combine(new string[] { "Projects", "Temp" })));
-                var fileName = string.Concat(tempDirectory.FullName, name, @".zip");
+                var fileName = Path.Combine(downloadsDir, string.Concat(name, @".zip"));
                 File.WriteAllBytes(fileName, content);
-                ZipFile.ExtractToDirectory(fileName, tempDirectory.FullName, true);
+                ZipFile.ExtractToDirectory(fileName, downloadsDir, true);
                 File.Delete(fileName);
             }
         }
@@ -56,7 +66,7 @@ namespace Codelyzer.Analysis.Tests
         [Test]
         public void TestCli()
         {
-            string mvcMusicStorePath = Directory.EnumerateFiles(tempDir, "MvcMusicStore.sln", SearchOption.AllDirectories).FirstOrDefault();
+            string mvcMusicStorePath = Directory.EnumerateFiles(downloadsDir, "MvcMusicStore.sln", SearchOption.AllDirectories).FirstOrDefault();
             string[] args = { "-p", mvcMusicStorePath };
             AnalyzerCLI cli = new AnalyzerCLI();
             cli.HandleCommand(args);
@@ -127,10 +137,10 @@ namespace Codelyzer.Analysis.Tests
 
         private string CopySolutionFolderToTemp(string solutionName)
         {
-            string solutionPath = Directory.EnumerateFiles(tempDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
+            string solutionPath = Directory.EnumerateFiles(downloadsDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
             string solutionDir = Directory.GetParent(solutionPath).FullName;
-            var newTempDir = Path.Combine(Directory.GetParent(solutionDir).FullName, Guid.NewGuid().ToString());
-            CopyDirectory(new DirectoryInfo(solutionDir), new DirectoryInfo(newTempDir));
+            var newTempDir = Path.Combine(tempDir, Guid.NewGuid().ToString());
+            FileUtils.DirectoryCopy(solutionDir, newTempDir);
 
             solutionPath = Directory.EnumerateFiles(newTempDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
             return solutionPath;
@@ -739,7 +749,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         [Test]
         public async Task TestNopCommerce()
         {
-            string solutionPath = Directory.EnumerateFiles(tempDir, "nopCommerce.sln", SearchOption.AllDirectories).FirstOrDefault();
+            string solutionPath = Directory.EnumerateFiles(downloadsDir, "nopCommerce.sln", SearchOption.AllDirectories).FirstOrDefault();
             FileAssert.Exists(solutionPath);
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
@@ -910,25 +920,22 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             });
         }
 
-        [TearDown]
-        public void Cleanup()
-        {
-            DeleteDir(0);
-        }
-
         #region private methods
-        private void DeleteDir(int retries)
+        private void DeleteDir(string path, int retries = 0)
         {
             if(retries <= 10)
             {
                 try
                 {
-                    Directory.Delete(GetTstPath(Path.Combine("Projects", "Temp")), true);
+                    if (Directory.Exists(path))
+                    {
+                        Directory.Delete(path, true);
+                    }
                 }
                 catch (Exception)
                 {
                     Thread.Sleep(10000);
-                    DeleteDir(retries + 1);
+                    DeleteDir(path, retries + 1);
                 }
             }
         }

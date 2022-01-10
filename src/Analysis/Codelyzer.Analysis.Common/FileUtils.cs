@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -25,11 +24,6 @@ namespace Codelyzer.Analysis.Common
         {
             return File.ReadAllText(pathFile);
         }
-
-        public static void CreateDirectory(string path)
-        {
-            System.IO.Directory.CreateDirectory(path);
-        }
         
         public static string GetRelativePath(string filePath, string dirPath)
         {
@@ -38,6 +32,41 @@ namespace Codelyzer.Analysis.Common
             
             var path = filePath.Replace(dirPathSeparator, "");
             return path;
+        }
+
+        public static void DirectoryCopy(string sourceDirPath, string destDirPath, bool copySubDirs = true)
+        {
+            // Get the subdirectories for the specified directory.
+            DirectoryInfo dir = new DirectoryInfo(sourceDirPath);
+            if (!dir.Exists)
+            {
+                throw new DirectoryNotFoundException(
+                    "Source directory does not exist or could not be found: "
+                    + sourceDirPath);
+            }
+
+            DirectoryInfo[] dirs = dir.GetDirectories();
+
+            // If the destination directory doesn't exist, create it.       
+            Directory.CreateDirectory(destDirPath);
+
+            // Get the files in the directory and copy them to the new location.
+            FileInfo[] files = dir.GetFiles();
+            foreach (FileInfo file in files)
+            {
+                string tempPath = Path.Combine(destDirPath, file.Name);
+                file.CopyTo(tempPath, false);
+            }
+
+            // If copying subdirectories, copy them and their contents to new location.
+            if (copySubDirs)
+            {
+                foreach (DirectoryInfo subdir in dirs)
+                {
+                    string tempPath = Path.Combine(destDirPath, subdir.Name);
+                    DirectoryCopy(subdir.FullName, tempPath, copySubDirs);
+                }
+            }
         }
     }
 }

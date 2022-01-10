@@ -4,7 +4,6 @@ using Codelyzer.Analysis.CSharp;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -181,7 +180,7 @@ namespace Codelyzer.Analysis
         {
             if (AnalyzerConfiguration.ExportSettings.GenerateJsonOutput)
             {
-                FileUtils.CreateDirectory(AnalyzerConfiguration.ExportSettings.OutputPath);
+                Directory.CreateDirectory(AnalyzerConfiguration.ExportSettings.OutputPath);
                 foreach (var analyzerResult in analyzerResults)
                 {
                     Logger.LogDebug("Generating Json file for " + analyzerResult.ProjectResult.ProjectName);
