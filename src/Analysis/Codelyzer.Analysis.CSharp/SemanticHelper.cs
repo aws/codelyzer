@@ -76,7 +76,7 @@ namespace Codelyzer.Analysis.CSharp
             string type = null;
 
             var typeInfo = semanticModel.GetTypeInfo(expressionSyntax);
-            if (typeInfo.Type == null && preportSemanticModel != null)
+            if (typeInfo.Type == null && preportSemanticModel != null) // Should preportSemanticModel be null? Because it is.
             {
                 try
                 {
@@ -103,7 +103,7 @@ namespace Codelyzer.Analysis.CSharp
         {
             if (semanticModel == null && preportSemanticModel == null) return null;
 
-            var symbol = semanticModel?.GetSymbolInfo(syntaxNode).Symbol;
+            var symbol = semanticModel?.GetSymbolInfo(syntaxNode).Symbol; // Seems like the data is just wrong now in the semanticModel, this returns Use(object, params....)
             if (symbol == null && preportSemanticModel != null)
             {
                 try

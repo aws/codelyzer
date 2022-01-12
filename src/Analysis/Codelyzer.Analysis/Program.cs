@@ -13,8 +13,32 @@ namespace Codelyzer.Analysis
         static async Task Main(string[] args)
         {
             var memory = GC.GetTotalMemory(false);
-            AnalyzerCLI cli = new AnalyzerCLI();
-            cli.HandleCommand(args);
+            AnalyzerCLI cli = new AnalyzerCLI()
+            {
+                FilePath = @"C:\Users\bgosse\Downloads\OwinParadise-ForCodelyzer\OwinParadise.sln",
+                Configuration = new AnalyzerConfiguration("CSharp")
+                {
+                    ExportSettings = new ExportSettings
+                    {
+                        GenerateJsonOutput = true,
+                        OutputPath = @"C:\Users\bgosse\Downloads\CodelyzerDebugOutput",
+                    },
+                    MetaDataSettings = new MetaDataSettings
+                    {
+                        Annotations = true,
+                        DeclarationNodes = true,
+                        MethodInvocations = true,
+                        ReferenceData = true,
+                        LoadBuildData = true,
+                        InterfaceDeclarations = true,
+                        MemberAccess = true,
+                        ElementAccess = true
+                    }
+
+                },
+                
+            };
+
             Console.WriteLine(cli);
 
             /* 1. Logger object */

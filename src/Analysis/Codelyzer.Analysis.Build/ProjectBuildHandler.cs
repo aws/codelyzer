@@ -15,6 +15,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Constants = Codelyzer.Analysis.Common.Constants;
 
 namespace Codelyzer.Analysis.Build
@@ -373,11 +374,27 @@ namespace Codelyzer.Analysis.Build
                 {
                     SyntaxTree = syntaxTree,
                     PrePortSemanticModel = preportTree != null ? PrePortCompilation?.GetSemanticModel(preportTree) : null,
-                    SemanticModel = Compilation.GetSemanticModel(syntaxTree),
+                    SemanticModel = Compilation.GetSemanticModel(syntaxTree), // It is possible the SemanticModel just comes back differently here
                     SourceFileFullPath = syntaxTree.FilePath,
                     SyntaxGenerator = SyntaxGenerator.GetGenerator(Project),
                     SourceFilePath = sourceFilePath
                 };
+                if (syntaxTree.FilePath == @"C:\Users\bgosse\Downloads\OwinParadise-ForCodelyzer\OwinParadise\WebSocketSample.cs")
+                {
+                    CompilationUnitSyntax root = syntaxTree.GetCompilationUnitRoot();
+                    InvocationExpressionSyntax method = (InvocationExpressionSyntax)root.Members.First().ChildNodes().Last().ChildNodes().Last().ChildNodes().First().ChildNodes().Last().ChildNodes().First().ChildNodes().First();
+
+                    // In v1.8 methodCode = "                app.Use(UpgradeToWebSockets)"
+                    // In v2.0 methodCode = "                app.Use(UpgradeToWebSockets)"
+                    var methodCode = method.ToFullString();
+
+                    var symbol = fileResult.SemanticModel?.GetSymbolInfo(method).Symbol; // Or maybe it's possible GetSymbolInfo has changed between v1.8 and v2 of codelyzer
+
+                    // In v1.8 result = "Owin.IAppBuilder.Use(System.Func<Microsoft.Owin.IOwinContext, System.Func<System.Threading.Tasks.Task>, System.Threading.Tasks.Task>)"
+                    // In v2.0 result = "Owin.IAppBuilder.Use(object, params object[])"
+                    var result = symbol.ToString();
+                }
+
                 projectBuildResult.SourceFileBuildResults.Add(fileResult);
                 projectBuildResult.SourceFiles.Add(sourceFilePath);
             }
