@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using Codelyzer.Analysis.Common;
 using CommandLine;

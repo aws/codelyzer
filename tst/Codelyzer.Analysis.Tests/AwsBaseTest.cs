@@ -43,28 +43,5 @@ namespace Codelyzer.Analysis.Tests
         {
             return Path.Combine(srcPath, path);
         }
-
-        protected void CopyDirectory(DirectoryInfo source, DirectoryInfo target)
-        {
-            if (!Directory.Exists(target.FullName))
-            {
-                Directory.CreateDirectory(target.FullName);
-            }
-
-            var files = source.GetFiles();
-            foreach (var file in files)
-            {
-                file.CopyTo(Path.Combine(target.FullName, file.Name), true);
-            }
-
-            var dirs = source.GetDirectories();
-            foreach (var dir in dirs)
-            {
-                DirectoryInfo destinationSub = new DirectoryInfo(Path.Combine(target.FullName, dir.Name));
-                CopyDirectory(dir, destinationSub);
-            }
-        }
     }
-    
-    
 }

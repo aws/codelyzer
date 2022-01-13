@@ -1,16 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Codelyzer.Analysis", "Analysis\Codelyzer.Analysis\Codelyzer.Analysis.csproj", "{BDE5AC46-B937-4EAE-92F8-AE59E9005C29}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Codelyzer.Analysis", "Analysis\Codelyzer.Analysis\Codelyzer.Analysis.csproj", "{BDE5AC46-B937-4EAE-92F8-AE59E9005C29}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Codelyzer.Analysis.Build", "Analysis\Codelyzer.Analysis.Build\Codelyzer.Analysis.Build.csproj", "{DE7DE201-A18C-49A1-9501-EC0053FF0B89}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Codelyzer.Analysis.Build", "Analysis\Codelyzer.Analysis.Build\Codelyzer.Analysis.Build.csproj", "{DE7DE201-A18C-49A1-9501-EC0053FF0B89}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Codelyzer.Analysis.Model", "Analysis\Codelyzer.Analysis.Model\Codelyzer.Analysis.Model.csproj", "{19F5F605-BC7B-4122-965C-3B2468C8C227}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Codelyzer.Analysis.Model", "Analysis\Codelyzer.Analysis.Model\Codelyzer.Analysis.Model.csproj", "{19F5F605-BC7B-4122-965C-3B2468C8C227}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Codelyzer.Analysis.CSharp", "Analysis\Codelyzer.Analysis.CSharp\Codelyzer.Analysis.CSharp.csproj", "{D6C91EEA-08F6-48D5-9D26-AB3C7CA36AF1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Codelyzer.Analysis.CSharp", "Analysis\Codelyzer.Analysis.CSharp\Codelyzer.Analysis.CSharp.csproj", "{D6C91EEA-08F6-48D5-9D26-AB3C7CA36AF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Codelyzer.Analysis.Common", "Analysis\Codelyzer.Analysis.Common\Codelyzer.Analysis.Common.csproj", "{E85A6836-B5BB-4D10-8AD0-88BF8E093C96}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Codelyzer.Analysis.Common", "Analysis\Codelyzer.Analysis.Common\Codelyzer.Analysis.Common.csproj", "{E85A6836-B5BB-4D10-8AD0-88BF8E093C96}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Codelyzer.Analysis.Tests", "..\tst\Codelyzer.Analysis.Tests\Codelyzer.Analysis.Tests.csproj", "{5EB36B53-4B93-4819-8BEB-6D44D18EA47B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Codelyzer.Analysis.Tests", "..\tst\Codelyzer.Analysis.Tests\Codelyzer.Analysis.Tests.csproj", "{5EB36B53-4B93-4819-8BEB-6D44D18EA47B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -42,5 +45,11 @@ Global
 		{5EB36B53-4B93-4819-8BEB-6D44D18EA47B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5EB36B53-4B93-4819-8BEB-6D44D18EA47B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5EB36B53-4B93-4819-8BEB-6D44D18EA47B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {ADDD44A7-A0FB-40FB-AFB4-C4971093C89A}
 	EndGlobalSection
 EndGlobal

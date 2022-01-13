@@ -501,9 +501,9 @@ namespace Codelyzer.Analysis.Build
                 if (!String.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
                 else { throw new Exception(); }
             }
-            catch
+            catch(Exception ex)
             {
-                Logger.LogError("Build error: Codelyzer wasn't able to retrieve the MSBuild path");
+                Logger.LogError(ex, "Build error: Codelyzer wasn't able to retrieve the MSBuild path");
             }
 
             options.EnvironmentVariables.Add(Constants.EnableNuGetPackageRestore, Boolean.TrueString.ToLower());
@@ -548,20 +548,19 @@ namespace Codelyzer.Analysis.Build
         private AnalyzerManager GetAnalyzerManager()
         {
             AnalyzerManager analyzerManager;
+            var analyzerManagerOptions = new AnalyzerManagerOptions
+            {
+                LogWriter = _writer
+            };
+
             if (IsSolutionFile())
             {
-                analyzerManager = new AnalyzerManager(WorkspacePath,
-                                                new AnalyzerManagerOptions
-                                                {
-                                                    LogWriter = _writer
-                                                });
+                
+                analyzerManager = new AnalyzerManager(WorkspacePath, analyzerManagerOptions);
             }
             else
             {
-                analyzerManager = new AnalyzerManager(new AnalyzerManagerOptions
-                {
-                    LogWriter = _writer
-                });
+                analyzerManager = new AnalyzerManager(analyzerManagerOptions);
 
             }
             return analyzerManager;
@@ -584,23 +583,37 @@ namespace Codelyzer.Analysis.Build
             List<string> editions = new List<string> { "Enterprise", "Professional", "Community", "BuildTools" };
             var targets = new string[] { "Microsoft.CSharp.targets", "Microsoft.CSharp.CurrentVersion.targets", "Microsoft.Common.targets" };
             // "Microsoft.CSharp.CrossTargeting.targets"
+
             var msbuildpath = "";
-            //2022
+            DirectoryInfo vsDirectory;
             var programFiles = programFilesPath ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            DirectoryInfo vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
+            string programFilesX86 = programFilesX86Path ?? System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86);
+
+           
+            //2022              
+            vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
             msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
-            if (!String.IsNullOrEmpty(msbuildpath)) return msbuildpath;
+            if (!string.IsNullOrEmpty(msbuildpath))
+            {
+                return msbuildpath;
+            }
 
             // 2019, 2017
-            string programFilesX86 = programFilesX86Path?? System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86);
             vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "Microsoft Visual Studio"));
             msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
-            if (!String.IsNullOrEmpty(msbuildpath)) return msbuildpath;
-
+            if (!string.IsNullOrEmpty(msbuildpath))
+            {
+                return msbuildpath;
+            }
+            
             // 14.0, 12.0 
             vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "MSBuild"));
             msbuildpath = GetMsBuildPathFromVSDirectoryBelow15(vsDirectory, editions, targets);
-            if (!String.IsNullOrEmpty(msbuildpath)) return msbuildpath;
+            if (!string.IsNullOrEmpty(msbuildpath))
+            {
+                return msbuildpath;
+            }
+
             return msbuildpath;
         }
 
@@ -616,8 +629,14 @@ namespace Codelyzer.Analysis.Build
                     {
                         var folderName = GetVersionFolder(msbuild.FullName);
                         if (folderName.ToLower() == "current") return -100;
-                        else return -Convert.ToDouble(folderName);
-
+                        else
+                        {
+                            if(double.TryParse(folderName, out double result))
+                            {
+                                return -1 * result;
+                            }
+                            return -100;
+                        }
                     })
                     .Where(msbuild =>
                     {
