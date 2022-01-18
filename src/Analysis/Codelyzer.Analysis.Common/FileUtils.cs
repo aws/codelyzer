@@ -1,4 +1,5 @@
 using Microsoft.Build.Construction;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -73,7 +74,7 @@ namespace Codelyzer.Analysis.Common
             }
         }
 
-        public static IEnumerable<string> GetProjectPathsFromSolutionFile(string solutionPath)
+        public static IEnumerable<string> GetProjectPathsFromSolutionFile(string solutionPath, ILogger logger = null)
         {
             if (solutionPath.Contains(".sln") && File.Exists(solutionPath))
             {
@@ -86,8 +87,7 @@ namespace Codelyzer.Analysis.Common
                 }
                 catch (Exception ex)
                 {
-                    //Should include the logger here
-                    //LogHelper.LogError(ex, $"Error while parsing solution file {solutionPath} falling back to directory parsing.");
+                    logger?.LogError(ex, $"Error while parsing solution file {solutionPath} falling back to directory parsing.");
                     projectPaths = Directory.EnumerateFiles(solutionDir, "*.csproj", SearchOption.AllDirectories);
                 }
 
