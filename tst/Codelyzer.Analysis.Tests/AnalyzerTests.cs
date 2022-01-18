@@ -414,7 +414,7 @@ namespace Codelyzer.Analysis.Tests
             string solutionDir = Directory.GetParent(solutionPath).FullName;
 
             FileAssert.Exists(solutionPath);
-            string projectPath = Directory.EnumerateFiles(Path.GetDirectoryName(solutionPath), "*.csproj", SearchOption.AllDirectories).FirstOrDefault();
+            string projectPath = FileUtils.GetProjectPathsFromSolutionFile(solutionPath).FirstOrDefault();
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
             {

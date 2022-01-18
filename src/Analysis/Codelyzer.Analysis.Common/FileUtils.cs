@@ -1,4 +1,9 @@
+using Microsoft.Build.Construction;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Codelyzer.Analysis.Common
@@ -66,6 +71,39 @@ namespace Codelyzer.Analysis.Common
                     string tempPath = Path.Combine(destDirPath, subdir.Name);
                     DirectoryCopy(subdir.FullName, tempPath, copySubDirs);
                 }
+            }
+        }
+
+        /// <summary>
+        /// This function takes a solution file path .../*.sln and parses the solution file to return all of the project paths contained within.
+        /// </summary>
+        /// <param name="solutionPath">Path of the solution file *.sln.</param>
+        /// <param name="logger">Optional logger object Microsoft.Extension.Logging.ILogger used to log errors during this process.</param>
+        /// <returns></returns>
+        public static IEnumerable<string> GetProjectPathsFromSolutionFile(string solutionPath, ILogger logger = null)
+        {
+            if (solutionPath.Contains(".sln") && File.Exists(solutionPath))
+            {
+                IEnumerable<string> projectPaths = null;
+                try
+                {
+                    SolutionFile solution = SolutionFile.Parse(solutionPath);
+                    projectPaths = solution.ProjectsInOrder.Select(p => p.AbsolutePath);
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogError(ex, $"Error while parsing solution file {solutionPath} falling back to directory parsing.");
+                    string solutionDir = Directory.GetParent(solutionPath).FullName;
+                    projectPaths = Directory.EnumerateFiles(solutionDir, "*.csproj", SearchOption.AllDirectories);
+                }
+
+                return projectPaths;
+            }
+            else
+            {
+                logger?.LogError($"Solution file does not exist or is not of .sln format {solutionPath} falling back to directory parsing.");
+                string solutionDir = Directory.GetParent(solutionPath).FullName;
+                return Directory.EnumerateFiles(solutionDir, "*.csproj", SearchOption.AllDirectories);
             }
         }
     }

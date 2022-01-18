@@ -35,6 +35,13 @@ namespace Codelyzer.Analysis.Build
         private Dictionary<Guid, IAnalyzerResult> DictAnalysisResult;
         private ILogger Logger { get; set; }
 
+        private static HashSet<SolutionProjectType> AcceptedProjectTypes = new HashSet<SolutionProjectType>()
+        {
+            SolutionProjectType.KnownToBeMSBuildFormat,
+            SolutionProjectType.WebDeploymentProject,
+            SolutionProjectType.WebProject
+        };
+
         public WorkspaceBuilderHelper(ILogger logger, string workspacePath, AnalyzerConfiguration analyzerConfiguration = null)
         {
             this.Logger = logger;
@@ -56,9 +63,9 @@ namespace Codelyzer.Analysis.Build
             return WorkspacePath.EndsWith("sln");
         }
 
-        private bool IsProjectFile(string projectPath)
+        private bool IsProjectFile(ProjectInSolution project)
         {
-            return projectPath.EndsWith("csproj");
+            return AcceptedProjectTypes.Contains(project.ProjectType);
         }
 
         public async IAsyncEnumerable<ProjectAnalysisResult> BuildProjectIncremental()
@@ -72,7 +79,7 @@ namespace Codelyzer.Analysis.Build
                     foreach (var project in solutionFile.ProjectsInOrder)
                     {
                         string projectPath = project.AbsolutePath;
-                        if (IsProjectFile(projectPath))
+                        if (IsProjectFile(project))
                         {
                             // if it is part of analyzer manager
                             concurrencySemaphore.Wait();
@@ -94,7 +101,6 @@ namespace Codelyzer.Analysis.Build
             }
             else
             {
-
                 yield return BuildIncremental(WorkspacePath);
             }
 
@@ -364,20 +370,29 @@ namespace Codelyzer.Analysis.Build
             Parallel.ForEach(manager.Projects.Values, options, p =>
             {
                 Logger.LogDebug("Building the project : " + p.ProjectFile.Path);
-                var buildResult = BuildProject(p);
-                if (buildResult != null)
+                
+                if(IsProjectFile(p.ProjectInSolution))
                 {
-                    concurrentResults.Add(buildResult);
-                    Logger.LogDebug("Building complete for {0} - {1}", p.ProjectFile.Path, buildResult.Succeeded ? "Success" : "Fail");
+                    var buildResult = BuildProject(p);
+                    if (buildResult != null)
+                    {
+                        concurrentResults.Add(buildResult);
+                        Logger.LogDebug("Building complete for {0} - {1}", p.ProjectFile.Path, buildResult.Succeeded ? "Success" : "Fail");
+                    }
+                    else
+                    {
+                        FailedProjects.Add(new ProjectAnalysisResult()
+                        {
+                            ProjectAnalyzer = p
+                        });
+                        Logger.LogDebug("Building complete for {0} - {1}", p.ProjectFile.Path, "Fail");
+                    }
                 }
                 else
                 {
-                    FailedProjects.Add(new ProjectAnalysisResult()
-                    {
-                        ProjectAnalyzer = p
-                    });
-                    Logger.LogDebug("Building complete for {0} - {1}", p.ProjectFile.Path, "Fail");
+                    Logger.LogDebug("Building skipped for {0} - {1}", p.ProjectFile.Path, "Skipped");
                 }
+                
             });
 
             List<IAnalyzerResult> results = concurrentResults.ToList();
