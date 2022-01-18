@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using Microsoft.Build.Construction;
+using System.Collections.Generic;
+using System.IO;
 
 namespace Codelyzer.Analysis.Common
 {
@@ -19,6 +21,13 @@ namespace Codelyzer.Analysis.Common
         public const string PackagesFolder = "packages";
         public const string NupkgFileExtension = "*.nupkg";
         public const string PackagesConfig = "packages.config";
+
+        public static HashSet<SolutionProjectType> AcceptedProjectTypes = new HashSet<SolutionProjectType>()
+        {
+            SolutionProjectType.KnownToBeMSBuildFormat,
+            SolutionProjectType.WebDeploymentProject,
+            SolutionProjectType.WebProject
+        };
 
         public static string PackagesDirectoryIdentifier
         {
