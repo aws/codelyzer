@@ -74,11 +74,16 @@ namespace Codelyzer.Analysis.Common
             }
         }
 
+        /// <summary>
+        /// This function takes a solution file path .../*.sln and parses the solution file to return all of the project paths contained within.
+        /// </summary>
+        /// <param name="solutionPath">Path of the solution file *.sln.</param>
+        /// <param name="logger">Optional logger object Microsoft.Extension.Logging.ILogger used to log errors during this process.</param>
+        /// <returns></returns>
         public static IEnumerable<string> GetProjectPathsFromSolutionFile(string solutionPath, ILogger logger = null)
         {
             if (solutionPath.Contains(".sln") && File.Exists(solutionPath))
             {
-                string solutionDir = Directory.GetParent(solutionPath).FullName;
                 IEnumerable<string> projectPaths = null;
                 try
                 {
@@ -88,12 +93,18 @@ namespace Codelyzer.Analysis.Common
                 catch (Exception ex)
                 {
                     logger?.LogError(ex, $"Error while parsing solution file {solutionPath} falling back to directory parsing.");
+                    string solutionDir = Directory.GetParent(solutionPath).FullName;
                     projectPaths = Directory.EnumerateFiles(solutionDir, "*.csproj", SearchOption.AllDirectories);
                 }
 
                 return projectPaths;
             }
-            return new List<string>();
+            else
+            {
+                logger?.LogError($"Solution file does not exist or is not of .sln format {solutionPath} falling back to directory parsing.");
+                string solutionDir = Directory.GetParent(solutionPath).FullName;
+                return Directory.EnumerateFiles(solutionDir, "*.csproj", SearchOption.AllDirectories);
+            }
         }
     }
 }

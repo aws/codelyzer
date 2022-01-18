@@ -65,7 +65,7 @@ namespace Codelyzer.Analysis.Build
 
         private bool IsProjectFile(ProjectInSolution project)
         {
-            return AcceptedProjectTypes.Contains(project.ProjectType); //projectPath.EndsWith("csproj");
+            return AcceptedProjectTypes.Contains(project.ProjectType);
         }
 
         public async IAsyncEnumerable<ProjectAnalysisResult> BuildProjectIncremental()
