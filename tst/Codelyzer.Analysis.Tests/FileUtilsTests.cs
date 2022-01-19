@@ -121,7 +121,7 @@ namespace Codelyzer.Analysis.Tests
 
             // Assert
             Assert.IsNotNull(results);
-            Assert.IsTrue(results.Count() == 6);
+            Assert.IsTrue(results.Count() == 5);
         }
 
         [Test]
