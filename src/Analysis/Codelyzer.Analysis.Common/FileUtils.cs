@@ -88,7 +88,7 @@ namespace Codelyzer.Analysis.Common
                 try
                 {
                     SolutionFile solution = SolutionFile.Parse(solutionPath);
-                    projectPaths = solution.ProjectsInOrder.Select(p => p.AbsolutePath);
+                    projectPaths = solution.ProjectsInOrder.Where(p => Constants.AcceptedProjectTypes.Contains(p.ProjectType)).Select(p => p.AbsolutePath);
                 }
                 catch (Exception ex)
                 {

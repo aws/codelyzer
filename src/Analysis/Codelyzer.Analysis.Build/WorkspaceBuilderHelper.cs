@@ -35,13 +35,6 @@ namespace Codelyzer.Analysis.Build
         private Dictionary<Guid, IAnalyzerResult> DictAnalysisResult;
         private ILogger Logger { get; set; }
 
-        private static HashSet<SolutionProjectType> AcceptedProjectTypes = new HashSet<SolutionProjectType>()
-        {
-            SolutionProjectType.KnownToBeMSBuildFormat,
-            SolutionProjectType.WebDeploymentProject,
-            SolutionProjectType.WebProject
-        };
-
         public WorkspaceBuilderHelper(ILogger logger, string workspacePath, AnalyzerConfiguration analyzerConfiguration = null)
         {
             this.Logger = logger;
@@ -65,7 +58,7 @@ namespace Codelyzer.Analysis.Build
 
         private bool IsProjectFile(ProjectInSolution project)
         {
-            return AcceptedProjectTypes.Contains(project.ProjectType);
+            return Constants.AcceptedProjectTypes.Contains(project.ProjectType);
         }
 
         public async IAsyncEnumerable<ProjectAnalysisResult> BuildProjectIncremental()
