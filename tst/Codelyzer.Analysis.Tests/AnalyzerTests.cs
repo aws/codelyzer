@@ -258,8 +258,8 @@ namespace Codelyzer.Analysis.Tests
             File.WriteAllText(projectPath, projectFileContent.Replace(@"$(MSBuildBinPath)\Microsoft.CSharp.targets", @"InvalidTarget"));
 
             //Try without setting the flag, result should be null:
-            AnalyzerResult result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
-            Assert.Null(result);
+            AnalyzerResult result = (await analyzer.AnalyzeSolution(solutionPath)).First();
+            Assert.IsTrue(result.ProjectBuildResult.BuildErrors.Count > 0);
 
             //Try with setting the flag, syntax tree should be returned
             configuration.AnalyzeFailedProjects = true;

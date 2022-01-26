@@ -437,8 +437,14 @@ namespace Codelyzer.Analysis.Build
         {
             await Task.Run(() =>
             {
+                var languageVersion = LanguageVersion.Default;
+                if (projectBuildResult.Compilation is CSharpCompilation compilation)
+                {
+                    languageVersion = compilation.LanguageVersion;
+                }
+
                 var fileContents = File.ReadAllText(filePath);
-                var updatedTree = CSharpSyntaxTree.ParseText(SourceText.From(fileContents), path: filePath);
+                var updatedTree = CSharpSyntaxTree.ParseText(SourceText.From(fileContents), path: filePath, options: new CSharpParseOptions(languageVersion));
 
                 var syntaxTree = Compilation.SyntaxTrees.FirstOrDefault(syntaxTree => syntaxTree.FilePath == filePath);
                 var preportSyntaxTree = Compilation.SyntaxTrees.FirstOrDefault(syntaxTree => syntaxTree.FilePath == filePath);

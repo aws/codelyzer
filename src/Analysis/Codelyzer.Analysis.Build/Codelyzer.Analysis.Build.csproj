@@ -7,9 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Buildalyzer" Version="3.2.5" />
-      <PackageReference Include="Buildalyzer.Logger" Version="3.2.5" />
-      <PackageReference Include="Buildalyzer.Workspaces" Version="3.2.5" />
+      <PackageReference Include="Buildalyzer" Version="3.2.8" />
+      <PackageReference Include="Buildalyzer.Logger" Version="3.2.8" />
+      <PackageReference Include="Buildalyzer.Workspaces" Version="3.2.8" />
       <PackageReference Include="NuGet.Packaging" Version="6.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
     </ItemGroup>
@@ -19,7 +19,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Update="Nerdbank.GitVersioning" Version="3.4.244" />
+      <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+      <PackageReference Update="Nerdbank.GitVersioning" Version="3.4.255" />
     </ItemGroup>
 
 </Project>
