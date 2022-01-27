@@ -502,8 +502,6 @@ namespace Codelyzer.Analysis.Build
             options.EnvironmentVariables.Add(Constants.EnableNuGetPackageRestore, Boolean.TrueString.ToLower());
 
             options.Arguments.Add(Constants.RestorePackagesConfigArgument);
-            options.Arguments.Add(Constants.LanguageVersionArgument);
-
             if (_analyzerConfiguration.MetaDataSettings.GenerateBinFiles)
             {
                 options.GlobalProperties.Add(MsBuildProperties.CopyBuildOutputToOutputDirectory, "true");
