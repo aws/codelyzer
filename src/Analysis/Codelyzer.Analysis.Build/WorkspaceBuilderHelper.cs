@@ -21,7 +21,6 @@ namespace Codelyzer.Analysis.Build
 {
     public class WorkspaceBuilderHelper : IDisposable
     {
-        private const string AWS_ACCESS_SECRET = "AKIAIOSFODNN7RXAMPLE";
         private const string TargetFramework = nameof(TargetFramework);
         private const string TargetFrameworkVersion = nameof(TargetFrameworkVersion);
         private const string Configuration = nameof(Configuration);
