@@ -75,11 +75,11 @@ environment and submit code.
 * Clone the repository `git clone https://github.com/aws/codelyzer.git`
 * You'll need BOTH Visual Studio 2022 and 2019. 2019 is needed to bring in the required dependencies for some tests.
 * Install Visual Studio 2022 with:
-  * The `.NET desktop development` Workload
-  * The `ASP.NET and web development` Workload
+  * The `.NET Desktop Development` Workload
+  * The `ASP.NET and Web Development` Workload
   * The `ASP.NET MVC 4` Individual Component
 * Install Visual Studio 2019 with:
-  * The `ASP.NET and web development` Workload
+  * The `ASP.NET and Web Development` Workload
 * Load the solution `Codelyzer.sln` using Visual Studio 2022. 
 * Build
 * Run tests
