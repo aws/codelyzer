@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Xml.Linq;
 using Codelyzer.Analysis.Build;
@@ -17,28 +18,28 @@ namespace Codelyzer.Analysis.Tests
         [OneTimeSetUp]
         public virtual void OneTimeSetUp()
         {
-            projectFileContent = @"<Project Sdk=""Microsoft.NET.Sdk"">
-  <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-  </PropertyGroup>
-  <ItemGroup>
-    <FrameworkReference Include=""Microsoft.AspNetCore.App"" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include=""MyFirstPackage"" Version=""1.0.0"" />
-    <PackageReference Include=""MySecondPackage"" Version=""2.0.0"" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include=""TheMainProject"" />
-    <ProjectReference Include=""TheDependency"" />
-  </ItemGroup>
-  <ItemGroup Label=""PortingInfo"">
-    <!-- DO NOT REMOVE WHILE PORTING
-        C:\\RandomFile.dll
-        C:\\this\\is\\some\\path\\to\\Some.dll
-    -->
-  </ItemGroup>
-</Project>";
+            projectFileContent = @"<Project Sdk=""Microsoft.NET.Sdk"">" + Environment.NewLine + 
+@"  <PropertyGroup>" + Environment.NewLine + 
+@"    <TargetFramework>netcoreapp3.1</TargetFramework>" + Environment.NewLine + 
+@"  </PropertyGroup>" + Environment.NewLine + 
+@"  <ItemGroup>" + Environment.NewLine + 
+@"    <FrameworkReference Include=""Microsoft.AspNetCore.App"" />" + Environment.NewLine + 
+@"  </ItemGroup>" + Environment.NewLine + 
+@"  <ItemGroup>" + Environment.NewLine + 
+@"    <PackageReference Include=""MyFirstPackage"" Version=""1.0.0"" />" + Environment.NewLine + 
+@"    <PackageReference Include=""MySecondPackage"" Version=""2.0.0"" />" + Environment.NewLine + 
+@"  </ItemGroup>" + Environment.NewLine + 
+@"  <ItemGroup>" + Environment.NewLine + 
+@"    <ProjectReference Include=""TheMainProject"" />" + Environment.NewLine + 
+@"    <ProjectReference Include=""TheDependency"" />" + Environment.NewLine + 
+@"  </ItemGroup>" + Environment.NewLine + 
+@"  <ItemGroup Label=""PortingInfo"">" + Environment.NewLine + 
+@"    <!-- DO NOT REMOVE WHILE PORTING" + Environment.NewLine + 
+@"        C:\\RandomFile.dll" + Environment.NewLine + 
+@"        C:\\this\\is\\some\\path\\to\\Some.dll" + Environment.NewLine + 
+@"    -->" + Environment.NewLine +
+@"  </ItemGroup>" + Environment.NewLine +
+@"</Project>";
             tmpTestFixturePath = Path.GetFullPath(Path.Combine(
                 Path.GetTempPath(),
                 Path.GetRandomFileName()));
