@@ -51,7 +51,7 @@ var allLiterals = sourcefile.AllLiterals();
 ```
 
 ## How to use this code?
-* Clone the repository
+* Clone the Git repository.
 * Load the solution `Codelyzer.sln` using Visual Studio or Rider. 
 * Create a "Run/Debug" Configuration for the "Codelyzer.Analysis" project.
 * Provide command line arguments for a solution and output path, then run the application.
