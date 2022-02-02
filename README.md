@@ -73,7 +73,7 @@ environment and submit code.
 
 ### How to build this code and run automated tests successfully
 * Clone the repository `git clone https://github.com/aws/codelyzer.git`
-* You'll need BOTH Visual Studio 2022 and 2019. 2019 is needed to bring in the required dependencies for some tests.
+* You'll need BOTH Visual Studio 2022 and 2019. 2019 is needed to bring in the required dependencies for some tests. Community, Professional and Enterprise Edition all work.
 * Install Visual Studio 2022 with:
   * The `.NET Desktop Development` Workload
   * The `ASP.NET and Web Development` Workload
