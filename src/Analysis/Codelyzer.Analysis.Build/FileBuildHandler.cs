@@ -12,7 +12,7 @@ namespace Codelyzer.Analysis.Build
 {
     public class FileBuildHandler : IDisposable
     {
-        private Compilation _compilation;
+        private Compilation _compilation; // Test
         private Compilation _prePortCompilation;
 
         private List<string> Errors { get; set; }
