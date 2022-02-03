@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2019
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     steps:
@@ -27,25 +27,19 @@ jobs:
           echo "Added aws secret templates"
           git secrets --scan -r ../
           echo "Repository scan completed"
-    - name: Setup .NET Core
+    - name: Setup .NET Versions
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.301
-    - name: Setup .NET 5
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 5.0.x
-    - name: Setup .NET 6
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 6.0.x
-        include-prerelease: true
+        dotnet-version: | 
+          3.1.x
+          5.0.x
+          6.0.x
     - name: Install dependencies
       run: dotnet restore src/Codelyzer.sln
     - name: Build
       run: dotnet build --configuration Release --no-restore src/Codelyzer.sln
     - name: Test
-      run: dotnet test --configuration Release --no-restore --verbosity normal src/Codelyzer.sln
+      run: dotnet test --configuration Release --no-build --no-restore --verbosity normal src/Codelyzer.sln
     - name: Pack
       if: ${{ github.event_name == 'push' }}
       run: dotnet pack --configuration Release --no-restore -o dist src/Codelyzer.sln

@@ -71,6 +71,19 @@ We welcome community contributions and pull requests. See
 [CONTRIBUTING](./CONTRIBUTING.md) for information on how to set up a development
 environment and submit code.
 
+### How to build this code and run automated tests successfully
+* Clone the repository `git clone https://github.com/aws/codelyzer.git`
+* You'll need BOTH Visual Studio 2022 and 2019. 2019 is needed to bring in the required dependencies for some tests. Community, Professional and Enterprise Edition all work.
+* Install Visual Studio 2022 with:
+  * The `.NET Desktop Development` Workload
+  * The `ASP.NET and Web Development` Workload
+  * The `ASP.NET MVC 4` Individual Component
+* Install Visual Studio 2019 with:
+  * The `ASP.NET and Web Development` Workload
+* Load the solution `Codelyzer.sln` using Visual Studio 2022. 
+* Build
+* Run tests
+
 ## Thank you
 * [The .NET Compiler Platform ("Roslyn")](https://github.com/dotnet/roslyn) - Roslyn provides open-source C# and Visual Basic compilers with rich code analysis APIs.   
 * [Buildalyzer](https://github.com/daveaglick/Buildalyzer) - Buildalyzer lets you run MSBuild from your own code and returns information about the project.  
