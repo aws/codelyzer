@@ -5,6 +5,17 @@ Whether it's a bug report, new feature, correction, or additional documentation,
 
 Please read through this document before submitting any issues or pull requests to ensure we have all the necessary information to effectively respond to your bug report or contribution.
 
+## How to build this code and run automated tests successfully
+* Clone the repository `git clone https://github.com/aws/codelyzer.git`
+* You'll need BOTH Visual Studio 2022 and 2019. 2019 is needed to bring in the required dependencies for some tests. Community, Professional and Enterprise Edition all work.
+* Install Visual Studio 2022 with:
+  * The `.NET Desktop Development` Workload
+  * The `ASP.NET and Web Development` Workload
+* Install Visual Studio 2019 with:
+  * The `ASP.NET and Web Development` Workload
+* Load the solution `Codelyzer.sln` using Visual Studio 2022. 
+* Build
+* Run tests
 
 ## Reporting Bugs/Feature Requests
 
