@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace Codelyzer.Analysis
 {
     [ExcludeFromCodeCoverage]
-    class Program
+    public class Program
     {
-        static async Task Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var memory = GC.GetTotalMemory(false);
             AnalyzerCLI cli = new AnalyzerCLI();
