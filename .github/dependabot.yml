@@ -22,8 +22,6 @@ updates:
       - nuget-org
     schedule:
       interval: "weekly"
-    ignore:
-      - dependency-name: "Buildalyzer*"
 updates:
   - package-ecosystem: "nuget"
     directory: "/src/Analysis/Codelyzer.Analysis.Common"
@@ -55,6 +53,4 @@ updates:
       - porting-assistant-nuget
       - nuget-org
     schedule:
-      interval: "weekly"
-    ignore:
-      - dependency-name: "Buildalyzer*"      
+      interval: "weekly"   
