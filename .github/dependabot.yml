@@ -13,7 +13,7 @@ updates:
       - porting-assistant-nuget
       - nuget-org
     schedule:
-      interval: "daily"
+      interval: "weekly"
 updates:
   - package-ecosystem: "nuget"
     directory: "/src/Analysis/Codelyzer.Analysis.Build"
@@ -21,9 +21,7 @@ updates:
       - porting-assistant-nuget
       - nuget-org
     schedule:
-      interval: "daily"
-    ignore:
-      - dependency-name: "Buildalyzer*"
+      interval: "weekly"
 updates:
   - package-ecosystem: "nuget"
     directory: "/src/Analysis/Codelyzer.Analysis.Common"
@@ -31,7 +29,7 @@ updates:
       - porting-assistant-nuget
       - nuget-org
     schedule:
-      interval: "daily"
+      interval: "weekly"
 updates:
   - package-ecosystem: "nuget"
     directory: "/src/Analysis/Codelyzer.Analysis.CSharp"
@@ -39,7 +37,7 @@ updates:
       - porting-assistant-nuget
       - nuget-org
     schedule:
-      interval: "daily"
+      interval: "weekly"
 updates:
   - package-ecosystem: "nuget"
     directory: "/src/Analysis/Codelyzer.Analysis.Model"
@@ -47,7 +45,7 @@ updates:
       - porting-assistant-nuget
       - nuget-org
     schedule:
-      interval: "daily"
+      interval: "weekly"
 updates:
   - package-ecosystem: "nuget"
     directory: "/tst/Codelyzer.Analysis.Tests"
@@ -55,6 +53,4 @@ updates:
       - porting-assistant-nuget
       - nuget-org
     schedule:
-      interval: "daily"
-    ignore:
-      - dependency-name: "Buildalyzer*"      
+      interval: "weekly"   
