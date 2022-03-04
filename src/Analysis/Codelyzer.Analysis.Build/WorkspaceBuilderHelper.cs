@@ -488,20 +488,23 @@ namespace Codelyzer.Analysis.Build
                 }
             }
 
-            try
+            //We want to provide the MsBuild path only if it's a framework solution. Buildalyzer automatically builds core solutions using "dotnet"
+            if (requiresNetFramework)
             {
-                var msbuildExe = GetFrameworkMsBuildExePath();
-                if (!String.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
-                else { throw new Exception(); }
-            }
-            catch(Exception ex)
-            {
-                Logger.LogError(ex, "Build error: Codelyzer wasn't able to retrieve the MSBuild path");
-            }
+                try
+                {
+                    var msbuildExe = GetFrameworkMsBuildExePath();
+                    if (!String.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
+                    else { throw new Exception(); }
 
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Build error: Codelyzer wasn't able to retrieve the MSBuild path");
+                }
+                options.Arguments.Add(Constants.RestorePackagesConfigArgument);
+            }
             options.EnvironmentVariables.Add(Constants.EnableNuGetPackageRestore, Boolean.TrueString.ToLower());
-
-            options.Arguments.Add(Constants.RestorePackagesConfigArgument);
             if (_analyzerConfiguration.MetaDataSettings.GenerateBinFiles)
             {
                 options.GlobalProperties.Add(MsBuildProperties.CopyBuildOutputToOutputDirectory, "true");
@@ -510,7 +513,6 @@ namespace Codelyzer.Analysis.Build
                 options.GlobalProperties.Add(MsBuildProperties.SkipCopyBuildProduct, "false");
                 options.GlobalProperties.Add(MsBuildProperties.SkipCompilerExecution, "false");
             }
-
             return options;
         }
 
