@@ -76,6 +76,21 @@ namespace Codelyzer.Analysis.Tests
             Assert.NotNull(cli.Configuration);
         }
 
+        [Test]
+        public void TestCliCustomBuild()
+        {
+            var msbuildPath = "ANY_PATH";
+            var arguments = "arg1|arg2|arg3";
+
+            string mvcMusicStorePath = Directory.EnumerateFiles(downloadsDir, "MvcMusicStore.sln", SearchOption.AllDirectories).FirstOrDefault();
+            string[] args = { "-p", mvcMusicStorePath, "-x", msbuildPath, "-a", arguments };
+            AnalyzerCLI cli = new AnalyzerCLI();
+            cli.HandleCommand(args);
+            Assert.NotNull(cli);
+            Assert.AreEqual(msbuildPath, cli.Configuration.BuildSettings.MSBuildPath);
+            Assert.AreEqual(arguments, string.Join("|", cli.Configuration.BuildSettings.BuildArguments));
+        }
+
         [Test, TestCaseSource(nameof(TestCliMetaDataSource))]
         public async Task TestCliForMetaDataStringsAsync(string mdArgument, int enumNumbers, int ifaceNumbers)
         {

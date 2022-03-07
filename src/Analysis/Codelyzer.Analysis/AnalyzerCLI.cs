@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Codelyzer.Analysis.Common;
 using CommandLine;
@@ -37,6 +38,12 @@ namespace Codelyzer.Analysis
 
         [Option('m', "meta-data", Required = false, HelpText = "metadata string, e:g: 'EnumDeclarations=true,StructDeclarations=true,Annotations=true'")]
         public string MetaDataDetails { get; set; }
+
+        [Option('x', "msbuild-location", Required =false, HelpText ="MSBuild exe to be used for building the solution")]
+        public string MSBuildLocation { get; set; }
+
+        [Option('a', "build-arguments", Required = false, HelpText = "Build arguments string, pipe separated, e.g: arg1|arg2|arg3", Separator = '|')]
+        public IEnumerable<string> BuildArguments { get; set; }
 
     }
 
@@ -127,6 +134,16 @@ namespace Codelyzer.Analysis
                     if (!string.IsNullOrEmpty(o.AnalyzeFailed))
                     {
                         Configuration.AnalyzeFailedProjects = o.AnalyzeFailed.ToLower() == bool.TrueString.ToLower();
+                    }
+
+                    if (!string.IsNullOrEmpty(o.MSBuildLocation))
+                    {
+                        Configuration.BuildSettings.MSBuildPath = o.MSBuildLocation;
+                    }
+
+                    if (o.BuildArguments.Count() > 0)
+                    {
+                        Configuration.BuildSettings.BuildArguments = o.BuildArguments.ToList();
                     }
                 });
 

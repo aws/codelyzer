@@ -12,7 +12,6 @@ namespace Codelyzer.Analysis
     {
         public static async Task Main(string[] args)
         {
-            var memory = GC.GetTotalMemory(false);
             AnalyzerCLI cli = new AnalyzerCLI();
             cli.HandleCommand(args);
             Console.WriteLine(cli);
