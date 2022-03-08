@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -29,6 +28,7 @@ namespace Codelyzer.Analysis.Build
         private readonly AdhocWorkspace _workspaceIncremental;
         private StringBuilder _sb;
         private StringWriter _writer;
+        private MSBuildDetector _msBuildDetector;
 
         internal List<ProjectAnalysisResult> Projects;
         internal List<ProjectAnalysisResult> FailedProjects;
@@ -47,6 +47,7 @@ namespace Codelyzer.Analysis.Build
             _sb = new StringBuilder();
             _writer = new StringWriter(_sb);
             _analyzerManager = GetAnalyzerManager();
+            _msBuildDetector = new MSBuildDetector();
         }
 
         private string WorkspacePath { get; }
@@ -150,7 +151,7 @@ namespace Codelyzer.Analysis.Build
                 {
                     continue;
                 }
-                IAnalyzerResult analyzerResult = projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework)).FirstOrDefault();
+                IAnalyzerResult analyzerResult = projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework, projectAnalyzer.ProjectFile.ToolsVersion)).FirstOrDefault();
 
                 if (analyzerResult == null)
                 {
@@ -245,7 +246,7 @@ namespace Codelyzer.Analysis.Build
                             continue;
                         }
 
-                        IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework));
+                        IAnalyzerResults analyzerResults = projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework, projectAnalyzer.ProjectFile.ToolsVersion));
                         IAnalyzerResult analyzerResult = analyzerResults.First();
 
                         if (analyzerResult == null)
@@ -440,7 +441,7 @@ namespace Codelyzer.Analysis.Build
                 {
                     return null;
                 }
-                return projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework)).FirstOrDefault();
+                return projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework, projectAnalyzer.ProjectFile.ToolsVersion)).FirstOrDefault();
             }
             catch (Exception e)
             {
@@ -475,7 +476,7 @@ namespace Codelyzer.Analysis.Build
             return true;
         }
 
-        private EnvironmentOptions GetEnvironmentOptions(bool requiresNetFramework)
+        private EnvironmentOptions GetEnvironmentOptions(bool requiresNetFramework, string toolsVersion)
         {
             var os = DetermineOSPlatform();
             EnvironmentOptions options = new EnvironmentOptions();
@@ -493,8 +494,12 @@ namespace Codelyzer.Analysis.Build
             {
                 try
                 {
-                    var msbuildExe = GetFrameworkMsBuildExePath();
-                    if (!String.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
+                    var msbuildExe = _analyzerConfiguration.BuildSettings.MSBuildPath;
+                    if (string.IsNullOrEmpty(msbuildExe))
+                    {
+                        msbuildExe = _msBuildDetector.GetFirstMatchingMsBuildFromPath(toolsVersion: toolsVersion);
+                    }
+                    if (!string.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
                     else { throw new Exception(); }
 
                 }
@@ -502,9 +507,12 @@ namespace Codelyzer.Analysis.Build
                 {
                     Logger.LogError(ex, "Build error: Codelyzer wasn't able to retrieve the MSBuild path");
                 }
-                options.Arguments.Add(Constants.RestorePackagesConfigArgument);
+                _analyzerConfiguration.BuildSettings.BuildArguments.ForEach(argument => {
+                    options.Arguments.Add(argument);
+                });
             }
             options.EnvironmentVariables.Add(Constants.EnableNuGetPackageRestore, Boolean.TrueString.ToLower());
+
             if (_analyzerConfiguration.MetaDataSettings.GenerateBinFiles)
             {
                 options.GlobalProperties.Add(MsBuildProperties.CopyBuildOutputToOutputDirectory, "true");
@@ -568,134 +576,6 @@ namespace Codelyzer.Analysis.Build
         private string NormalizePath(string path) =>
             path == null ? null : Path.GetFullPath(path.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar));
 
-        public static string GetFrameworkMsBuildExePath(string programFilesPath = null, string programFilesX86Path = null)
-        {
-            // Could not find the tools path, possibly due to https://github.com/Microsoft/msbuild/issues/2369
-            // Try to poll for it. From https://github.com/KirillOsenkov/MSBuildStructuredLog/blob/4649f55f900a324421bad5a714a2584926a02138/src/StructuredLogViewer/MSBuildLocator.cs
 
-            List<string> editions = new List<string> { "Enterprise", "Professional", "Community", "BuildTools" };
-            var targets = new string[] { "Microsoft.CSharp.targets", "Microsoft.CSharp.CurrentVersion.targets", "Microsoft.Common.targets" };
-            // "Microsoft.CSharp.CrossTargeting.targets"
-
-            var msbuildpath = "";
-            DirectoryInfo vsDirectory;
-            var programFiles = programFilesPath ?? Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            string programFilesX86 = programFilesX86Path ?? System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86);
-
-           
-            //2022              
-            vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
-            msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
-            if (!string.IsNullOrEmpty(msbuildpath))
-            {
-                return msbuildpath;
-            }
-
-            // 2019, 2017
-            vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "Microsoft Visual Studio"));
-            msbuildpath = GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets);
-            if (!string.IsNullOrEmpty(msbuildpath))
-            {
-                return msbuildpath;
-            }
-            
-            // 14.0, 12.0 
-            vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "MSBuild"));
-            msbuildpath = GetMsBuildPathFromVSDirectoryBelow15(vsDirectory, editions, targets);
-            if (!string.IsNullOrEmpty(msbuildpath))
-            {
-                return msbuildpath;
-            }
-
-            return msbuildpath;
-        }
-
-        public static string GetMsBuildPathFromVSDirectory(DirectoryInfo vsDirectory, List<string> editions, string[] targets)
-        {
-            if (vsDirectory.Exists)
-            {   List<FileInfo> msBuildExePath = vsDirectory
-                    .GetDirectories("MSBuild", SearchOption.AllDirectories)
-                    .SelectMany(msBuildDir => msBuildDir.GetFiles("MSBuild.exe", SearchOption.AllDirectories))
-                    .OrderByDescending(msbuild => FileVersionInfo.GetVersionInfo(msbuild.FullName).FileVersion)
-                    .ThenBy(msbuild => editions.IndexOf(GetEditionType(msbuild.DirectoryName, editions)))
-                    .ThenBy(msbuild =>
-                    {
-                        var folderName = GetVersionFolder(msbuild.FullName);
-                        if (folderName.ToLower() == "current") return -100;
-                        else
-                        {
-                            if(double.TryParse(folderName, out double result))
-                            {
-                                return -1 * result;
-                            }
-                            return -100;
-                        }
-                    })
-                    .Where(msbuild =>
-                    {
-                        var targetsWithPath = GetTargetsWithPath(msbuild.DirectoryName, targets);
-                        if (targetsWithPath.TrueForAll(File.Exists)) return true;
-                        return false;
-                    })
-                    .ToList();
-                return msBuildExePath?.FirstOrDefault()?.FullName;
-            };
-            return "";
-        }
-
-        public static string GetMsBuildPathFromVSDirectoryBelow15(DirectoryInfo vsDirectory, List<string> editions, string[] targets)
-        {
-            if (vsDirectory.Exists)
-            {
-                List<FileInfo> msBuildExePath = vsDirectory
-                    .GetFiles("MSBuild.exe", SearchOption.AllDirectories)
-                    .OrderByDescending(msbuild => FileVersionInfo.GetVersionInfo(msbuild.FullName).FileVersion)
-                    .ThenBy(msbuild =>
-                    {
-                        var folderName = GetVersionFolder(msbuild.FullName);
-                        if (folderName.ToLower() == "current") return 1;
-                        else return -Convert.ToDouble(folderName);
-
-                    })
-                    .Where(msbuild =>
-                    {
-                        var targetsWithPath = GetTargetsWithPath(msbuild.DirectoryName, targets);
-                        if (targetsWithPath.TrueForAll(File.Exists)) return true;
-                        return false;
-                    })
-                    .ToList();
-                return msBuildExePath?.First().FullName;
-            };
-            return "";
-        }
-
-        public static string GetEditionType(string vsPath, List<string> editions)
-        {
-            string[] elements = vsPath.Split(Path.DirectorySeparatorChar);
-            foreach (var edition in editions)
-            {
-                if (elements.Contains(edition))
-                {
-                    return edition;
-                }
-            }
-            return "";
-        }
-
-        public static string GetVersionFolder(string vsPath)
-        {
-            List<string> elements = vsPath.Split(Path.DirectorySeparatorChar).ToList();
-            var folderIdx = elements.IndexOf("MSBuild");
-            return elements[folderIdx + 1];
-        }
-        public static List<string> GetTargetsWithPath(string vsPath, string[] targets)
-        {
-            List<string> targetsWithPath = new List<string>();
-            foreach (string target in targets)
-            {
-                targetsWithPath.Add(Path.Combine(vsPath, target));
-            }
-            return targetsWithPath;
-        }
     }
 }

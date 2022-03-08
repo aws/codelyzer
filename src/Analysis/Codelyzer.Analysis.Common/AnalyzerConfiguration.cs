@@ -1,4 +1,5 @@
 using Codelyzer.Analysis.Common;
+using System.Collections.Generic;
 
 namespace Codelyzer.Analysis
 {
@@ -6,23 +7,41 @@ namespace Codelyzer.Analysis
     {
         public string Language;
         public int ConcurrentThreads = Constants.DefaultConcurrentThreads;
-        public bool AnalyzeFailedProjects = false;
+        public bool AnalyzeFailedProjects = false; 
+        public static List<string> DefaultBuildArguments = new()
+        {
+            Constants.RestorePackagesConfigArgument
+        };
 
         public AnalyzerConfiguration(string language)
         {
             Language = language;
             ExportSettings = new ExportSettings(); 
             MetaDataSettings = new MetaDataSettings();
+            BuildSettings = new BuildSettings();
         }
 
         public ExportSettings ExportSettings;
         public MetaDataSettings MetaDataSettings;
+        public BuildSettings BuildSettings;
     }
     
     public static class LanguageOptions
     {
         public const string CSharp = nameof(CSharp);
         public const string Vb = nameof(Vb);
+    }
+
+    public class BuildSettings
+    {
+        public BuildSettings()
+        {
+            BuildArguments = AnalyzerConfiguration.DefaultBuildArguments;
+        }
+        public string MSBuildPath;
+        public List<string> BuildArguments;
+
+        
     }
 
     public class ExportSettings
