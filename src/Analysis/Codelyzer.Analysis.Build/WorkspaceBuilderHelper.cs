@@ -489,27 +489,30 @@ namespace Codelyzer.Analysis.Build
                 }
             }
 
-            try
+            //We want to provide the MsBuild path only if it's a framework solution. Buildalyzer automatically builds core solutions using "dotnet"
+            if (requiresNetFramework)
             {
-                var msbuildExe = _analyzerConfiguration.BuildSettings.MSBuildPath;
-                if (string.IsNullOrEmpty(msbuildExe))
+                try
                 {
-                    msbuildExe = _msBuildDetector.GetFirstMatchingMsBuildFromPath(toolsVersion: toolsVersion);
-                }
-                if (!string.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
-                else { throw new Exception(); }
-            }
-            catch(Exception ex)
-            {
-                Logger.LogError(ex, "Build error: Codelyzer wasn't able to retrieve the MSBuild path");
-            }
+                    var msbuildExe = _analyzerConfiguration.BuildSettings.MSBuildPath;
+                    if (string.IsNullOrEmpty(msbuildExe))
+                    {
+                        msbuildExe = _msBuildDetector.GetFirstMatchingMsBuildFromPath(toolsVersion: toolsVersion);
+                    }
+                    if (!string.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
+                    else { throw new Exception(); }
 
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Build error: Codelyzer wasn't able to retrieve the MSBuild path");
+                }
+                _analyzerConfiguration.BuildSettings.BuildArguments.ForEach(argument => {
+                    options.Arguments.Add(argument);
+                });
+            }
             options.EnvironmentVariables.Add(Constants.EnableNuGetPackageRestore, Boolean.TrueString.ToLower());
 
-            _analyzerConfiguration.BuildSettings.BuildArguments.ForEach(argument => {
-                options.Arguments.Add(argument);
-            });
-            
             if (_analyzerConfiguration.MetaDataSettings.GenerateBinFiles)
             {
                 options.GlobalProperties.Add(MsBuildProperties.CopyBuildOutputToOutputDirectory, "true");
@@ -518,7 +521,6 @@ namespace Codelyzer.Analysis.Build
                 options.GlobalProperties.Add(MsBuildProperties.SkipCopyBuildProduct, "false");
                 options.GlobalProperties.Add(MsBuildProperties.SkipCompilerExecution, "false");
             }
-
             return options;
         }
 
