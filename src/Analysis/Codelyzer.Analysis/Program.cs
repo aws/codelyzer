@@ -37,6 +37,7 @@ namespace Codelyzer.Analysis
             };*/
             cli.Configuration.MetaDataSettings.DeclarationNodes = true;
             cli.Configuration.MetaDataSettings.ReferenceData = true;
+            cli.Configuration.BuildSettings.BuildOnly = true;
 
             /* 3. Get Analyzer instance based on language */
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(cli.Configuration, 
@@ -71,10 +72,13 @@ namespace Codelyzer.Analysis
             }
 
             /* Consume the results as model objects */
-            var sourcefile = analyzerResult.ProjectResult.SourceFileResults.First();
-            foreach (var invocation in sourcefile.AllInvocationExpressions())
+            var sourcefile = analyzerResult?.ProjectResult?.SourceFileResults?.First();
+            if (sourcefile != null)
             {
-                Console.WriteLine(invocation.MethodName + ":" + invocation.SemanticMethodSignature);
+                foreach (var invocation in sourcefile.AllInvocationExpressions())
+                {
+                    Console.WriteLine(invocation.MethodName + ":" + invocation.SemanticMethodSignature);
+                }
             }
         }
     }
