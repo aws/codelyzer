@@ -191,12 +191,12 @@ namespace Codelyzer.Analysis.Build
 
         public void Build()
         {
-            //Uncomment the below code to debug issues with msbuild */
-            var writer = new StreamWriter(Console.OpenStandardOutput());
+            /* Uncomment the below code to debug issues with msbuild */
+            /*var writer = new StreamWriter(Console.OpenStandardOutput());
             writer.AutoFlush = true;
 
             Console.SetOut(writer);
-            Console.SetError(writer);
+            Console.SetError(writer);*/
 
             if (IsSolutionFile())
             {
