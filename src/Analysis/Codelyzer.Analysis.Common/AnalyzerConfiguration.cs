@@ -10,7 +10,8 @@ namespace Codelyzer.Analysis
         public bool AnalyzeFailedProjects = false; 
         public static List<string> DefaultBuildArguments = new()
         {
-            Constants.RestorePackagesConfigArgument
+            Constants.RestorePackagesConfigArgument,
+            Constants.RestoreArgument
         };
 
         public AnalyzerConfiguration(string language)
