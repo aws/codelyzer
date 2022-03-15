@@ -10,7 +10,8 @@ namespace Codelyzer.Analysis
         public bool AnalyzeFailedProjects = false; 
         public static List<string> DefaultBuildArguments = new()
         {
-            Constants.RestorePackagesConfigArgument
+            Constants.RestorePackagesConfigArgument,
+            Constants.RestoreArgument
         };
 
         public AnalyzerConfiguration(string language)
@@ -40,8 +41,7 @@ namespace Codelyzer.Analysis
         }
         public string MSBuildPath;
         public List<string> BuildArguments;
-
-        
+        public bool BuildOnly = false;
     }
 
     public class ExportSettings

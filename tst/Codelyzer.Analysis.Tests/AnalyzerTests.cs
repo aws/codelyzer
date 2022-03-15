@@ -850,6 +850,93 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         }
 
 
+        [Test]
+        public async Task TestBuildOnlyFramework_Successfully()
+        {
+            var solutionPath = CopySolutionFolderToTemp("BuildableWebApi.sln");
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    GenerateGremlinOutput = false,
+                    GenerateRDFOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData  = true,
+                    LoadBuildData = true
+                },
+                BuildSettings =
+                {
+                    BuildOnly = true,
+                    BuildArguments = AnalyzerConfiguration.DefaultBuildArguments
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+
+            await analyzer.AnalyzeSolution(solutionPath);
+
+            //Check that the bin folder was created
+            var binPath = Path.Join(Path.GetDirectoryName(solutionPath), "BuildableWebApi", "bin");
+            Assert.IsTrue(Directory.Exists(binPath));
+
+            //And it contains DLLs
+            var dlls = Directory.EnumerateFiles(binPath, "*.dll", SearchOption.AllDirectories);
+            Assert.AreEqual(84, dlls.Count());
+        }
+
+        [Test]
+        public async Task TestBuildOnlyCore_Successfully()
+        {
+            var solutionPath = CopySolutionFolderToTemp("CoreMVC.sln");
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    GenerateGremlinOutput = false,
+                    GenerateRDFOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData  = true,
+                    LoadBuildData = true
+                },
+                BuildSettings =
+                {
+                    BuildOnly = true,
+                    BuildArguments = AnalyzerConfiguration.DefaultBuildArguments
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            
+            await analyzer.AnalyzeSolution(solutionPath);
+
+            //Check that the bin folder was created
+            var binPath = Path.Join(Path.GetDirectoryName(solutionPath), "CoreMvc", "bin");
+            Assert.IsTrue(Directory.Exists(binPath));
+
+            //And it contains DLLs
+            var dlls = Directory.EnumerateFiles(binPath, "*.dll", SearchOption.AllDirectories);
+            Assert.AreEqual(2, dlls.Count());
+        }
 
 
         [TestCase("SampleWebApi.sln")]

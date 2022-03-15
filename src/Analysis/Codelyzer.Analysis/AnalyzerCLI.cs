@@ -42,9 +42,11 @@ namespace Codelyzer.Analysis
         [Option('x', "msbuild-location", Required =false, HelpText ="MSBuild exe to be used for building the solution")]
         public string MSBuildLocation { get; set; }
 
+        [Option('y', "build-only", Required = false, HelpText = "Runs build without any analysis")]
+        public string BuildOnly { get; set; }
+
         [Option('a', "build-arguments", Required = false, HelpText = "Build arguments string, pipe separated, e.g: arg1|arg2|arg3", Separator = '|')]
         public IEnumerable<string> BuildArguments { get; set; }
-
     }
 
     public class AnalyzerCLI

@@ -11,6 +11,7 @@ namespace Codelyzer.Analysis.Common
         public const int DefaultConcurrentThreads = 4;
         public const string MsBuildCommandName = "msbuild";
         public const string RestorePackagesConfigArgument = "/p:RestorePackagesConfig=true";
+        public const string RestoreArgument = "/restore";
         public const string EnableNuGetPackageRestore = "EnableNuGetPackageRestore";
             
         public const string ProjectReferenceType = "Microsoft.CodeAnalysis.CSharp.CSharpCompilationReference";

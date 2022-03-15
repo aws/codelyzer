@@ -240,7 +240,7 @@ namespace Codelyzer.Analysis.Build
                         Logger.LogInformation("Building: " + path);
 
                         IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(path);
-
+                        
                         if (!TryGetRequiresNetFramework(projectAnalyzer.ProjectFile, out bool requiresNetFramework))
                         {
                             continue;
@@ -358,6 +358,15 @@ namespace Codelyzer.Analysis.Build
          * */
         private void BuildSolution(IAnalyzerManager manager)
         {
+            //If we are building only, we don't need to run through the rest of the logic
+            if (_analyzerConfiguration.BuildSettings.BuildOnly)
+            {
+                if(TryGetRequiresNetFramework(manager.Projects.First().Value.ProjectFile, out var isFramework))
+                {
+                    BuildSolutionOnlyWithoutOutput(WorkspacePath, isFramework);
+                }
+                return;
+            }
             var options = new ParallelOptions() { MaxDegreeOfParallelism = _analyzerConfiguration.ConcurrentThreads };
 
             BlockingCollection<IAnalyzerResult> concurrentResults = new BlockingCollection<IAnalyzerResult>();
@@ -430,6 +439,49 @@ namespace Codelyzer.Analysis.Build
                         Logger.LogDebug(ex.StackTrace);
                     }
                 }
+            }
+        }
+
+        private void BuildSolutionOnlyWithoutOutput(string solutionPath, bool isFramework)
+        {
+            try
+            {
+                System.Diagnostics.Process process = new System.Diagnostics.Process();
+                System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
+                startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+
+                var msBuildLocation = _analyzerConfiguration.BuildSettings.MSBuildPath;
+                if (string.IsNullOrEmpty(msBuildLocation))
+                {
+                    msBuildLocation = _msBuildDetector.GetFirstMatchingMsBuildFromPath();
+                }
+
+                //Add quotes around solution name to make sure spaces don't cause the command to fail
+                var escapedSolutionPath = "\"" + solutionPath + "\"";
+
+                var arguments = new List<string>(_analyzerConfiguration.BuildSettings.BuildArguments);
+
+                if (isFramework)
+                {
+                    startInfo.FileName = msBuildLocation;
+                    arguments.Insert(0, escapedSolutionPath);
+                    startInfo.Arguments = string.Join(" ", arguments);
+                }
+                else
+                {
+                    startInfo.FileName = "dotnet";
+                    arguments.Insert(0, escapedSolutionPath);
+                    arguments.Insert(0, "build");
+                    startInfo.Arguments = string.Join(" ", arguments);
+                }
+
+                process.StartInfo = startInfo;
+                process.Start();
+                process.WaitForExit();
+            }
+            catch(Exception ex)
+            {
+                Logger.LogError(ex, "Unable to build. Project type used is not supported");
             }
         }
 
