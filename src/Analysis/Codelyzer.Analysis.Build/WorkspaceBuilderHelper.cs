@@ -482,6 +482,7 @@ namespace Codelyzer.Analysis.Build
             catch(Exception ex)
             {
                 Logger.LogError(ex, "Unable to build. Project type used is not supported");
+                throw;
             }
         }
 

@@ -143,6 +143,11 @@ namespace Codelyzer.Analysis
                         Configuration.BuildSettings.MSBuildPath = o.MSBuildLocation;
                     }
 
+                    if (!string.IsNullOrEmpty(o.BuildOnly))
+                    {
+                        Configuration.BuildSettings.BuildOnly = o.BuildOnly.ToLower() == bool.TrueString.ToLower();
+                    }
+
                     if (o.BuildArguments.Count() > 0)
                     {
                         Configuration.BuildSettings.BuildArguments = o.BuildArguments.ToList();
