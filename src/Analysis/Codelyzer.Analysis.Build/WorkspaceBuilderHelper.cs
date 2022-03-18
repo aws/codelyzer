@@ -573,6 +573,10 @@ namespace Codelyzer.Analysis.Build
                 options.GlobalProperties.Add(MsBuildProperties.UseCommonOutputDirectory, "false");
                 options.GlobalProperties.Add(MsBuildProperties.SkipCopyBuildProduct, "false");
                 options.GlobalProperties.Add(MsBuildProperties.SkipCompilerExecution, "false");
+                if (!requiresNetFramework)
+                {
+                    options.GlobalProperties.Add(MsBuildProperties.BuildProjectReferences, "true");
+                }
             }
             return options;
         }
