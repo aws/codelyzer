@@ -358,12 +358,12 @@ namespace Codelyzer.Analysis.Build
          * */
         private void BuildSolution(IAnalyzerManager manager)
         {
-            TryGetRequiresNetFramework(manager.Projects.First().Value.ProjectFile, out var isFramework);            
+            var isSupportedProject = TryGetRequiresNetFramework(manager.Projects.First().Value.ProjectFile, out var isFramework);            
 
             //If we are building only, we don't need to run through the rest of the logic
             if (_analyzerConfiguration.BuildSettings.BuildOnly)
             {
-                if(isFramework)
+                if (isSupportedProject)
                 {
                     BuildSolutionOnlyWithoutOutput(WorkspacePath, isFramework);
                 }
