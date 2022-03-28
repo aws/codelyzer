@@ -358,10 +358,12 @@ namespace Codelyzer.Analysis.Build
          * */
         private void BuildSolution(IAnalyzerManager manager)
         {
+            TryGetRequiresNetFramework(manager.Projects.First().Value.ProjectFile, out var isFramework);            
+
             //If we are building only, we don't need to run through the rest of the logic
             if (_analyzerConfiguration.BuildSettings.BuildOnly)
             {
-                if(TryGetRequiresNetFramework(manager.Projects.First().Value.ProjectFile, out var isFramework))
+                if(isFramework)
                 {
                     BuildSolutionOnlyWithoutOutput(WorkspacePath, isFramework);
                 }
@@ -369,6 +371,11 @@ namespace Codelyzer.Analysis.Build
             }
             var options = new ParallelOptions() { MaxDegreeOfParallelism = _analyzerConfiguration.ConcurrentThreads };
 
+            // If core solution, building multiple projects at the same time causes conflicts when there are dependencies between the projects:
+            if (!isFramework)
+            {
+                options.MaxDegreeOfParallelism = 1;
+            }
             BlockingCollection<IAnalyzerResult> concurrentResults = new BlockingCollection<IAnalyzerResult>();
             Parallel.ForEach(manager.Projects.Values, options, p =>
             {
