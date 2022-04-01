@@ -7,20 +7,24 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Buildalyzer" Version="4.1.3" />
-      <PackageReference Include="Buildalyzer.Logger" Version="4.1.3" />
-      <PackageReference Include="Buildalyzer.Workspaces" Version="4.1.3" />
+      <PackageReference Include="Microsoft.Build" Version="17.1.0" />
+      <PackageReference Include="Microsoft.Build.Framework" Version="17.1.0" />
+      <PackageReference Include="MsBuildPipeLogger.Logger" Version="1.1.3" />
+      <PackageReference Include="MsBuildPipeLogger.Server" Version="1.1.6" />
       <PackageReference Include="NuGet.Packaging" Version="6.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\..\..\Users\longachr\Downloads\Buildalyzer-3.2.8\Buildalyzer-3.2.8\src\Buildalyzer.Logger\Buildalyzer.Logger.csproj" />
+      <ProjectReference Include="..\..\..\..\..\Users\longachr\Downloads\Buildalyzer-3.2.8\Buildalyzer-3.2.8\src\Buildalyzer.Workspaces\Buildalyzer.Workspaces.csproj" />
+      <ProjectReference Include="..\..\..\..\..\Users\longachr\Downloads\Buildalyzer-3.2.8\Buildalyzer-3.2.8\src\Buildalyzer\Buildalyzer.csproj" />
       <ProjectReference Include="..\Codelyzer.Analysis.CSharp\Codelyzer.Analysis.CSharp.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
-      <PackageReference Update="Nerdbank.GitVersioning" Version="3.4.255" />
-    </ItemGroup>
+	<ItemGroup>
+		<PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+		<PackageReference Update="Nerdbank.GitVersioning" Version="3.4.255" />
+	</ItemGroup>
 
 </Project>

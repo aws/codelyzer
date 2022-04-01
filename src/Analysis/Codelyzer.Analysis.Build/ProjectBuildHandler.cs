@@ -15,7 +15,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using Microsoft.CodeAnalysis.VisualBasic;
 using Constants = Codelyzer.Analysis.Common.Constants;
+using LanguageVersion = Microsoft.CodeAnalysis.CSharp.LanguageVersion;
 
 namespace Codelyzer.Analysis.Build
 {
@@ -165,7 +167,11 @@ namespace Codelyzer.Analysis.Build
 
         private void FallbackCompilation()
         {
-            var options = (CSharpCompilationOptions) this.Project.CompilationOptions;
+            var vbOptions =
+                Project.CompilationOptions is VisualBasicCompilationOptions
+                    ? (VisualBasicCompilationOptions) Project.CompilationOptions
+                    : null;
+            var options = vbOptions != null ? null : (CSharpCompilationOptions) Project.CompilationOptions;
             var meta = this.Project.MetadataReferences;
             var trees = new List<SyntaxTree>();
 
@@ -190,7 +196,21 @@ namespace Codelyzer.Analysis.Build
             
             if (trees.Count != 0)
             {
-                Compilation = CSharpCompilation.Create(Project.AssemblyName, trees, meta, options);
+                if (vbOptions != null)
+                {
+                    Compilation =
+                        VisualBasicCompilation.Create(Project.AssemblyName,
+                            trees, meta, vbOptions);
+                }
+                else
+                {
+                    if (options != null)
+                    {
+                        Compilation =
+                            CSharpCompilation.Create(Project.AssemblyName,
+                                trees, meta, options);
+                    }
+                }
             }
         }
         private void SetSyntaxCompilation()
