@@ -16,10 +16,19 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\..\..\Users\longachr\Downloads\Buildalyzer-3.2.8\Buildalyzer-3.2.8\src\Buildalyzer.Logger\Buildalyzer.Logger.csproj" />
-      <ProjectReference Include="..\..\..\..\..\Users\longachr\Downloads\Buildalyzer-3.2.8\Buildalyzer-3.2.8\src\Buildalyzer.Workspaces\Buildalyzer.Workspaces.csproj" />
-      <ProjectReference Include="..\..\..\..\..\Users\longachr\Downloads\Buildalyzer-3.2.8\Buildalyzer-3.2.8\src\Buildalyzer\Buildalyzer.csproj" />
       <ProjectReference Include="..\Codelyzer.Analysis.CSharp\Codelyzer.Analysis.CSharp.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Buildalyzer">
+        <HintPath>..\..\..\..\Buildalyzer\src\Buildalyzer\bin\Debug\netcoreapp3.1\Buildalyzer.dll</HintPath>
+      </Reference>
+      <Reference Include="Buildalyzer.Logger">
+        <HintPath>..\..\..\..\Buildalyzer\src\Buildalyzer\bin\Debug\netcoreapp3.1\Buildalyzer.Logger.dll</HintPath>
+      </Reference>
+      <Reference Include="Buildalyzer.Workspaces">
+        <HintPath>..\..\..\..\Buildalyzer\src\Buildalyzer.Workspaces\bin\Debug\netcoreapp3.1\Buildalyzer.Workspaces.dll</HintPath>
+      </Reference>
     </ItemGroup>
 
 	<ItemGroup>

@@ -53,5 +53,7 @@ namespace Codelyzer.Analysis.Model
         public const string ElementAccessIdName = "element-access";
 
         public const string MemberAccessIdName = "member-access";
+
+        public const string ImportsStatementName = "imports-statement";
     }
 }
