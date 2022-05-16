@@ -55,5 +55,13 @@ namespace Codelyzer.Analysis.Model
         public const string MemberAccessIdName = "member-access";
 
         public const string ImportsStatementName = "imports-statement";
+
+        public const string ClassBlockName = "class-block";
+
+        public const string ClassStatementName = "class-statement";
+
+        public const string FieldDeclarationName = "field-declaration";
+
+        public const string VariableDeclaratorName = "variable-declarator";
     }
 }

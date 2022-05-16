@@ -78,6 +78,30 @@ namespace Codelyzer.Analysis.VisualBasic
             return handler.UstNode;
         }
 
+        public override UstNode VisitClassBlock(ClassBlockSyntax node)
+        {
+            ClassBlockHandler handler = new ClassBlockHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitClassStatement(ClassStatementSyntax node)
+        {
+            ClassStatementHandler handler = new ClassStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitFieldDeclaration(FieldDeclarationSyntax node)
+        {
+            FieldDeclarationHandler handler = new FieldDeclarationHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitVariableDeclarator(VariableDeclaratorSyntax node)
+        {
+            VariableDeclaratorHandler handler = new VariableDeclaratorHandler(_context, node);
+            return handler.UstNode;
+        }
+
         private void HandleReferences(in Reference reference)
         {
             if (MetaDataSettings.ReferenceData
