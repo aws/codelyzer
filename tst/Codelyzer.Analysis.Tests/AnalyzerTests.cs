@@ -851,6 +851,44 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
 
         [Test]
+        public async Task TestSampleNet60()
+        {
+            string solutionPath = Directory.EnumerateFiles(downloadsDir, "SampleNet60Mvc.sln", SearchOption.AllDirectories).FirstOrDefault();
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true
+                }
+            };
+
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            var results = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
+            
+            // Class with scoped namespace - should be able to get children
+            var sampleClass = results.FirstOrDefault().ProjectResult.SourceFileResults.FirstOrDefault(x => x.FileFullPath.EndsWith("SampleClass.cs"));
+            Assert.AreEqual(1, sampleClass.Children.Count);
+        }
+
+        [Test]
         public async Task TestBuildOnlyFramework_Successfully()
         {
             var solutionPath = CopySolutionFolderToTemp("BuildableWebApi.sln");
