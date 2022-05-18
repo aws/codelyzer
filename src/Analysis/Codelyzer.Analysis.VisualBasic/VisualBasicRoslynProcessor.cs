@@ -102,6 +102,18 @@ namespace Codelyzer.Analysis.VisualBasic
             return handler.UstNode;
         }
 
+        public override UstNode VisitAttributeList(AttributeListSyntax node)
+        {
+            AttributeListHandler handler = new AttributeListHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitConstructorBlock(ConstructorBlockSyntax node)
+        {
+            ConstructorBlockHandler handler = new ConstructorBlockHandler(_context, node);
+            return handler.UstNode;
+        }
+
         private void HandleReferences(in Reference reference)
         {
             if (MetaDataSettings.ReferenceData

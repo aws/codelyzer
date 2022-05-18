@@ -63,5 +63,7 @@ namespace Codelyzer.Analysis.Model
         public const string FieldDeclarationName = "field-declaration";
 
         public const string VariableDeclaratorName = "variable-declarator";
+
+        public const string AttributeListName = "attribute-list";
     }
 }
