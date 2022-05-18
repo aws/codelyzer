@@ -1,6 +1,7 @@
 ﻿using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis.VisualBasic.Syntax;
+using System.Linq;
 
 namespace Codelyzer.Analysis.VisualBasic.Handlers
 {

@@ -1,0 +1,121 @@
+﻿using Xunit;
+using Microsoft.CodeAnalysis;
+using Codelyzer.Analysis.Common;
+using Xunit.Abstractions;
+using Microsoft.Extensions.Logging.Abstractions;
+using Codelyzer.Analysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp;
+using Codelyzer.Analysis.Model;
+
+namespace Codelyzer.Analysis.Languages.UnitTests
+{
+    public class CSharpHandlerTests
+    {
+
+		private AnalyzerConfiguration Configuration;
+		private readonly ITestOutputHelper _output;
+
+		public CSharpHandlerTests(ITestOutputHelper output)
+		{
+			_output = output;
+			Configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+			{
+				ExportSettings =
+				{
+					GenerateJsonOutput = false,
+				},
+
+				MetaDataSettings =
+				{
+					LiteralExpressions = true,
+					MethodInvocations = true,
+					Annotations = true
+				}
+			};
+		}
+
+		[Fact]
+		public void CodeBlockHandlerTest1()
+		{
+			const string vbCodeSnippet = @"
+				public class Person
+				{
+					public string Name { get; set; }
+					public int Age { get; set; }
+
+					public Person()
+					{
+						Console.WriteLine(""This is a constructor"");
+					}
+
+					public void SetName(string newName)
+					{
+						Name = newName;
+					}
+
+					public string GetName()
+					{
+						return Name;
+					}
+				}";
+			//ClassNode
+			var rootNode = GetCSharpUstNode(vbCodeSnippet);
+			Assert.Single(rootNode.Children);
+			var classNode = rootNode.Children[0];
+			Assert.Equal(typeof(Model.ClassDeclaration), classNode.GetType());
+			Assert.Equal(3, classNode.Children.Count);
+			//Child 0: construction
+			var constructionNode  = classNode.Children[0];
+			Assert.Equal(typeof(Model.ConstructorDeclaration), constructionNode.GetType());
+			Assert.Single(constructionNode.Children);
+			//construction: block
+			var blockNode = constructionNode.Children[0];
+			Assert.Equal(typeof(Model.BlockStatement), blockNode.GetType());
+			Assert.Single(blockNode.Children);
+			//construction: invocationExpress
+			var invocationNode = blockNode.Children[0];
+			Assert.Equal(typeof(Model.InvocationExpression), invocationNode.GetType());
+			//construction: invocationExpress: Arguments
+			var arguments = ((InvocationExpression)invocationNode).Arguments;
+			Assert.Single(arguments);
+			//construction: invocationExpress: InvocationExpression
+			Assert.Single(((InvocationExpression)invocationNode).Children);
+			var literalExpressionNode = ((InvocationExpression)invocationNode).Children[0];
+			Assert.Equal(typeof(Model.LiteralExpression), literalExpressionNode.GetType());
+
+			//Child 1: MethodDeclaration - SetName
+			var method1Node = classNode.Children[1];
+			Assert.Equal("SetName", method1Node.Identifier);
+			Assert.Equal(typeof(Model.MethodDeclaration), method1Node.GetType());
+			var method1Parameters = ((MethodDeclaration)method1Node).Parameters;
+			Assert.Single(method1Parameters);
+			Assert.Equal("void", ((MethodDeclaration)method1Node).ReturnType);
+			//Child 2: MethodDeclaration - GetName
+			var method2Node = classNode.Children[2];
+			Assert.Equal("GetName", method2Node.Identifier);
+			Assert.Equal(typeof(Model.MethodDeclaration), method2Node.GetType());
+			var method2Parameters = ((MethodDeclaration)method2Node).Parameters;
+			Assert.True(method2Parameters.Count == 0);
+			Assert.Equal("string", ((MethodDeclaration)method2Node).ReturnType);
+		}
+
+		private Model.UstNode GetCSharpUstNode(string expressionShell)
+		{
+			var tree = Microsoft.CodeAnalysis.CSharp.SyntaxFactory.ParseSyntaxTree(expressionShell);
+			var compilation = CSharpCompilation.Create(
+				"test.dll",
+				options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
+				syntaxTrees: new[] { tree },
+				references: new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) });
+
+			// Check for errors
+			//var diagnostics = compilation.GetDiagnostics();
+
+			CodeContext codeContext = new CodeContext(null, null, tree, null, null, Configuration, new NullLogger<CSharpRoslynProcessor>());
+			CSharpRoslynProcessor processor = new CSharpRoslynProcessor(codeContext);
+
+			var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
+			return result;
+		}
+	}
+}

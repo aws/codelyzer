@@ -10,7 +10,7 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
 
         public ImportsStatementHandler(CodeContext context,
             ImportsStatementSyntax syntaxNode)
-            : base(context, syntaxNode, new UsingDirective())
+            : base(context, syntaxNode, new ImportsStatement())
         {
             Model.Identifier = syntaxNode.ImportsKeyword.ToString();
         }

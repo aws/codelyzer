@@ -234,7 +234,7 @@ namespace Codelyzer.Analysis.VisualBasic
         /// <param name="semanticModel">Semantic model of syntax tree containing the method declaration</param>
         /// <param name="syntaxNode">Method declaration node</param>
         /// <returns>The semantic method signature</returns>
-        public static string GetSemanticMethodSignature(SemanticModel semanticModel, SemanticModel originalSemanticModel, BaseMethodDeclarationSyntax syntaxNode)
+        public static string GetSemanticMethodSignature(SemanticModel semanticModel, SemanticModel originalSemanticModel, SubNewStatementSyntax syntaxNode)
         {
             var semanticMethodNameAndParameters = GetDeclaredOriginalSymbol(syntaxNode, semanticModel, originalSemanticModel)?.ToString();            
             var joinedModifiers = string.Join(" ", syntaxNode.Modifiers.Select(m => m.ToString()));
