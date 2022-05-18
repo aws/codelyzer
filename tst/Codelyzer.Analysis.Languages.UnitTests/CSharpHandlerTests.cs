@@ -30,14 +30,15 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 					LiteralExpressions = true,
 					MethodInvocations = true,
 					Annotations = true
+				
 				}
 			};
 		}
 
 		[Fact]
-		public void CodeBlockHandlerTest1()
+		public void ClassHandlerTest()
 		{
-			const string vbCodeSnippet = @"
+			const string classSnippet = @"
 				public class Person
 				{
 					public string Name { get; set; }
@@ -59,7 +60,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 					}
 				}";
 			//ClassNode
-			var rootNode = GetCSharpUstNode(vbCodeSnippet);
+			var rootNode = GetCSharpUstNode(classSnippet);
 			Assert.Single(rootNode.Children);
 			var classNode = rootNode.Children[0];
 			Assert.Equal(typeof(Model.ClassDeclaration), classNode.GetType());
@@ -99,7 +100,43 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.Equal("string", ((MethodDeclaration)method2Node).ReturnType);
 		}
 
-		private Model.UstNode GetCSharpUstNode(string expressionShell)
+
+		[Fact]
+		public void AttributeHandlerTest()
+		{
+			var expressShell = @"
+				[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
+				public class AuthorAttribute : Attribute
+				{
+					private string name;
+					public AuthorAttribute(string name)
+					{
+						this.name = name;
+					}
+					public string Name
+					{
+						get { return name; }
+					}
+				}";
+			var rootNode = GetCSharpUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			/*var classNode = rootNode.Children[0];
+			var annotationNode = classNode.Children[0];
+            Assert.Equal(typeof(Model.Annotation), annotationNode.GetType());
+			Assert.Equal(2, annotationNode.Children.Count);
+			Assert.Equal("AttributeTargets.Class", annotationNode.Children[0].Identifier);
+			Assert.Equal("AllowMultiple = true", annotationNode.Children[1].Identifier);
+
+			var constructionNode = rootNode.Children[1];
+			Assert.Equal(typeof(Model.ConstructorDeclaration), constructionNode.GetType());
+			Assert.Equal("AuthorAttribute", constructionNode.Identifier);
+
+			var returnNode = rootNode.Children[2];
+			Assert.Equal(typeof(Model.ReturnStatement), returnNode.GetType());
+			Assert.Equal("name", returnNode.Identifier);*/
+		}
+
+        private Model.UstNode GetCSharpUstNode(string expressionShell)
 		{
 			var tree = Microsoft.CodeAnalysis.CSharp.SyntaxFactory.ParseSyntaxTree(expressionShell);
 			var compilation = CSharpCompilation.Create(
@@ -117,5 +154,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
 			return result;
 		}
+
+
 	}
 }

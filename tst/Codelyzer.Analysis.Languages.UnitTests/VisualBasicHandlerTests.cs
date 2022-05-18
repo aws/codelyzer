@@ -73,6 +73,45 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.True(variableNode.GetType() == typeof(Model.VariableDeclarator));
 		}
 
+
+		[Fact]
+		public void AttributeHandlerTest()
+		{
+			var expressShell = @"
+				<AttributeUsage(AttributeTargets.[Class], AllowMultiple:=True)>
+				Public Class AuthorAttribute
+					Inherits Attribute
+
+					Private name As String
+
+					Public Sub New(ByVal name As String)
+						Me.name = name
+					End Sub
+
+					Public ReadOnly Property Name As String
+						Get
+							Return name
+						End Get
+					End Property
+				End Class";
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			var classNode = rootNode.Children[0];
+			var annotationNode = classNode.Children[0];
+			Assert.Equal(typeof(Model.Annotation), annotationNode.GetType());
+			Assert.Equal(2, annotationNode.Children.Count);
+			Assert.Equal("AttributeTargets.[Class]", annotationNode.Children[0].Identifier);
+			Assert.Equal("AllowMultiple:=True", annotationNode.Children[1].Identifier);
+
+			var constructionNode = rootNode.Children[1];
+			Assert.Equal(typeof(Model.ConstructorDeclaration), constructionNode.GetType());
+			Assert.Equal("AuthorAttribute", constructionNode.Identifier);
+
+			var returnNode = rootNode.Children[2];
+			Assert.Equal(typeof(Model.ReturnStatement), returnNode.GetType());
+			Assert.Equal("name", returnNode.Identifier);
+		}
+
 		private Model.UstNode GetVisualBasicUstNode(string expressionShell)
         {
             var tree = Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.ParseSyntaxTree(expressionShell);
