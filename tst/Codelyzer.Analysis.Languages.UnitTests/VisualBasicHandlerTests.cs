@@ -27,7 +27,8 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 				{
 					LiteralExpressions = true,
 					MethodInvocations = true,
-					InvocationArguments = true
+					InvocationArguments = true,
+					DeclarationNodes = true
 				}
 			};
 		}
@@ -95,10 +96,12 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			//1:sub-block
 			var subBlockNode = classBlockNode.Children[1];
 			Assert.True(subBlockNode.GetType() == typeof(Model.MethodBlock));
+			Assert.Equal("SubBlock", subBlockNode.Identifier);
 			Assert.Equal(4, subBlockNode.Children.Count);
 			//1:sub-block::0::substatement
 			var subStatementNode = subBlockNode.Children[0];
 			Assert.True(subStatementNode.GetType() == typeof(Model.MethodStatement));
+
 			//1:sub-block::1::LocalDeclarationStatement
 			var localDeclareNode = subBlockNode.Children[1]; 
 			Assert.True(localDeclareNode.GetType() == typeof(Model.LocalDeclarationStatement));
@@ -161,6 +164,35 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.Equal(typeof(Model.ReturnStatement), returnNode.GetType());
 			Assert.Equal("name", returnNode.Identifier);*/
 		}
+
+
+		[Fact]
+		public void FunctionHandlerTest()
+		{
+			var expressShell = @"
+			Private Function GenerateResponse(context As HttpContext)
+				Return ""This is a test handler""
+			End Function";
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			var funcBlockNode = rootNode.Children[0];
+			Assert.True(funcBlockNode.GetType() == typeof(Model.MethodBlock));
+			Assert.Equal("FunctionBlock", funcBlockNode.Identifier);
+			Assert.Equal(3, funcBlockNode.Children.Count);
+			//1:sub-block::0::substatement
+			var subStatementNode = funcBlockNode.Children[0];
+			Assert.True(subStatementNode.GetType() == typeof(Model.MethodStatement));
+
+			var returnNode = funcBlockNode.Children[1];
+			Assert.True(returnNode.GetType() == typeof(Model.ReturnStatement));
+			Assert.Single(returnNode.Children);
+			var literalNode = returnNode.Children[0];
+			Assert.True(literalNode.GetType() == typeof(Model.LiteralExpression));
+			var endBlockNode = funcBlockNode.Children[2];
+			Assert.True(endBlockNode.GetType() == typeof(Model.EndBlockStatement));
+			Assert.Equal("End Function", endBlockNode.Identifier);
+		}
+		
 
 		private Model.UstNode GetVisualBasicUstNode(string expressionShell)
         {

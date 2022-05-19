@@ -165,6 +165,34 @@ namespace Codelyzer.Analysis.VisualBasic
             return handler.UstNode;
         }
 
+        public override UstNode VisitReturnStatement(ReturnStatementSyntax node)
+        {
+            ReturnStatementHandler handler = new ReturnStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitIdentifierName(IdentifierNameSyntax node)
+        {
+            if (MetaDataSettings.DeclarationNodes)
+            {
+                IdentifierNameHandler handler = new IdentifierNameHandler(_context, node);
+                if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
+                {
+                    HandleReferences(((DeclarationNode)handler.UstNode).Reference);
+                    return handler.UstNode;
+                }
+            }
+            return null;
+        }
+
+        public override UstNode VisitLiteralExpression(LiteralExpressionSyntax node)
+        {
+            if (!MetaDataSettings.LiteralExpressions) return null;
+
+            LiteralExpressionHandler handler = new LiteralExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
+
         private void HandleReferences(in Reference reference)
         {
             if (MetaDataSettings.ReferenceData
