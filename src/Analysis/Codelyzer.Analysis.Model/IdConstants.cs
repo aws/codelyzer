@@ -65,5 +65,14 @@ namespace Codelyzer.Analysis.Model
         public const string VariableDeclaratorName = "variable-declarator";
 
         public const string AttributeListName = "attribute-list";
+
+        public const string SubBlockName = "sub-block";
+
+        public const string EndBlockName = "end-block";
+
+        public const string ArgumentListName = "argument-list";
+
+        public const string LocalDeclarationStatementName = "local-declaration";
+        
     }
 }

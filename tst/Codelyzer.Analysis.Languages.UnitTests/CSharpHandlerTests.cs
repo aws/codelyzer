@@ -100,7 +100,45 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.Equal("string", ((MethodDeclaration)method2Node).ReturnType);
 		}
 
+		[Fact]
+		public void InvocationExpressionHandlerTest()
+		{
+			const string codeSnippet =
+			@"class TypeName
+			{
+				public void Test()
+				{
+					var a = ""test"";
+					string.Equals(a, ""v"", System.StringComparison.Ordinal);
+				}
+			}";
+			var rootNode = GetCSharpUstNode(codeSnippet);
+			Assert.Single(rootNode.Children);
+			var classNode = rootNode.Children[0];
+			Assert.True(classNode.GetType() == typeof(Model.ClassDeclaration));
+			Assert.Single(classNode.Children);
 
+			var methodNode = classNode.Children[0];
+			Assert.True(methodNode.GetType() == typeof(Model.MethodDeclaration));
+			Assert.Single(methodNode.Children);
+
+			var blockNode = methodNode.Children[0];
+			Assert.True(blockNode.GetType() == typeof(Model.BlockStatement));
+			Assert.Equal(2, blockNode.Children.Count);
+
+			var literalNode = blockNode.Children[0];
+			Assert.True(literalNode.GetType() == typeof(Model.LiteralExpression));
+			Assert.Equal("test", literalNode.Identifier);
+
+
+			var invocationNode = blockNode.Children[1];
+			Assert.True(invocationNode.GetType() == typeof(Model.InvocationExpression));
+			var invocationExpressionNode = (InvocationExpression)invocationNode;
+			Assert.Equal("Equals", invocationExpressionNode.MethodName);
+
+			Assert.Equal(3, invocationExpressionNode.Arguments.Count);
+			Assert.Equal("a", invocationExpressionNode.Arguments[0].Identifier);
+		}
 		[Fact]
 		public void AttributeHandlerTest()
 		{
@@ -120,7 +158,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 				}";
 			var rootNode = GetCSharpUstNode(expressShell);
 			Assert.Single(rootNode.Children);
-			/*var classNode = rootNode.Children[0];
+			var classNode = rootNode.Children[0];
 			var annotationNode = classNode.Children[0];
             Assert.Equal(typeof(Model.Annotation), annotationNode.GetType());
 			Assert.Equal(2, annotationNode.Children.Count);
@@ -133,7 +171,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 
 			var returnNode = rootNode.Children[2];
 			Assert.Equal(typeof(Model.ReturnStatement), returnNode.GetType());
-			Assert.Equal("name", returnNode.Identifier);*/
+			Assert.Equal("name", returnNode.Identifier);
 		}
 
         private Model.UstNode GetCSharpUstNode(string expressionShell)

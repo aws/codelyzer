@@ -114,6 +114,57 @@ namespace Codelyzer.Analysis.VisualBasic
             return handler.UstNode;
         }
 
+        public override UstNode VisitInvocationExpression(InvocationExpressionSyntax node)
+        {
+            if (!MetaDataSettings.MethodInvocations) return null;
+
+            InvocationExpressionHandler handler = new InvocationExpressionHandler(_context, node);
+            HandleReferences(((InvocationExpression)handler.UstNode).Reference);
+            return handler.UstNode;
+        }
+        public override UstNode VisitExpressionStatement(ExpressionStatementSyntax node)
+        {
+            return base.VisitExpressionStatement(node);
+        }
+
+        public override UstNode VisitMethodBlock(MethodBlockSyntax node)
+        {
+            MethodBlockHandler handler = new MethodBlockHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitMethodStatement(MethodStatementSyntax node)
+        {
+            MethodStatementHandler handler = new MethodStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
+        {
+            MemberAccessExpressionHandler handler = new MemberAccessExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitEndBlockStatement(EndBlockStatementSyntax node)
+        {
+            EndBlockStatementHandler handler = new EndBlockStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitArgumentList(ArgumentListSyntax node)
+        {
+            if (!MetaDataSettings.InvocationArguments) return null;
+
+            ArgumentListHandler handler = new ArgumentListHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
+        {
+            LocalDeclarationStatementHandler handler = new LocalDeclarationStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
         private void HandleReferences(in Reference reference)
         {
             if (MetaDataSettings.ReferenceData
