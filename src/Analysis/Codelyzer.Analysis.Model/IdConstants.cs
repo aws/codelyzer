@@ -30,6 +30,10 @@ namespace Codelyzer.Analysis.Model
 
         public const string SimpleLambdaExpressionIdName = "simple-lambda-expression";
 
+        public const string SingleLineLambdaExpressionIdName = "singleline-lambda-expression";
+
+        public const string MultiLineLambdaExpressionIdName = "multiline-lambda-expression";
+
         public const string LiteralIdName = "literal";
         
         public const string InvocationIdName = "invocation";

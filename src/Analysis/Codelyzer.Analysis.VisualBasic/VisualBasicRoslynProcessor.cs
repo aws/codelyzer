@@ -193,6 +193,22 @@ namespace Codelyzer.Analysis.VisualBasic
             return handler.UstNode;
         }
 
+        public override UstNode VisitSingleLineLambdaExpression(SingleLineLambdaExpressionSyntax node)
+        {
+            if (!MetaDataSettings.LambdaMethods) return null;
+
+            var handler = new SingleLineLambdaExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitMultiLineLambdaExpression(MultiLineLambdaExpressionSyntax node)
+        {
+            if (!MetaDataSettings.LambdaMethods) return null;
+
+            var handler = new MultiLineLambdaExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
+
         private void HandleReferences(in Reference reference)
         {
             if (MetaDataSettings.ReferenceData

@@ -28,7 +28,8 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 					LiteralExpressions = true,
 					MethodInvocations = true,
 					InvocationArguments = true,
-					DeclarationNodes = true
+					DeclarationNodes = true,
+					LambdaMethods = true
 				}
 			};
 		}
@@ -192,7 +193,47 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.True(endBlockNode.GetType() == typeof(Model.EndBlockStatement));
 			Assert.Equal("End Function", endBlockNode.Identifier);
 		}
-		
+
+		[Fact]
+		public void ConstructionHandlerTest()
+		{
+			var expressShell = @"
+			Sub New(isReusable As Boolean)
+				Me.IsReusable = isReusable
+			End Sub";
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			var constructionNode = rootNode.Children[0];
+			Assert.True(constructionNode.GetType() == typeof(Model.ConstructorBlock));
+
+		}
+
+		[Fact]
+		public void LambdaHandlerTest()
+		{
+			var expressShell = @"
+			Dim increment1 = Function(x) x + 1
+			Dim increment2 = Function(x)
+                     Return x + 2
+            End Function";
+
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Equal(2, rootNode.Children.Count);
+			var declare1Node = rootNode.Children[0];
+			Assert.True(declare1Node.GetType() == typeof(Model.FieldDeclaration));
+			var variable1Node = declare1Node.Children[0];
+			Assert.True(variable1Node.GetType() == typeof(Model.VariableDeclarator));
+			var singleLambdaNode = variable1Node.Children[0];
+			Assert.True(singleLambdaNode.GetType() == typeof(Model.SingleLineLambdaExpression));
+
+			var declare2Node = rootNode.Children[1];
+			Assert.True(declare2Node.GetType() == typeof(Model.FieldDeclaration));
+			var variable2Node = declare2Node.Children[0];
+			Assert.True(variable2Node.GetType() == typeof(Model.VariableDeclarator));
+			var multiLambdaNode = variable2Node.Children[0];
+			Assert.True(multiLambdaNode.GetType() == typeof(Model.MultiLineLambdaExpression));
+		}
+
 
 		private Model.UstNode GetVisualBasicUstNode(string expressionShell)
         {
