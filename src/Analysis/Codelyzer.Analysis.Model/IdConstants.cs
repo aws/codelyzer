@@ -77,6 +77,14 @@ namespace Codelyzer.Analysis.Model
         public const string ArgumentListName = "argument-list";
 
         public const string LocalDeclarationStatementName = "local-declaration";
-        
+
+        public const string NamespaceBlockIdName = "namespace-block";
+
+        public const string NamespaceStatementIdName = "namespace-statement";
+
+        public const string InterfaceBlockIdName = "interface-block";
+
+        public const string InterfaceStatementIdName = "interface-statement";
+
     }
 }

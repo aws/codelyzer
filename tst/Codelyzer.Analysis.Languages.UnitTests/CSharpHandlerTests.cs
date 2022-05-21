@@ -29,8 +29,11 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 				{
 					LiteralExpressions = true,
 					MethodInvocations = true,
-					Annotations = true
-				
+					InvocationArguments = true,
+					DeclarationNodes = true,
+					LambdaMethods = true,
+					InterfaceDeclarations = true
+
 				}
 			};
 		}
@@ -174,7 +177,56 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.Equal("name", returnNode.Identifier);
 		}
 
-        private Model.UstNode GetCSharpUstNode(string expressionShell)
+		[Fact]
+		public void NamespaceHandlerTest()
+		{
+			var expressShell = @"
+				namespace TestProject.System.Collections.Generic
+				{
+					class specialSortedList<T> : List<T>
+					{}
+				}
+				";
+			var rootNode = GetCSharpUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			var namespaceNode = rootNode.Children[0];
+			Assert.Equal(typeof(Model.NamespaceDeclaration), namespaceNode.GetType());
+			
+		}
+
+
+		[Fact]
+		public void InterfaceHandlerTest()
+		{
+			var expressShell = @"
+				namespace CsharpInterface {
+				  interface IPolygon {
+					// method without body
+					void calculateArea(int l, int b);
+				  }
+
+				  class Rectangle : IPolygon {
+					// implementation of methods inside interface
+					public void calculateArea(int l, int b) {
+
+					  int area = l * b;
+					  Console.WriteLine(""Area of Rectangle: "" + area);
+					}
+			}";
+			var rootNode = GetCSharpUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			var interfaceNode = rootNode.Children[0].Children[0];
+			Assert.Equal(typeof(Model.InterfaceDeclaration), interfaceNode.GetType());
+			Assert.Single(interfaceNode.Children);
+			var methodNode = interfaceNode.Children[0];
+			Assert.Equal(typeof(Model.MethodDeclaration), methodNode.GetType());
+			Assert.Equal(2, ((MethodDeclaration)methodNode).Parameters.Count);
+			var p1 = ((MethodDeclaration)methodNode).Parameters[0];
+			Assert.Equal("l", ((Parameter)p1).Name);
+			Assert.Equal("int", ((Parameter)p1).Type);
+		}
+		
+		private Model.UstNode GetCSharpUstNode(string expressionShell)
 		{
 			var tree = Microsoft.CodeAnalysis.CSharp.SyntaxFactory.ParseSyntaxTree(expressionShell);
 			var compilation = CSharpCompilation.Create(

@@ -25,7 +25,7 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
                 {
                     Name = parameter.Identifier.ToString()
                 };
-
+                
                 if (parameter.AsClause.Type != null)
                     param.Type = parameter.AsClause.Type.ToString();
 

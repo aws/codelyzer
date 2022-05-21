@@ -29,7 +29,8 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 					MethodInvocations = true,
 					InvocationArguments = true,
 					DeclarationNodes = true,
-					LambdaMethods = true
+					LambdaMethods = true,
+					InterfaceDeclarations = true
 				}
 			};
 		}
@@ -150,12 +151,12 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 				End Class";
 			var rootNode = GetVisualBasicUstNode(expressShell);
 			Assert.Single(rootNode.Children);
-			/*var classNode = rootNode.Children[0];
+			var classNode = rootNode.Children[0];
 			var annotationNode = classNode.Children[0];
-			Assert.Equal(typeof(Model.Annotation), annotationNode.GetType());
-			Assert.Equal(2, annotationNode.Children.Count);
-			Assert.Equal("AttributeTargets.[Class]", annotationNode.Children[0].Identifier);
-			Assert.Equal("AllowMultiple:=True", annotationNode.Children[1].Identifier);
+			//Assert.Equal(typeof(Model.Annotation), annotationNode.GetType());
+			//Assert.Equal(2, annotationNode.Children.Count);
+			/*Assert.Equal("AttributeTargets.[Class]", annotationNode.Children[0].Identifier);
+			Assert.Equal("AllowMultiple:=True", annotationNode.Children[1].Identifier);*/
 
 			var constructionNode = rootNode.Children[1];
 			Assert.Equal(typeof(Model.ConstructorDeclaration), constructionNode.GetType());
@@ -163,7 +164,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 
 			var returnNode = rootNode.Children[2];
 			Assert.Equal(typeof(Model.ReturnStatement), returnNode.GetType());
-			Assert.Equal("name", returnNode.Identifier);*/
+			Assert.Equal("name", returnNode.Identifier);
 		}
 
 
@@ -235,7 +236,100 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 		}
 
 
-		private Model.UstNode GetVisualBasicUstNode(string expressionShell)
+		[Fact]
+		public void ObjectCreationHandlerTest()
+		{
+			var expressShell = @"
+			Sub Main()
+				Dim request As New HttpRequest("""", ""http://localhost"", """")
+			End Sub";
+
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			var methodBlockNode = rootNode.Children[0];
+			Assert.True(methodBlockNode.GetType() == typeof(Model.MethodBlock));
+
+			var methodStatementNode = methodBlockNode.Children[0];
+			Assert.True(methodStatementNode.GetType() == typeof(Model.MethodStatement));
+			var localDeclarationNode = methodBlockNode.Children[1];
+			Assert.True(localDeclarationNode.GetType() == typeof(Model.LocalDeclarationStatement));
+			var variableNode = localDeclarationNode.Children[0];
+			Assert.True(variableNode.GetType() == typeof(Model.VariableDeclarator));
+			var objectCreateNode = variableNode.Children[0];
+			Assert.True(objectCreateNode.GetType() == typeof(Model.ObjectCreationExpression));
+			Assert.Equal(3, ((Model.ObjectCreationExpression)objectCreateNode).Arguments.Count);
+
+			var endNode = methodBlockNode.Children[2];
+			Assert.True(endNode.GetType() == typeof(Model.EndBlockStatement));
+
+		}
+
+		[Fact]
+		public void NameSpaceHandlerTest()
+		{
+			var expressShell = @"
+			Namespace System.Collections.Generic
+				Class specialSortedList(Of T)
+					Inherits List(Of T)
+					' Insert code to define the special generic list class.
+
+				End Class
+			End Namespace";
+
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			var nsblockNode = rootNode.Children[0];
+			Assert.True(nsblockNode.GetType() == typeof(Model.NamespaceBlock));
+
+			var nsStatementNode = nsblockNode.Children[0];
+			Assert.True(nsStatementNode.GetType() == typeof(Model.NamespaceStatement));
+			Assert.Equal(3, nsStatementNode.Children.Count);
+			Assert.Equal("System", nsStatementNode.Children[0].Identifier);
+			Assert.Equal("Collections", nsStatementNode.Children[1].Identifier);
+			Assert.Equal("Generic", nsStatementNode.Children[2].Identifier);
+		}
+
+
+		[Fact]
+		public void InterfaceHandlerTest()
+		{
+			var expressShell = @"
+				Namespace CsharpInterface
+				Interface IPolygon
+					Sub calculateArea(ByVal l As Integer, ByVal b As Integer)
+				End Interface
+
+				Class Rectangle
+					Implements IPolygon
+
+					Public Sub calculateArea(ByVal l As Integer, ByVal b As Integer)
+						Dim area As Integer = l * b
+						Console.WriteLine(""Area of Rectangle: "" & area)
+					End Sub
+				End Class
+			End Namespace";
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			var interfaceNode = rootNode.Children[0].Children[1];
+			Assert.Equal(typeof(Model.InterfaceBlock), interfaceNode.GetType());
+			Assert.Equal(3, interfaceNode.Children.Count);
+			var interfaceStatementNode = interfaceNode.Children[0];
+			Assert.Equal(typeof(Model.InterfaceStatement), interfaceStatementNode.GetType());
+			
+			var methodStatementNode = interfaceNode.Children[1];
+			Assert.Equal(typeof(Model.MethodStatement), methodStatementNode.GetType());
+
+			Assert.Equal(2, ((Model.MethodStatement)methodStatementNode).Parameters.Count);
+			var p1 = ((Model.MethodStatement)methodStatementNode).Parameters[0];
+			Assert.Equal("l", p1.Name);
+			Assert.Equal("Integer", p1.Type);
+			var endNode = interfaceNode.Children[2];
+			Assert.Equal(typeof(Model.EndBlockStatement), endNode.GetType());
+
+			
+		}
+
+			private Model.UstNode GetVisualBasicUstNode(string expressionShell)
         {
             var tree = Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.ParseSyntaxTree(expressionShell);
             var compilation = VisualBasicCompilation.Create(

@@ -209,6 +209,40 @@ namespace Codelyzer.Analysis.VisualBasic
             return handler.UstNode;
         }
 
+        public override UstNode VisitObjectCreationExpression(ObjectCreationExpressionSyntax node)
+        {
+            ObjectCreationExpressionHandler handler = new ObjectCreationExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitNamespaceBlock(NamespaceBlockSyntax node)
+        {
+            NamespaceBlockHandler handler = new NamespaceBlockHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitNamespaceStatement(NamespaceStatementSyntax node)
+        {
+            NamespaceStatementHandler handler = new NamespaceStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitInterfaceBlock(InterfaceBlockSyntax node)
+        {
+            if (!MetaDataSettings.InterfaceDeclarations) return null;
+
+            InterfaceBlockHandler handler = new InterfaceBlockHandler(_context, node);
+            HandleReferences(((InterfaceBlock)handler.UstNode).Reference);
+
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitInterfaceStatement(InterfaceStatementSyntax node)
+        {
+            InterfaceStatementHandler handler = new InterfaceStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
         private void HandleReferences(in Reference reference)
         {
             if (MetaDataSettings.ReferenceData

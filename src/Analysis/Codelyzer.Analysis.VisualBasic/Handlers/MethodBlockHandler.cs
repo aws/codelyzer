@@ -35,6 +35,8 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
                     Model.BaseList = classSymbol.Interfaces.Select(x => x.ToString())?.ToList();
                 }
             }
+
+            
         }
     }
 }
