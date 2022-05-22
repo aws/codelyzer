@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Codelyzer.Analysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp;
 using Codelyzer.Analysis.Model;
+using System.Linq;
 
 namespace Codelyzer.Analysis.Languages.UnitTests
 {
@@ -101,6 +102,47 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			var method2Parameters = ((MethodDeclaration)method2Node).Parameters;
 			Assert.True(method2Parameters.Count == 0);
 			Assert.Equal("string", ((MethodDeclaration)method2Node).ReturnType);
+		}
+
+
+		[Fact]
+		public void ConstructorHandlerTest()
+		{
+			const string constructorSnippet = @"
+		public class Child : Person
+		{
+			private static int maximumAge;
+
+			public Child(string lastName, string firstName) : base(lastName, firstName)
+			{ }
+
+			static Child() => maximumAge = 18;
+
+			// Remaining implementation of Child class.
+		}";
+
+			var rootNode = GetCSharpUstNode(constructorSnippet);
+			Assert.Single(rootNode.Children);
+			var classNode = rootNode.Children[0];
+			//2 constructionDeclaration
+			Assert.Equal(2, classNode.Children.Count);
+			var construction1Node = classNode.Children[0];
+			Assert.True(construction1Node.GetType() == typeof(Model.ConstructorDeclaration));
+			Assert.Equal(2, construction1Node.Children.Count(c => c.GetType() == typeof(Model.Parameter)));
+			var p1 =construction1Node.Children.FirstOrDefault(c => c.GetType() == typeof(Model.Parameter));
+			var p2 = construction1Node.Children.LastOrDefault(c => c.GetType() == typeof(Model.Parameter));
+			Assert.Equal("lastName", p1.Identifier);
+			Assert.Equal("firstName", p2.Identifier);
+
+			var construction2Node = classNode.Children[1];
+			Assert.True(construction2Node.GetType() == typeof(Model.ConstructorDeclaration));
+			Assert.Single(construction2Node.Children);
+			var arrowNode = construction2Node.Children[0];
+
+			Assert.True(arrowNode.GetType() == typeof(Model.ArrowExpressionClause));
+			var literalNode = arrowNode.Children[0];
+			Assert.True(literalNode.GetType() == typeof(Model.LiteralExpression));
+			Assert.Equal("18", literalNode.Identifier);
 		}
 
 		[Fact]

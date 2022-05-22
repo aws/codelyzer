@@ -152,10 +152,10 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			var rootNode = GetVisualBasicUstNode(expressShell);
 			Assert.Single(rootNode.Children);
 			var classNode = rootNode.Children[0];
-			var annotationNode = classNode.Children[0];
+			/*var annotationNode = classNode.Children[0];
 			//Assert.Equal(typeof(Model.Annotation), annotationNode.GetType());
 			//Assert.Equal(2, annotationNode.Children.Count);
-			/*Assert.Equal("AttributeTargets.[Class]", annotationNode.Children[0].Identifier);
+			Assert.Equal("AttributeTargets.[Class]", annotationNode.Children[0].Identifier);
 			Assert.Equal("AllowMultiple:=True", annotationNode.Children[1].Identifier);*/
 
 			var constructionNode = rootNode.Children[1];
