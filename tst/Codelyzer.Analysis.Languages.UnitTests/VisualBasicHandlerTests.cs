@@ -235,6 +235,81 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.True(multiLambdaNode.GetType() == typeof(Model.MultiLineLambdaExpression));
 		}
 
+		[Fact]
+		public void PropertyHandlerTest()
+		{
+			var expressShell = @"
+			Public ReadOnly Property Url() As String
+				Get
+					Return UrlValue
+				End Get
+			End Property";
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			var propertyBlockNode = rootNode.Children[0];
+			Assert.True(propertyBlockNode.GetType() == typeof(Model.PropertyBlock));
+			Assert.Equal("PropertyBlock", propertyBlockNode.Identifier);
+			Assert.Equal(3, propertyBlockNode.Children.Count);
+			
+			var propertyStatementNode = propertyBlockNode.Children[0];
+			Assert.True(propertyStatementNode.GetType() == typeof(Model.PropertyStatement));
+
+			var accessorBlockNode = propertyBlockNode.Children[1];
+			Assert.True(accessorBlockNode.GetType() == typeof(Model.AccessorBlock));
+			Assert.Equal(4, accessorBlockNode.Children.Count);
+
+			var accessorStatementNode = accessorBlockNode.Children[1];
+			Assert.True(accessorStatementNode.GetType() == typeof(Model.AccessorStatement));
+			var returnStatementNode = accessorBlockNode.Children[2];
+			Assert.True(returnStatementNode.GetType() == typeof(Model.ReturnStatement));
+			var endStatementNode = accessorBlockNode.Children[3];
+			Assert.True(endStatementNode.GetType() == typeof(Model.EndBlockStatement));
+			Assert.Equal("End Get", endStatementNode.Identifier);
+
+			var endBlockNode = propertyBlockNode.Children[2];
+			Assert.True(endBlockNode.GetType() == typeof(Model.EndBlockStatement));
+			Assert.Equal("End Property", endBlockNode.Identifier);
+		}
+
+		[Fact]
+		public void ModuleHandlerTest()
+		{
+			var expressShell = @"
+			Module Module1
+			End Module";
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			var moduleNode = rootNode.Children[0];
+
+			Assert.True(moduleNode.GetType() == typeof(Model.ModuleBlock));
+			Assert.True(moduleNode.Children[0].GetType() == typeof(Model.ModuleStatement));
+		}
+
+		[Fact]
+		public void EnumHandlerTest()
+		{
+			var expressShell = @"
+			Private Enum SampleEnum
+				SampleMember
+			End Enum";
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+
+			var enumBlockNode = rootNode.Children[0];
+			Assert.True(enumBlockNode.GetType() == typeof(Model.EnumBlock));
+			Assert.Equal("enumBlock", enumBlockNode.Identifier);
+			Assert.Equal(3, enumBlockNode.Children.Count);
+
+			var enumStatementNode = enumBlockNode.Children[0];
+			Assert.True(enumStatementNode.GetType() == typeof(Model.EnumStatement));
+
+			var enumMemberDeclarationNode = enumBlockNode.Children[1];
+			Assert.True(enumMemberDeclarationNode.GetType() == typeof(Model.EnumMemberDeclaration));
+
+			var endBlockNode = enumBlockNode.Children[2];
+			Assert.True(endBlockNode.GetType() == typeof(Model.EndBlockStatement));
+			Assert.Equal("End Enum", endBlockNode.Identifier);
+		}
 
 		[Fact]
 		public void ObjectCreationHandlerTest()

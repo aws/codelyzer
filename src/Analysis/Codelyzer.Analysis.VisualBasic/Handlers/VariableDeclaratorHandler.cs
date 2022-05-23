@@ -12,7 +12,7 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
             VariableDeclaratorSyntax syntaxNode)
             : base(context, syntaxNode, new VariableDeclarator())
         {
-            Model.Identifier = syntaxNode.ToString();
+            Model.Identifier = syntaxNode.Names.ToString();
         }
     }
 }

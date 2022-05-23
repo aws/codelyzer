@@ -62,8 +62,6 @@ namespace Codelyzer.Analysis.Model
 
         public const string ClassBlockName = "class-block";
 
-        public const string ClassStatementName = "class-statement";
-
         public const string FieldDeclarationName = "field-declaration";
 
         public const string VariableDeclaratorName = "variable-declarator";
@@ -86,5 +84,22 @@ namespace Codelyzer.Analysis.Model
 
         public const string InterfaceStatementIdName = "interface-statement";
 
+        public const string PropertyBlockName = "property-block";
+
+        public const string PropertyStatementName = "property-statement";
+
+        public const string AccessorBlockName = "accessor-block";
+
+        public const string AccessorStatementName = "accessor-statement";
+
+        public const string ModuleBlockName = "module-block";
+
+        public const string ModuleStatementName = "module-statement";
+
+        public const string EnumBlockName = "enum-block";
+
+        public const string EnumStatementName = "enum-statement";
+
+        public const string EnumMemberDeclarationName = "enum-member-declaration";
     }
 }
