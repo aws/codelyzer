@@ -15,7 +15,7 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
             : base(context, syntaxNode, new PropertyBlock())
         {
 
-            foreach (var parameter in syntaxNode.PropertyStatement.ParameterList.Parameters)
+            foreach (var parameter in syntaxNode.PropertyStatement.ParameterList?.Parameters)
             {
                 var param = new Parameter
                 {

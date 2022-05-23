@@ -152,20 +152,21 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 				End Class";
 			var rootNode = GetVisualBasicUstNode(expressShell);
 			Assert.Single(rootNode.Children);
-			var classNode = rootNode.Children[0];
-			/*var annotationNode = classNode.Children[0];
-			//Assert.Equal(typeof(Model.Annotation), annotationNode.GetType());
-			//Assert.Equal(2, annotationNode.Children.Count);
-			Assert.Equal("AttributeTargets.[Class]", annotationNode.Children[0].Identifier);
-			Assert.Equal("AllowMultiple:=True", annotationNode.Children[1].Identifier);*/
-
-			var constructionNode = rootNode.Children[1];
-			Assert.Equal(typeof(Model.ConstructorDeclaration), constructionNode.GetType());
-			Assert.Equal("AuthorAttribute", constructionNode.Identifier);
-
-			var returnNode = rootNode.Children[2];
-			Assert.Equal(typeof(Model.ReturnStatement), returnNode.GetType());
-			Assert.Equal("name", returnNode.Identifier);
+			var classBlockNode = rootNode.Children[0];
+			Assert.Single(classBlockNode.Children.Where(c=> c.GetType() == typeof(Model.ClassStatement)));
+			var classStatementNode = classBlockNode.Children.Single(c => c.GetType() == typeof(Model.ClassStatement));
+			Assert.Single(classStatementNode.Children);
+			var attributeListNode = classStatementNode.Children[0];
+			Assert.Equal(typeof(Model.AttributeList), attributeListNode.GetType());
+			Assert.Single(attributeListNode.Children);
+			var argumentListNode = attributeListNode.Children[0];
+			Assert.Equal(typeof(Model.ArgumentList), argumentListNode.GetType());
+			Assert.Equal(2, argumentListNode.Children.Count);
+			var attribute1 = (Model.AttributeArgument)argumentListNode.Children.FirstOrDefault();
+			var attribute2 = (Model.AttributeArgument)argumentListNode.Children.LastOrDefault();
+			Assert.Equal("AttributeTargets.[Class]", attribute1.ArgumentExpression);
+			Assert.Equal("True", attribute2.ArgumentExpression);
+			Assert.Equal("AllowMultiple", attribute2.ArgumentName);
 		}
 
 

@@ -315,6 +315,12 @@ namespace Codelyzer.Analysis.VisualBasic
             return handler.UstNode;
         }
 
+        public override UstNode VisitSimpleArgument(SimpleArgumentSyntax node)
+        {
+            SimpleArgumentHandler handler = new SimpleArgumentHandler(_context, node);
+            return handler.UstNode;
+        }
+
         private void HandleReferences(in Reference reference)
         {
             if (MetaDataSettings.ReferenceData
