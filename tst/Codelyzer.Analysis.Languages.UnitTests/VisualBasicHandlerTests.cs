@@ -5,6 +5,7 @@ using Microsoft.CodeAnalysis.VisualBasic;
 using Xunit.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Codelyzer.Analysis.VisualBasic;
+using System.Linq;
 
 namespace Codelyzer.Analysis.Languages.UnitTests
 {
@@ -169,7 +170,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 
 
 		[Fact]
-		public void FunctionHandlerTest()
+		public void Function1HandlerTest()
 		{
 			var expressShell = @"
 			Private Function GenerateResponse(context As HttpContext)
@@ -184,12 +185,47 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			//1:sub-block::0::substatement
 			var subStatementNode = funcBlockNode.Children[0];
 			Assert.True(subStatementNode.GetType() == typeof(Model.MethodStatement));
-
+			Assert.Single(((Model.MethodStatement)subStatementNode).Parameters);
+			var p1 = ((Model.MethodStatement)subStatementNode).Parameters[0];
+			Assert.Equal("HttpContext", p1.Type);
+			
 			var returnNode = funcBlockNode.Children[1];
 			Assert.True(returnNode.GetType() == typeof(Model.ReturnStatement));
 			Assert.Single(returnNode.Children);
 			var literalNode = returnNode.Children[0];
 			Assert.True(literalNode.GetType() == typeof(Model.LiteralExpression));
+			var endBlockNode = funcBlockNode.Children[2];
+			Assert.True(endBlockNode.GetType() == typeof(Model.EndBlockStatement));
+			Assert.Equal("End Function", endBlockNode.Identifier);
+		}
+
+		[Fact]
+		public void Function2HandlerTest()
+		{
+			var expressShell = @"
+			Function CreatePerson(ByVal value As String) As Person
+				Return New Person()
+			End Function";
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			var funcBlockNode = rootNode.Children[0];
+			Assert.True(funcBlockNode.GetType() == typeof(Model.MethodBlock));
+			Assert.Equal("FunctionBlock", funcBlockNode.Identifier);
+			Assert.Equal(3, funcBlockNode.Children.Count);
+			//1:sub-block::0::substatement
+			var subStatementNode = funcBlockNode.Children[0];
+			Assert.True(subStatementNode.GetType() == typeof(Model.MethodStatement));
+			Assert.Single(((Model.MethodStatement)subStatementNode).Parameters);
+			var p1 = ((Model.MethodStatement)subStatementNode).Parameters[0];
+			Assert.Equal("String", p1.Type);
+
+			var subStatementTypeNode = subStatementNode.Children.LastOrDefault();
+			Assert.Equal("Person", ((Model.SimpleAsClause)subStatementTypeNode).Type); 
+
+			var returnNode = funcBlockNode.Children[1];
+			Assert.True(returnNode.GetType() == typeof(Model.ReturnStatement));
+			Assert.Single(returnNode.Children);
+			
 			var endBlockNode = funcBlockNode.Children[2];
 			Assert.True(endBlockNode.GetType() == typeof(Model.EndBlockStatement));
 			Assert.Equal("End Function", endBlockNode.Identifier);
@@ -206,7 +242,10 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.Single(rootNode.Children);
 			var constructionNode = rootNode.Children[0];
 			Assert.True(constructionNode.GetType() == typeof(Model.ConstructorBlock));
-
+			Assert.Single(((Model.ConstructorBlock)constructionNode).Parameters);
+			var p = ((Model.ConstructorBlock)constructionNode).Parameters[0];
+			Assert.Equal("isReusable", p.Name);
+			Assert.Equal("Boolean", p.Type);
 		}
 
 		[Fact]
@@ -253,16 +292,20 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			
 			var propertyStatementNode = propertyBlockNode.Children[0];
 			Assert.True(propertyStatementNode.GetType() == typeof(Model.PropertyStatement));
+			Assert.Single(propertyStatementNode.Children);
+			var asTypeNode = propertyStatementNode.Children[0];
+			Assert.True(asTypeNode.GetType() == typeof(Model.SimpleAsClause));
+			Assert.Equal("String", ((Model.SimpleAsClause)asTypeNode).Type);
 
 			var accessorBlockNode = propertyBlockNode.Children[1];
 			Assert.True(accessorBlockNode.GetType() == typeof(Model.AccessorBlock));
-			Assert.Equal(4, accessorBlockNode.Children.Count);
+			Assert.Equal(3, accessorBlockNode.Children.Count);
 
-			var accessorStatementNode = accessorBlockNode.Children[1];
+			var accessorStatementNode = accessorBlockNode.Children[0];
 			Assert.True(accessorStatementNode.GetType() == typeof(Model.AccessorStatement));
-			var returnStatementNode = accessorBlockNode.Children[2];
+			var returnStatementNode = accessorBlockNode.Children[1];
 			Assert.True(returnStatementNode.GetType() == typeof(Model.ReturnStatement));
-			var endStatementNode = accessorBlockNode.Children[3];
+			var endStatementNode = accessorBlockNode.Children[2];
 			Assert.True(endStatementNode.GetType() == typeof(Model.EndBlockStatement));
 			Assert.Equal("End Get", endStatementNode.Identifier);
 

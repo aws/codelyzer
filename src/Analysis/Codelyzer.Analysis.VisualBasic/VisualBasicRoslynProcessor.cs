@@ -207,7 +207,7 @@ namespace Codelyzer.Analysis.VisualBasic
             return handler.UstNode;
         }
 
-        public override UstNode VisitImplementsStatement(ImplementsStatementSyntax node)
+        /*public override UstNode VisitImplementsStatement(ImplementsStatementSyntax node)
         {
             ImplementsStatementHandler handler = new ImplementsStatementHandler(_context, node);
             return handler.UstNode;
@@ -217,7 +217,7 @@ namespace Codelyzer.Analysis.VisualBasic
         {
             MultiLineIfBlockHandler handler = new MultiLineIfBlockHandler(_context, node);
             return handler.UstNode;
-        }
+        }*/
 
         public override UstNode VisitEnumBlock(EnumBlockSyntax node)
         {
@@ -306,6 +306,12 @@ namespace Codelyzer.Analysis.VisualBasic
         public override UstNode VisitInterfaceStatement(InterfaceStatementSyntax node)
         {
             InterfaceStatementHandler handler = new InterfaceStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitSimpleAsClause(SimpleAsClauseSyntax node)
+        {
+            SimpleAsClauseHandler handler = new SimpleAsClauseHandler(_context, node);
             return handler.UstNode;
         }
 

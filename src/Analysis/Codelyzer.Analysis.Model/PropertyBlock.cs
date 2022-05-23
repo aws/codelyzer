@@ -22,6 +22,9 @@ namespace Codelyzer.Analysis.Model
         public Reference Reference { get; set; }
         public string SemanticAssembly { get; set; }
 
+        [JsonProperty("parameters", Order = 100)]
+        public List<Parameter> Parameters { get; set; }
+
         public PropertyBlock()
             : base(IdConstants.PropertyBlockName)
         {

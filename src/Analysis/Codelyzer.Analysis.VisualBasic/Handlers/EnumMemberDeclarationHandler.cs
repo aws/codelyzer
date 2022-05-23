@@ -12,7 +12,7 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
             EnumMemberDeclarationSyntax syntaxNode)
             : base(context, syntaxNode, new EnumMemberDeclaration())
         {
-            Model.Identifier = syntaxNode.Identifier;
+            Model.Identifier = syntaxNode.Identifier.Text;
         }
     }
 }
