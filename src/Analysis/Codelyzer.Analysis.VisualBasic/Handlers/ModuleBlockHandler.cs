@@ -5,18 +5,18 @@ using System.Linq;
 
 namespace Codelyzer.Analysis.VisualBasic.Handlers
 {
-    public class ClassBlockHandler : UstNodeHandler
+    public class ModuleBlockHandler : UstNodeHandler
     {
-        private ClassBlock Model { get => (ClassBlock)UstNode; }
+        private ModuleBlock Model { get => (ModuleBlock)UstNode; }
 
-        public ClassBlockHandler(CodeContext context,
-            ClassBlockSyntax syntaxNode)
-            : base(context, syntaxNode, new ClassBlock())
+        public ModuleBlockHandler(CodeContext context,
+            ModuleBlockSyntax syntaxNode)
+            : base(context, syntaxNode, new ModuleBlock())
         {
             var classSymbol = SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
 
-            Model.Identifier = syntaxNode.ClassStatement.Identifier.ToString();
-            Model.Modifiers = syntaxNode.ClassStatement.Modifiers.ToString();
+            Model.Identifier = syntaxNode.Kind().ToString();
+            Model.Modifiers = syntaxNode.BlockStatement.Modifiers.ToString();
 
             if (classSymbol != null)
             {
@@ -32,7 +32,7 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
 
                 if (classSymbol.Interfaces != null)
                 {
-                    Model.Inherits = classSymbol.Interfaces.Select(x => x.ToString())?.ToList();
+                    Model.BaseList = classSymbol.Interfaces.Select(x => x.ToString())?.ToList();
                 }
             }
         }

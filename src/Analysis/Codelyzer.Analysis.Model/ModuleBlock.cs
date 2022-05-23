@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Codelyzer.Analysis.Model
 {
-    public class ClassBlock : UstNode
+    public class ModuleBlock : UstNode
     {
         [JsonProperty("base-type", Order = 10)]
         public string BaseType { get; set; }
@@ -12,8 +12,8 @@ namespace Codelyzer.Analysis.Model
         [JsonProperty("base-type-original-def", Order = 11)]
         public string BaseTypeOriginalDefinition { get; set; }
 
-        [JsonProperty("inherits", Order = 12)]
-        public List<string> Inherits { get; set; }
+        [JsonProperty("base-list", Order = 12)]
+        public List<string> BaseList { get; set; }
 
         [JsonProperty("modifiers", Order = 20)]
         public string Modifiers { get; set; }
@@ -22,22 +22,22 @@ namespace Codelyzer.Analysis.Model
         public Reference Reference { get; set; }
         public string SemanticAssembly { get; set; }
 
-        public ClassBlock()
-            : base(IdConstants.ClassBlockName)
+        public ModuleBlock()
+            : base(IdConstants.AccessorBlockName)
         {
             Reference = new Reference();
         }
 
         public override bool Equals(object obj)
         {
-            if (obj is ClassBlock)
+            if (obj is ModuleBlock)
             {
-                return Equals(obj as ClassBlock);
+                return Equals(obj as ModuleBlock);
             }
             return false;
         }
 
-        public bool Equals(ClassBlock compareNode)
+        public bool Equals(ModuleBlock compareNode)
         {
             return
                 compareNode != null &&

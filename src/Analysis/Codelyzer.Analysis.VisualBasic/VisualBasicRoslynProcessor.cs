@@ -171,6 +171,72 @@ namespace Codelyzer.Analysis.VisualBasic
             return handler.UstNode;
         }
 
+        public override UstNode VisitPropertyBlock(PropertyBlockSyntax node)
+        {
+            PropertyBlockHandler handler = new PropertyBlockHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitPropertyStatement(PropertyStatementSyntax node)
+        {
+            PropertyStatementHandler handler = new PropertyStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitAccessorBlock(AccessorBlockSyntax node)
+        {
+            AccessorBlockHandler handler = new AccessorBlockHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitAccessorStatement(AccessorStatementSyntax node)
+        {
+            AccessorStatementHandler handler = new AccessorStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitModuleBlock(ModuleBlockSyntax node)
+        {
+            ModuleBlockHandler handler = new ModuleBlockHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitModuleStatement(ModuleStatementSyntax node)
+        {
+            ModuleStatementHandler handler = new ModuleStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitImplementsStatement(ImplementsStatementSyntax node)
+        {
+            ImplementsStatementHandler handler = new ImplementsStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitMultiLineIfBlock(MultiLineIfBlockSyntax node)
+        {
+            MultiLineIfBlockHandler handler = new MultiLineIfBlockHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitEnumBlock(EnumBlockSyntax node)
+        {
+            EnumBlockHandler handler = new EnumBlockHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitEnumStatement(EnumStatementSyntax node)
+        {
+            EnumStatementHandler handler = new EnumStatementHandler(_context, node);
+            return handler.UstNode;
+        }
+
+        public override UstNode VisitEnumMemberDeclaration(EnumMemberDeclarationSyntax node)
+        {
+            EnumMemberDeclarationHandler handler = new EnumMemberDeclarationHandler(_context, node);
+            return handler.UstNode;
+        }
+
         public override UstNode VisitIdentifierName(IdentifierNameSyntax node)
         {
             if (MetaDataSettings.DeclarationNodes)
