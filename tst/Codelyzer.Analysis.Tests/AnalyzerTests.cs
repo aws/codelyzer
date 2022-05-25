@@ -1109,7 +1109,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(3, projectGraph.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Facade")).Edges.Count);
 
             // The Mvc project has 3 Edges
-            Assert.AreEqual(4, projectGraph.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Mvc")).Edges.Count);
+            Assert.AreEqual(3, projectGraph.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Mvc")).Edges.Count);
 
             // The Models project has 0 Edges
             Assert.AreEqual(0, projectGraph.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).Edges.Count);
