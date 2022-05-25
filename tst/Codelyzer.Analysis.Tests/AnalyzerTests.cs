@@ -1060,6 +1060,89 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             });
         }
 
+        [Test]
+        public async Task TestModernizeGraph()
+        {
+            string solutionPath = CopySolutionFolderToTemp("Modernize.Web.sln");
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                ConcurrentThreads = 1,
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true,
+                    GenerateBinFiles = true,
+                    LoadBuildData = true
+                }
+            };
+
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            var result = await analyzer.AnalyzeSolutionWithGraph(solutionPath);
+
+            var projectGraph = result.CodeGraph?.ProjectGraph;
+            var classGraph = result.CodeGraph?.ClassGraph;
+
+            // There are 5 projects in the solution
+            Assert.AreEqual(5, projectGraph.Count);
+
+            // There are 26 classes in the solution
+            Assert.AreEqual(26, classGraph.Count);
+
+            // The Facade project has 3 Edges
+            Assert.AreEqual(3, projectGraph.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Facade")).Edges.Count);
+
+            // The Mvc project has 3 Edges
+            Assert.AreEqual(4, projectGraph.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Mvc")).Edges.Count);
+
+            // The Models project has 0 Edges
+            Assert.AreEqual(0, projectGraph.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).Edges.Count);
+
+            // Number of edges for each node
+            Assert.AreEqual(1, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.BundleConfig")).Edges.Count);
+            Assert.AreEqual(1, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.FilterConfig")).Edges.Count);
+            Assert.AreEqual(1, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.RouteConfig")).Edges.Count);
+            Assert.AreEqual(0, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.WebApiConfig")).Edges.Count);
+            Assert.AreEqual(0, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Controllers.HomeController")).Edges.Count);
+            Assert.AreEqual(20, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.CustomersController")).Edges.Count);
+            Assert.AreEqual(8, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Controllers.ProductsAPIController")).Edges.Count);
+            Assert.AreEqual(20, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Controllers.ProductsController")).Edges.Count);
+            Assert.AreEqual(21, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Controllers.PurchasesController")).Edges.Count);
+            Assert.AreEqual(0, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Controllers.ValuesController")).Edges.Count);
+            Assert.AreEqual(15, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Data.ModernizeWebMvcContext")).Edges.Count);
+            Assert.AreEqual(3, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.SecondExtractedClass")).Edges.Count);
+            Assert.AreEqual(3, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.ExtractedClass")).Edges.Count);
+            Assert.AreEqual(3, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.MvcApplication")).Edges.Count);
+            Assert.AreEqual(23, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Customer")).Edges.Count);
+            Assert.AreEqual(28, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Product")).Edges.Count);
+            Assert.AreEqual(23, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Purchase")).Edges.Count);
+            Assert.AreEqual(51, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Data.SqlProvider")).Edges.Count);
+            Assert.AreEqual(0, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Common.Constants")).Edges.Count);
+            Assert.AreEqual(8, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.Factory")).Edges.Count);
+            Assert.AreEqual(23, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.CustomerFacade")).Edges.Count);
+            Assert.AreEqual(23, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.ProductFacade")).Edges.Count);
+            Assert.AreEqual(31, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.PurchaseFacade")).Edges.Count);
+            Assert.AreEqual(0, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.IPurchaseFacade")).Edges.Count);
+            Assert.AreEqual(0, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.ICustomerFacade")).Edges.Count);
+            Assert.AreEqual(0, classGraph.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.IProductFacade")).Edges.Count);
+        }
+
         #region private methods
         private void DeleteDir(string path, int retries = 0)
         {

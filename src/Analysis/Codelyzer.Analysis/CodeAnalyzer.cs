@@ -55,6 +55,8 @@ namespace Codelyzer.Analysis
         /// <returns></returns>
         public abstract Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath, Dictionary<string, List<string>> originalReferences, Dictionary<string, List<string>> references);
 
+        public abstract CodeGraph GenerateGraph(List<AnalyzerResult> analyzerResults);
+        public abstract Task<SolutionAnalyzerResult> AnalyzeSolutionWithGraph(string solutionPath);
 
         /// <summary>
         /// Analyzes a code file and adds it to an existing project analysis. If the file already exists, it replaces it in the result.
