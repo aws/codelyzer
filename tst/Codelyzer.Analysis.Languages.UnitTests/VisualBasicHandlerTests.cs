@@ -330,6 +330,60 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 		}
 
 		[Fact]
+		public void ImpementHandlerTest()
+		{
+			var expressShell = @"
+			Public Class AppShutDownHandler
+				Implements IHttpHandler
+			End Class";
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+
+			var classBlockNode = rootNode.Children[0];
+			Assert.True(classBlockNode.GetType() == typeof(Model.ClassBlock));
+			Assert.Equal(3, classBlockNode.Children.Count);
+
+			var classStatementNode = classBlockNode.Children[0];
+			Assert.True(classStatementNode.GetType() == typeof(Model.ClassStatement));
+
+			var implementsStatementNode = classBlockNode.Children[1];
+			Assert.True(implementsStatementNode.GetType() == typeof(Model.ImplementsStatement));
+
+			var endBlockNode = classBlockNode.Children[2];
+			Assert.True(endBlockNode.GetType() == typeof(Model.EndBlockStatement));
+			Assert.Equal("End Class", endBlockNode.Identifier);
+		}
+
+		[Fact]
+		public void IfElseBlockHandlerTest()
+		{
+			var expressShell = @"
+			If fileInput IsNot emptyFile Then
+				jsonFile = fileInput
+			Else
+				jsonFile = emptyFile
+			End If";
+			var multiLineIfBlockNode = GetVisualBasicUstNode(expressShell);
+			Assert.Equal(3, multiLineIfBlockNode.Children.Count);
+
+			var ifStatementNode = multiLineIfBlockNode.Children[0];
+			Assert.True(ifStatementNode.GetType() == typeof(Model.IfStatement));
+			Assert.Single(ifStatementNode.Children);
+
+			var isNotExpressionNode = ifStatementNode.Children[0];
+			Assert.True(isNotExpressionNode.GetType() == typeof(Model.BinaryExpression));
+			Assert.Equal("IsNot", isNotExpressionNode.Identifier);
+
+			var elseStatementNode = multiLineIfBlockNode.Children[1];
+			Assert.True(elseStatementNode.GetType() == typeof(Model.ElseStatement));
+			Assert.Equal("Else", elseStatementNode.Identifier);
+
+			var endBlockNode = multiLineIfBlockNode.Children[2];
+			Assert.True(endBlockNode.GetType() == typeof(Model.EndBlockStatement));
+			Assert.Equal("End If", endBlockNode.Identifier);
+		}
+
+		[Fact]
 		public void EnumHandlerTest()
 		{
 			var expressShell = @"
@@ -341,7 +395,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 
 			var enumBlockNode = rootNode.Children[0];
 			Assert.True(enumBlockNode.GetType() == typeof(Model.EnumBlock));
-			Assert.Equal("enumBlock", enumBlockNode.Identifier);
+			Assert.Equal("EnumBlock", enumBlockNode.Identifier);
 			Assert.Equal(3, enumBlockNode.Children.Count);
 
 			var enumStatementNode = enumBlockNode.Children[0];
