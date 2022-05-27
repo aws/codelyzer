@@ -120,6 +120,16 @@ namespace Codelyzer.Analysis.Model
             return GetNodes<MemberAccess>(node);
         }
 
+        public static UstList<EnumBlock> AllEnumBlocks(this UstNode node)
+        {
+            return GetNodes<EnumBlock>(node);
+        }
+
+        public static UstList<InterfaceBlock> AllInterfaceBlocks(this UstNode node)
+        {
+            return GetNodes<InterfaceBlock>(node);
+        }
+
         private static UstList<T> GetNodes<T>(UstNode node) where T : UstNode
         {
             UstList<T> nodes = new UstList<T>();

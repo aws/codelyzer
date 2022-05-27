@@ -18,7 +18,7 @@ namespace Codelyzer.Analysis.Tests
 
     [TestFixture]
     [NonParallelizable]
-    public class AwsAnalyzerTests : AwsBaseTest
+    public class AnalyzerTests : AwsBaseTest
     {
         public string downloadsDir = ""; // A place to download example solutions one time for all tests
         public string tempDir = ""; // A place to copy example solutions for each test (as needed)
@@ -29,18 +29,18 @@ namespace Codelyzer.Analysis.Tests
             Setup(GetType());
             tempDir = GetTstPath(Path.Combine(Constants.TempProjectDirectories));
             downloadsDir = GetTstPath(Path.Combine(Constants.TempProjectDownloadDirectories));
-            DeleteDir(tempDir);
+            /*DeleteDir(tempDir);
             DeleteDir(downloadsDir);
             Directory.CreateDirectory(tempDir);
             Directory.CreateDirectory(downloadsDir);
-            DownloadTestProjects();
+            DownloadTestProjects();*/
         }
 
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            DeleteDir(tempDir);
-            DeleteDir(downloadsDir);
+            /*DeleteDir(tempDir);
+            DeleteDir(downloadsDir);*/
         }
 
         private void DownloadTestProjects()
@@ -111,6 +111,28 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(enumNumbers, testClassRootNode.AllEnumDeclarations().Count);
             var ifaceTestNode = result.ProjectResult.SourceFileResults.First(s => s.FileFullPath.EndsWith("ITest.cs"));
             Assert.AreEqual(ifaceNumbers, ifaceTestNode.AllInterfaces().Count);
+        }
+
+        [Test, TestCaseSource(nameof(TestCliMetaDataSource))]
+        public async Task VBTestCliForMetaDataStringsAsync(string mdArgument, int enumNumbers, int ifaceNumbers)
+        {
+            string projectPath = string.Concat(GetTstPath(Path.Combine(new[] { "Projects\\VBConsoleApp", "VBConsoleApp", "VBConsoleApp" })), ".vbproj");
+            string[] args = { "-p", projectPath, "-m", mdArgument };
+            AnalyzerCLI cli = new AnalyzerCLI();
+            cli.HandleCommand(args);
+            Assert.NotNull(cli);
+            Assert.NotNull(cli.FilePath);
+            Assert.NotNull(cli.Project);
+            Assert.NotNull(cli.Configuration);
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(cli.Configuration, NullLogger.Instance, projectPath);
+            AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
+            Assert.True(result != null);
+            var testClassRootNode = result.ProjectResult.SourceFileResults
+                    .First(s => s.FileFullPath.EndsWith("Class2.vb"))
+                as UstNode;
+            Assert.AreEqual(enumNumbers, testClassRootNode.AllEnumBlocks().Count);
+            var ifaceTestNode = result.ProjectResult.SourceFileResults.First(s => s.FileFullPath.EndsWith("ITest.vb"));
+            Assert.AreEqual(ifaceNumbers, ifaceTestNode.AllInterfaceBlocks().Count);
         }
 
         // netcoreapp3.1 project

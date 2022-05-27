@@ -245,14 +245,26 @@ namespace Codelyzer.Analysis.VisualBasic
 
         public override UstNode VisitEnumBlock(EnumBlockSyntax node)
         {
-            EnumBlockHandler handler = new EnumBlockHandler(_context, node);
-            return handler.UstNode;
+            if (MetaDataSettings.EnumDeclarations)
+            {
+                EnumBlockHandler handler = new EnumBlockHandler(_context, node);
+                if (!string.IsNullOrEmpty(handler.UstNode.Identifier))
+                {
+                    HandleReferences(((EnumBlock)handler.UstNode).Reference);
+                    return handler.UstNode;
+                }
+            }
+            return null;
         }
 
         public override UstNode VisitEnumStatement(EnumStatementSyntax node)
         {
-            EnumStatementHandler handler = new EnumStatementHandler(_context, node);
-            return handler.UstNode;
+            if (MetaDataSettings.EnumDeclarations)
+            {
+                EnumStatementHandler handler = new EnumStatementHandler(_context, node);
+                return handler.UstNode;
+            }
+            return null;
         }
 
         public override UstNode VisitEnumMemberDeclaration(EnumMemberDeclarationSyntax node)
