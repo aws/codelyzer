@@ -103,7 +103,9 @@ namespace Codelyzer.Analysis.CSharp
         {
             if (semanticModel == null && preportSemanticModel == null) return null;
 
-            var symbol = semanticModel?.GetSymbolInfo(syntaxNode).Symbol;
+            var symbolInfo = semanticModel?.GetSymbolInfo(syntaxNode);
+            var symbol = symbolInfo.Value.Symbol;
+            
             if (symbol == null && preportSemanticModel != null)
             {
                 try
@@ -115,7 +117,12 @@ namespace Codelyzer.Analysis.CSharp
                     //When looking for a symbol, and the semantic model is not passed, this generates an error.
                     //We don't log this error because this is an expected behavior when there's no previous semantic models
                 }
-        }
+            }
+
+            if(symbol == null && symbolInfo.Value.CandidateSymbols.Length > 0)
+            {
+                symbol = symbolInfo.Value.CandidateSymbols[0];
+            }
 
             return symbol;
         }

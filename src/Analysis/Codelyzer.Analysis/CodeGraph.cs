@@ -32,7 +32,7 @@ namespace Codelyzer.Analysis
                 var project = analyzerResults.FirstOrDefault(a => a.ProjectResult.ProjectFilePath == node.Identifier);
                 var projectReferences = project.ProjectResult?.ExternalReferences?.ProjectReferences;
 
-                projectReferences.ForEach(projectReference => {
+                projectReferences?.ForEach(projectReference => {
                     var targetNode = graph.FirstOrDefault(n => n.Identifier == projectReference.AssemblyLocation);
                     node.Edges.Add(new Edge() { EdgeType = EdgeType.ProjectReference, TargetNode = targetNode, SourceNode = node });
                 });
