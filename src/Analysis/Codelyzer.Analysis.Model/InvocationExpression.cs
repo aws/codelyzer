@@ -23,7 +23,7 @@ namespace Codelyzer.Analysis.Model
         public string SemanticClassType { get; set; }
 
         [JsonProperty("semantic-full-class-type", Order = 98)]
-        public string SemanticFullClassType { get; set; }
+        public string SemanticFullClassTypeName { get; set; }
 
         [JsonProperty("semantic-method-signature", Order = 15)]
         public string SemanticMethodSignature { get; set; }

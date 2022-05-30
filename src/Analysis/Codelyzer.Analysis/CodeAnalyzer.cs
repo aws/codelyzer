@@ -55,7 +55,18 @@ namespace Codelyzer.Analysis
         /// <returns></returns>
         public abstract Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath, Dictionary<string, List<string>> originalReferences, Dictionary<string, List<string>> references);
 
+        /// <summary>
+        /// Generates a graph using a previously run list of analyzerresults
+        /// </summary>
+        /// <param name="analyzerResults">A list of analayzer results</param>
+        /// <returns></returns>
         public abstract CodeGraph GenerateGraph(List<AnalyzerResult> analyzerResults);
+
+        /// <summary>
+        /// Runs an analysis and generates a SolutionAnalyzerResult object
+        /// </summary>
+        /// <param name="solutionPath">The path to the solution</param>
+        /// <returns></returns>
         public abstract Task<SolutionAnalyzerResult> AnalyzeSolutionWithGraph(string solutionPath);
 
         /// <summary>

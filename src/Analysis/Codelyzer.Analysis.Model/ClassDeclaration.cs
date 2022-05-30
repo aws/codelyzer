@@ -22,9 +22,6 @@ namespace Codelyzer.Analysis.Model
         public Reference Reference { get; set; }
         public string SemanticAssembly { get; set; }
 
-        [JsonProperty("full-identifier", Order = 98)]
-        public string FullIdentifier { get; set; }
-
         public ClassDeclaration()
             : base(IdConstants.ClassIdName)
         {

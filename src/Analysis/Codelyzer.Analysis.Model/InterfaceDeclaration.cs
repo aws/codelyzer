@@ -11,9 +11,6 @@ namespace Codelyzer.Analysis.Model
         [JsonProperty("base-type-original-def", Order = 11)]
         public string BaseTypeOriginalDefinition { get; set; }
 
-        [JsonProperty("full-identifier", Order = 98)]
-        public string FullIdentifier { get; set; }
-
         [JsonProperty("references", Order = 99)]
         public Reference Reference { get; set; }
         public string SemanticAssembly { get; set; }

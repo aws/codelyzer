@@ -44,7 +44,7 @@ namespace Codelyzer.Analysis
         public override CodeGraph GenerateGraph(List<AnalyzerResult> analyzerResults)
         {
 
-            var codeGraph = new CodeGraph();
+            var codeGraph = new CodeGraph(Logger);
             try
             {
                 codeGraph.Initialize(analyzerResults);
