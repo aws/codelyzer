@@ -104,6 +104,7 @@ namespace Codelyzer.Analysis.VisualBasic
 
         public override UstNode VisitAttributeList(AttributeListSyntax node)
         {
+            if (!MetaDataSettings.Annotations) return null;
             AttributeListHandler handler = new AttributeListHandler(_context, node);
             return handler.UstNode;
         }

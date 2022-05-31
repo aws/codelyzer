@@ -1,5 +1,6 @@
 ﻿using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using System.Linq;
 
@@ -36,7 +37,14 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
                 }
             }
 
-            
+            var methodSymbol = (IMethodSymbol)
+                (SemanticHelper.GetSemanticSymbol(syntaxNode, SemanticModel, OriginalSemanticModel)
+                ?? SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel)
+                ?? SemanticHelper.GetDeclaredOriginalSymbol(syntaxNode, SemanticModel, OriginalSemanticModel));
+            if (methodSymbol == null) return;
+            SemanticHelper.AddMethodProperties(methodSymbol, Model.SemanticProperties);
+            Model.SemanticSignature = SemanticHelper.GetSemanticMethodSignature(SemanticModel, OriginalSemanticModel, syntaxNode);
+
         }
     }
 }

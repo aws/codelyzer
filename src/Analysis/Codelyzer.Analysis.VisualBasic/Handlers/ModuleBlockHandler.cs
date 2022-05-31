@@ -1,5 +1,6 @@
 ﻿using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using System.Linq;
 

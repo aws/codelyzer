@@ -37,7 +37,7 @@ namespace Codelyzer.Analysis
         ///<inheritdoc/>
         public override async Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath)
         {
-            throw new NotImplementedException();
+            return await Analyze(solutionPath);
         }
 
         ///<inheritdoc/>

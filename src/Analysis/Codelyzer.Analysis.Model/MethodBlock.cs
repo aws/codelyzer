@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Codelyzer.Analysis.Model
 {
-    public class MethodBlock : UstNode
+    public class MethodBlock : BaseMethodDeclaration
     {
         [JsonProperty("base-type", Order = 10)]
         public string BaseType { get; set; }

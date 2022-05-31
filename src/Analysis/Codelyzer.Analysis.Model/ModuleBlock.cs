@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Codelyzer.Analysis.Model
 {
-    public class ModuleBlock : UstNode
+    public class ModuleBlock : BaseMethodDeclaration
     {
         [JsonProperty("base-type", Order = 10)]
         public string BaseType { get; set; }
@@ -14,9 +14,6 @@ namespace Codelyzer.Analysis.Model
 
         [JsonProperty("base-list", Order = 12)]
         public List<string> BaseList { get; set; }
-
-        [JsonProperty("modifiers", Order = 20)]
-        public string Modifiers { get; set; }
 
         [JsonProperty("references", Order = 99)]
         public Reference Reference { get; set; }

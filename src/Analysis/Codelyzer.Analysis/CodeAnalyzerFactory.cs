@@ -16,7 +16,7 @@ namespace Codelyzer.Analysis
         /// <returns></returns>
         public static CodeAnalyzer GetAnalyzer(AnalyzerConfiguration configuration, ILogger logger, string projectFile = "")
         {
-            if (projectFile.EndsWith(".vbproj",
+            if (configuration.Language == LanguageOptions.Vb ||projectFile.EndsWith(".vbproj",
                     StringComparison.OrdinalIgnoreCase))
             {
                 return new VisualBasicCodeAnalyzer(configuration, logger);

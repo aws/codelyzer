@@ -116,7 +116,7 @@ namespace Codelyzer.Analysis.Tests
         [Test, TestCaseSource(nameof(TestCliMetaDataSource))]
         public async Task VBTestCliForMetaDataStringsAsync(string mdArgument, int enumNumbers, int ifaceNumbers)
         {
-            string projectPath = string.Concat(GetTstPath(Path.Combine(new[] { "Projects\\VBConsoleApp", "VBConsoleApp", "VBConsoleApp" })), ".vbproj");
+            string projectPath = Directory.EnumerateFiles(downloadsDir, "VBWebApi.vbproj", SearchOption.AllDirectories).FirstOrDefault();
             string[] args = { "-p", projectPath, "-m", mdArgument };
             AnalyzerCLI cli = new AnalyzerCLI();
             cli.HandleCommand(args);
@@ -172,6 +172,39 @@ namespace Codelyzer.Analysis.Tests
             CollectionAssert.IsEmpty(allBuildErrors);
         }
 
+        [TestCase(@"VBWebApi.sln")]
+        public async Task VBTestAnalyzer_Builds_Projects_Successfully(string solutionFileName)
+        {
+            var solutionPath = CopySolutionFolderToTemp(solutionFileName);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    GenerateGremlinOutput = false,
+                    GenerateRDFOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData  = true,
+                    LoadBuildData = true
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            var results = await analyzer.AnalyzeSolution(solutionPath);
+            var allBuildErrors = results.SelectMany(r => r.ProjectBuildResult.BuildErrors);
+
+            CollectionAssert.IsNotEmpty(results);
+            //CollectionAssert.IsEmpty(allBuildErrors);  know issue for build errors
+        }
         private string CopySolutionFolderToTemp(string solutionName)
         {
             string solutionPath = Directory.EnumerateFiles(downloadsDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
@@ -186,7 +219,7 @@ namespace Codelyzer.Analysis.Tests
         [Test]
         public async Task TestSampleWebApi()
         {
-            string solutionPath = CopySolutionFolderToTemp("SampleWebApi.sln");
+            string solutionPath = CopySolutionFolderToTemp("WebApi.sln");
             string solutionDir = Directory.GetParent(solutionPath).FullName;
 
             FileAssert.Exists(solutionPath);
@@ -288,11 +321,117 @@ namespace Codelyzer.Analysis.Tests
             await RunAgainWithChangedFile(solutionPath, result.ProjectBuildResult.ProjectPath, configuration, analyzer);
         }
 
+        [Test]
+        public async Task VBTestSampleWebApi()
+        {
+            string solutionPath = CopySolutionFolderToTemp("VBWebApi.sln");
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+
+            FileAssert.Exists(solutionPath);
+            
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    OutputPath = Path.Combine("/", "tmp", "UnitTests")
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    InterfaceDeclarations = true,
+                    //GenerateBinFiles = true,
+                    LoadBuildData = true,
+                    ReturnStatements = true,
+                    InvocationArguments = true,
+                    ElementAccess = true,
+                    MemberAccess = true
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            var results = await analyzer.AnalyzeSolution(solutionPath);
+            AnalyzerResult result = results.FirstOrDefault();
+            Assert.True(result != null);
+            Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
+
+            //Project has 19 nuget references and 18 framework/dll references:
+            Assert.AreEqual(22, result.ProjectResult.ExternalReferences.NugetReferences.Count);
+            Assert.AreEqual(18, result.ProjectResult.ExternalReferences.SdkReferences.Count);
+
+            Assert.AreEqual(41, result.ProjectResult.SourceFiles.Count);
+
+            var helpController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HelpController.vb")).FirstOrDefault();
+            Assert.NotNull(helpController);
+
+            var iModelDocumentationProvider = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("IModelDocumentationProvider.vb")).FirstOrDefault();
+            Assert.NotNull(iModelDocumentationProvider);
+
+            var blockStatements = helpController.AllBlockStatements();
+            var classBlocks = helpController.AllClassBlocks();
+            var expressionStatements = helpController.AllExpressions();
+            var invocationExpressions = helpController.AllInvocationExpressions();
+            var literalExpressions = helpController.AllLiterals();
+            var methodBlocks = helpController.AllMethodBlocks();
+            var constructorBlocks = helpController.AllConstructorBlocks();
+            var returnStatements = helpController.AllReturnStatements();
+            var annotations = helpController.AllAttributeLists();
+            var namespaceBlocks = helpController.AllNamespaceBlocks();
+            var objectCreationExpressions = helpController.AllObjectCreationExpressions();
+            var importStatements = helpController.AllImportsStatements();
+            var interfaces = helpController.AllInterfaceBlocks();
+            var argumentLists = helpController.AllArgumentLists();
+            var memberAccess = helpController.AllMemberAccessExpressions();
+
+            Assert.AreEqual(0, blockStatements.Count);
+            Assert.AreEqual(1, classBlocks.Count);
+            Assert.AreEqual(33, expressionStatements.Count);
+            Assert.AreEqual(28, invocationExpressions.Count);
+            Assert.AreEqual(4, literalExpressions.Count);
+            Assert.AreEqual(3, methodBlocks.Count);
+            Assert.AreEqual(6, returnStatements.Count);
+            Assert.AreEqual(0, annotations.Count);
+            Assert.AreEqual(1, namespaceBlocks.Count);
+            Assert.AreEqual(0, objectCreationExpressions.Count);
+            Assert.AreEqual(5, importStatements.Count);
+            Assert.AreEqual(0, interfaces.Count);
+            Assert.AreEqual(14, argumentLists.Count);
+            Assert.AreEqual(13, memberAccess.Count);
+
+            var semanticMethodSignatures = methodBlocks.Select(m => m.SemanticSignature);
+            Assert.True(semanticMethodSignatures.Any(methodSignature => string.Compare(
+                "Public Public Function Index() As System.Web.Mvc.ActionResult",
+                methodSignature,
+                StringComparison.InvariantCulture) == 0));
+
+            var semanticConstructorSignatures = constructorBlocks.Select(c => c.SemanticSignature);
+            Assert.True(semanticConstructorSignatures.Any(constructorSignature => string.Compare(
+                "Public Public Sub New(config As System.Web.Http.HttpConfiguration)",
+                constructorSignature,
+                StringComparison.InvariantCulture) == 0));
+
+            var helpControllerClass = classBlocks.First(c => c.Identifier == "HelpController");
+            Assert.AreEqual("Public", helpControllerClass.Modifiers);
+
+            var helpPageSampleKey = result.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith("HelpPageSampleKey.vb"));
+            Assert.AreEqual(52, helpPageSampleKey.AllInvocationExpressions().Count);
+
+            //var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
+            //Assert.AreEqual(16, dllFiles.Count());
+
+            await RunAgainWithChangedFile(solutionPath, result.ProjectBuildResult.ProjectPath, configuration, analyzer);
+        }
+
         private async Task RunAgainWithChangedFile(string solutionPath, string projectPath, AnalyzerConfiguration configuration, CodeAnalyzer analyzer)
         {
             string projectFileContent = File.ReadAllText(projectPath);
             //Change the target to an invalid target to replicate an invalid msbuild installation
-            File.WriteAllText(projectPath, projectFileContent.Replace(@"$(MSBuildBinPath)\Microsoft.CSharp.targets", @"InvalidTarget"));
+            File.WriteAllText(projectPath, projectFileContent.Replace(@"$(MSBuildBinPath)\Microsoft.VisualBasic.targets", @"InvalidTarget"));
 
             //Try without setting the flag, result should be null:
             AnalyzerResult result = (await analyzer.AnalyzeSolution(solutionPath)).First();

@@ -7,6 +7,11 @@ namespace Codelyzer.Analysis.Model
             return GetNodes<Annotation>(node);
         }
 
+        public static UstList<AttributeList> AllAttributeLists(this UstNode node)
+        {
+            return GetNodes<AttributeList>(node);
+        }
+
         public static UstList<AttributeArgument> AllAttributeArguments(this UstNode node)
         {
             return GetNodes<AttributeArgument>(node);
@@ -22,9 +27,19 @@ namespace Codelyzer.Analysis.Model
             return GetNodes<ClassDeclaration>(node);
         }
 
+        public static UstList<ClassBlock> AllClassBlocks(this UstNode node)
+        {
+            return GetNodes<ClassBlock>(node);
+        }
+
         public static UstList<InterfaceDeclaration> AllInterfaces(this UstNode node)
         {
             return GetNodes<InterfaceDeclaration>(node);
+        }
+
+        public static UstList<InterfaceBlock> AllInterfaceBlocks(this UstNode node)
+        {
+            return GetNodes<InterfaceBlock>(node);
         }
 
         public static UstList<ExpressionStatement> AllExpressions(this UstNode node)
@@ -52,6 +67,11 @@ namespace Codelyzer.Analysis.Model
             return GetNodes<MethodDeclaration>(node);
         }
 
+        public static UstList<MethodBlock> AllMethodBlocks(this UstNode node)
+        {
+            return GetNodes<MethodBlock>(node);
+        }
+
         public static UstList<ReturnStatement> AllReturnStatements(this UstNode node)
         {
             return GetNodes<ReturnStatement>(node);
@@ -62,14 +82,29 @@ namespace Codelyzer.Analysis.Model
             return GetNodes<ConstructorDeclaration>(node);
         }
 
+        public static UstList<ConstructorBlock> AllConstructorBlocks(this UstNode node)
+        {
+            return GetNodes<ConstructorBlock>(node);
+        }
+
         public static UstList<NamespaceDeclaration> AllNamespaces(this UstNode node)
         {
             return GetNodes<NamespaceDeclaration>(node);
         }
 
+        public static UstList<NamespaceBlock> AllNamespaceBlocks(this UstNode node)
+        {
+            return GetNodes<NamespaceBlock>(node);
+        }
+
         public static UstList<UsingDirective> AllUsingDirectives(this UstNode node)
         {
             return GetNodes<UsingDirective>(node);
+        }
+
+        public static UstList<ImportsStatement> AllImportsStatements(this UstNode node)
+        {
+            return GetNodes<ImportsStatement>(node);
         }
 
         public static UstList<DeclarationNode> AllDeclarationNodes(this UstNode node)
@@ -111,6 +146,13 @@ namespace Codelyzer.Analysis.Model
         {
             return GetNodes<Argument>(node);
         }
+
+        public static UstList<ArgumentList> AllArgumentLists(this UstNode node)
+        {
+            return GetNodes<ArgumentList>(node);
+        }
+
+
         public static UstList<ElementAccess> AllElementAccessExpressions(this UstNode node)
         {
             return GetNodes<ElementAccess>(node);
@@ -123,11 +165,6 @@ namespace Codelyzer.Analysis.Model
         public static UstList<EnumBlock> AllEnumBlocks(this UstNode node)
         {
             return GetNodes<EnumBlock>(node);
-        }
-
-        public static UstList<InterfaceBlock> AllInterfaceBlocks(this UstNode node)
-        {
-            return GetNodes<InterfaceBlock>(node);
         }
 
         private static UstList<T> GetNodes<T>(UstNode node) where T : UstNode
