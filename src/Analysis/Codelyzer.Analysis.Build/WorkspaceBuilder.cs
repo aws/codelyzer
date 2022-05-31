@@ -72,7 +72,6 @@ namespace Codelyzer.Analysis.Build
         {
             using (var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
             {
-                var projectReferencesMap = FileUtils.GetProjectsWithReferences(_workspacePath);
 
                 if (!_analyzerConfiguration.BuildSettings.SyntaxOnly)
                 {
@@ -104,6 +103,7 @@ namespace Codelyzer.Analysis.Build
                 } 
                 else
                 {
+                    var projectReferencesMap = FileUtils.GetProjectsWithReferences(_workspacePath);
                     builder.GenerateNoBuildAnalysis();
 
                     var projectsInOrder = CreateDependencyQueue(projectReferencesMap);
@@ -157,42 +157,6 @@ namespace Codelyzer.Analysis.Build
             }
 
             buildOrder.Enqueue(projectPath);
-        }
-
-        public async Task<List<ProjectBuildResult>> BuildWithReferences(List<Compilation> compilations)
-        {
-            using (var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
-            {
-                builder.Build();
-
-
-                foreach (var projectResult in builder.Projects)
-                {
-                    using (ProjectBuildHandler projectBuildHandler =
-                        new ProjectBuildHandler(Logger, projectResult.Project, _analyzerConfiguration))
-                    {
-                        projectBuildHandler.AnalyzerResult = projectResult.AnalyzerResult;
-                        projectBuildHandler.ProjectAnalyzer = projectResult.ProjectAnalyzer;
-                        var result = await projectBuildHandler.Build();
-                        ProjectResults.Add(result);
-                    }
-                }
-                if (_analyzerConfiguration.AnalyzeFailedProjects)
-                {
-                    foreach (var projectResult in builder.FailedProjects)
-                    {
-                        using (ProjectBuildHandler projectBuildHandler =
-                        new ProjectBuildHandler(Logger, _analyzerConfiguration))
-                        {
-                            projectBuildHandler.ProjectAnalyzer = projectResult.ProjectAnalyzer;
-                            var result = projectBuildHandler.SyntaxOnlyBuild();
-                            ProjectResults.Add(result);
-                        }
-                    }
-                }
-            }
-
-            return ProjectResults;
         }
 
         public List<ProjectBuildResult> GenerateNoBuildAnalysis(Dictionary<string, List<string>> oldReferences, Dictionary<string, List<string>> references)
