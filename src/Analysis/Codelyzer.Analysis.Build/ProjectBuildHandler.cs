@@ -223,27 +223,55 @@ namespace Codelyzer.Analysis.Build
 
             var projPath = Path.GetDirectoryName(ProjectAnalyzer.ProjectFile.Path);
             DirectoryInfo directory = new DirectoryInfo(projPath);
-            var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
-            foreach (var file in allFiles)
+            if (!string.IsNullOrEmpty(projPath) && projPath.ToLower().EndsWith(".vbproj"))
             {
-                try
+                var allFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
+                foreach (var file in allFiles)
                 {
-                    using (var stream = File.OpenRead(file.FullName))
+                    try
                     {
-                        var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
-                        trees.Add(syntaxTree);
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e, "Error while running syntax analysis");
+                        Console.WriteLine(e);
                     }
                 }
-                catch (Exception e)
+
+                if (trees.Count != 0)
                 {
-                    Logger.LogError(e, "Error while running syntax analysis");
-                    Console.WriteLine(e);
+                    Compilation = VisualBasicCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
                 }
             }
-
-            if (trees.Count != 0)
+            else
             {
-                Compilation = CSharpCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
+                var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                foreach (var file in allFiles)
+                {
+                    try
+                    {
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e, "Error while running syntax analysis");
+                        Console.WriteLine(e);
+                    }
+                }
+
+                if (trees.Count != 0)
+                {
+                    Compilation = CSharpCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
+                }
             }
         }
 
@@ -252,27 +280,55 @@ namespace Codelyzer.Analysis.Build
             var trees = new List<SyntaxTree>();
             DirectoryInfo directory = new DirectoryInfo(Path.GetDirectoryName(projectPath));
 
-            var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
-            foreach (var file in allFiles)
+            if (!string.IsNullOrEmpty(projectPath) && projectPath.ToLower().EndsWith(".vbproj"))
             {
-                try
+                var allFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
+                foreach (var file in allFiles)
                 {
-                    using (var stream = File.OpenRead(file.FullName))
+                    try
                     {
-                        var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
-                        trees.Add(syntaxTree);
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e, "Error while running syntax analysis");
+                        Console.WriteLine(e);
                     }
                 }
-                catch (Exception e)
+
+                if (trees.Count != 0)
                 {
-                    Logger.LogError(e, "Error while running syntax analysis");
-                    Console.WriteLine(e);
+                    return VisualBasicCompilation.Create(Path.GetFileNameWithoutExtension(projectPath), trees, references?.Select(r => MetadataReference.CreateFromFile(r)));
                 }
             }
-
-            if (trees.Count != 0)
+            else
             {
-                return CSharpCompilation.Create(Path.GetFileNameWithoutExtension(projectPath), trees, references?.Select(r => MetadataReference.CreateFromFile(r)));
+                var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                foreach (var file in allFiles)
+                {
+                    try
+                    {
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e, "Error while running syntax analysis");
+                        Console.WriteLine(e);
+                    }
+                }
+
+                if (trees.Count != 0)
+                {
+                    return CSharpCompilation.Create(Path.GetFileNameWithoutExtension(projectPath), trees, references?.Select(r => MetadataReference.CreateFromFile(r)));
+                }
             }
             return null;
         }

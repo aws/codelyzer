@@ -14,7 +14,7 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
             ObjectCreationExpressionSyntax syntaxNode) 
             : base(context, syntaxNode, new ObjectCreationExpression())
         {
-            Model.Identifier = syntaxNode.ToString();
+            Model.Identifier = syntaxNode.Type + "-object-creation";
             SetMetaData(syntaxNode);
         }
 

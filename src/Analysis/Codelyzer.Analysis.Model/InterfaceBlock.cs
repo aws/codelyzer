@@ -23,7 +23,7 @@ namespace Codelyzer.Analysis.Model
         {
             if (obj is InterfaceBlock)
             {
-                return Equals(obj as InterfaceDeclaration);
+                return Equals(obj as InterfaceBlock); ;
             }
             return false;
         }
