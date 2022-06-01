@@ -213,7 +213,7 @@ namespace Codelyzer.Analysis.Build
                 }
             }
         }
-        private void SetSyntaxCompilation()
+        private void SetSyntaxCompilation(List<MetadataReference> metadataReferences)
         {
             var trees = new List<SyntaxTree>();
             isSyntaxAnalysis = true;
@@ -225,7 +225,7 @@ namespace Codelyzer.Analysis.Build
             DirectoryInfo directory = new DirectoryInfo(projPath);
             if (!string.IsNullOrEmpty(projPath) && projPath.ToLower().EndsWith(".vbproj"))
             {
-                var allFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
+                var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
                 foreach (var file in allFiles)
                 {
                     try
@@ -242,7 +242,6 @@ namespace Codelyzer.Analysis.Build
                         Console.WriteLine(e);
                     }
                 }
-
                 if (trees.Count != 0)
                 {
                     Compilation = VisualBasicCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
@@ -360,9 +359,9 @@ namespace Codelyzer.Analysis.Build
             Logger = logger;
             _analyzerConfiguration = analyzerConfiguration;
 
-            CompilationOptions options = project.CompilationOptions;
+            CompilationOptions options = project?.CompilationOptions;
 
-            if (project.CompilationOptions is CSharpCompilationOptions)
+            if (options is CSharpCompilationOptions)
             {
                 /*
                  * This is to fix the compilation errors related to :
@@ -372,8 +371,8 @@ namespace Codelyzer.Analysis.Build
                 options = options.WithAssemblyIdentityComparer(DesktopAssemblyIdentityComparer.Default);
             }
 
-            this.Project = project.WithCompilationOptions(options);
-            _projectPath = project.FilePath;
+            this.Project = project?.WithCompilationOptions(options);
+            _projectPath = project?.FilePath;
             Errors = new List<string>();
             MissingMetaReferences = new List<string>();
         }
@@ -554,7 +553,12 @@ namespace Codelyzer.Analysis.Build
 
         public ProjectBuildResult SyntaxOnlyBuild()
         {
-            SetSyntaxCompilation();
+            return SyntaxOnlyBuild(null);
+        }
+
+        public ProjectBuildResult SyntaxOnlyBuild(Dictionary<string, MetadataReference> metadataReferences)
+        {
+            SetSyntaxCompilation(metadataReferences?.Values?.ToList());
 
             ProjectBuildResult projectBuildResult = new ProjectBuildResult
             {
@@ -562,7 +566,15 @@ namespace Codelyzer.Analysis.Build
                 ProjectPath = ProjectAnalyzer.ProjectFile.Path,
                 ProjectRootPath = Path.GetDirectoryName(ProjectAnalyzer.ProjectFile.Path),
                 Compilation = Compilation,
-                IsSyntaxAnalysis = isSyntaxAnalysis
+                IsSyntaxAnalysis = isSyntaxAnalysis,
+                ExternalReferences = new ExternalReferences()
+                {
+                    ProjectReferences = metadataReferences?.Select(m=> new ExternalReference()
+                        {
+                            Identity = m.Value.Display,
+                            AssemblyLocation = m.Key
+                        }).ToList()
+                }
             };
 
             projectBuildResult.ProjectGuid = ProjectAnalyzer.ProjectGuid.ToString();

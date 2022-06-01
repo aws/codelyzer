@@ -324,5 +324,31 @@ namespace Codelyzer.Analysis
 
             return result;
         }
+
+        public override CodeGraph GenerateGraph(List<AnalyzerResult> analyzerResults)
+        {
+            var codeGraph = new CodeGraph(Logger);
+            try
+            {
+                codeGraph.Initialize(analyzerResults);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error while generating graph");
+            }
+            return codeGraph;
+        }
+
+        public override async Task<SolutionAnalyzerResult> AnalyzeSolutionWithGraph(string solutionPath)
+        {
+            var analyzerResults = await AnalyzeSolution(solutionPath);
+            var codeGraph = GenerateGraph(analyzerResults);
+
+            return new SolutionAnalyzerResult()
+            {
+                CodeGraph = codeGraph,
+                AnalyzerResults = analyzerResults
+            };
+        }
     }
 }

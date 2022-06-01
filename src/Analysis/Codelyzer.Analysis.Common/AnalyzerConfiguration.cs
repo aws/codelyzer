@@ -42,6 +42,7 @@ namespace Codelyzer.Analysis
         public string MSBuildPath;
         public List<string> BuildArguments;
         public bool BuildOnly = false;
+        public bool SyntaxOnly = false;
     }
 
     public class ExportSettings

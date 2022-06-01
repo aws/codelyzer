@@ -14,6 +14,9 @@ namespace Codelyzer.Analysis.Model
         [JsonProperty("semantic-class-type", Order = 14)]
         public string SemanticClassType { get; set; }
 
+        [JsonProperty("semantic-full-class-type", Order = 98)]
+        public string SemanticFullClassTypeName { get; set; }
+
         [JsonProperty("references", Order = 99)]
         public Reference Reference { get; set; }
 
