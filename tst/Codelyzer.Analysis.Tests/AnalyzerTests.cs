@@ -1,3 +1,4 @@
+using Codelyzer.Analysis.Analyzer;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -1479,8 +1480,48 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             });
         }
 
-        #region private methods
-        private void DeleteDir(string path, int retries = 0)
+        [Test]
+        public async Task SmokeTestLanguageAnalyzer()
+        {
+            string solutionPath = CopySolutionFolderToTemp("VBWebApi.sln");
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    OutputPath = Path.Combine("/", "tmp", "UnitTests")
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    InterfaceDeclarations = true,
+                    //GenerateBinFiles = true,
+                    LoadBuildData = true,
+                    ReturnStatements = true,
+                    InvocationArguments = true,
+                    ElementAccess = true,
+                    MemberAccess = true
+                }
+            };
+            var codeAnalyzerByLanguage = new CodeAnalyzerByLanguage(configuration, NullLogger.Instance);
+            var results = await codeAnalyzerByLanguage.AnalyzeSolution(solutionPath);
+            AnalyzerResult result = results.FirstOrDefault();
+            Assert.True(result != null);
+            Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
+        }
+
+            #region private methods
+            private void DeleteDir(string path, int retries = 0)
         {
             if(retries <= 10)
             {
