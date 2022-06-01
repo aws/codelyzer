@@ -21,6 +21,7 @@ namespace Codelyzer.Analysis.Model
         [JsonProperty("references", Order = 99)]
         public Reference Reference { get; set; }
         public string SemanticAssembly { get; set; }
+
         public ClassDeclaration()
             : base(IdConstants.ClassIdName)
         {

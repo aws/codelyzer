@@ -19,7 +19,7 @@ namespace Codelyzer.Analysis.CSharp
         /// <param name="syntaxNode">The node to get symbol info for</param>
         /// <param name="semanticModel">An instance of the semantic model</param>
         /// <returns>SymbolInfo of a node</returns>
-        public static SymbolInfo? GetSymbolInfo(SyntaxNode syntaxNode, 
+        public static SymbolInfo? GetSymbolInfo(SyntaxNode syntaxNode,
             SemanticModel semanticModel)
         {
             return semanticModel?.GetSymbolInfo(syntaxNode);
@@ -31,12 +31,12 @@ namespace Codelyzer.Analysis.CSharp
         /// <param name="typeSyntax">The TypeSyntax parameter to get info about</param>
         /// <param name="semanticModel">An instance of the semantic model</param>
         /// <returns>Name of the type</returns>
-        public static string GetSemanticType(TypeSyntax typeSyntax, 
+        public static string GetSemanticType(TypeSyntax typeSyntax,
             SemanticModel semanticModel,
             SemanticModel preportSemanticModel = null)
         {
             if (semanticModel == null && preportSemanticModel == null) return null;
-            
+
             string type = null;
 
             var typeInfo = semanticModel.GetTypeInfo(typeSyntax);
@@ -67,12 +67,12 @@ namespace Codelyzer.Analysis.CSharp
         /// <param name="expressionSyntax">The ExpressionSyntax to get info about</param>
         /// <param name="semanticModel">An instance of the semantic model</param>
         /// <returns>Name of the type</returns>
-        public static string GetSemanticType(ExpressionSyntax expressionSyntax, 
+        public static string GetSemanticType(ExpressionSyntax expressionSyntax,
             SemanticModel semanticModel,
             SemanticModel preportSemanticModel = null)
         {
             if (semanticModel == null && preportSemanticModel == null) return null;
-            
+
             string type = null;
 
             var typeInfo = semanticModel.GetTypeInfo(expressionSyntax);
@@ -115,8 +115,20 @@ namespace Codelyzer.Analysis.CSharp
                     //When looking for a symbol, and the semantic model is not passed, this generates an error.
                     //We don't log this error because this is an expected behavior when there's no previous semantic models
                 }
-        }
+            }
 
+            try
+            {
+                var symbolInfo = semanticModel?.GetSymbolInfo(syntaxNode);
+                if (symbol == null && symbolInfo.Value.CandidateSymbols.Length > 0)
+                {
+                    symbol = symbolInfo.Value.CandidateSymbols[0];
+                }
+            }
+            catch (Exception)
+            {
+                // We're trying to get candidate symbols, and we might not find any so we're ok with this erroring out
+            }
             return symbol;
         }
 
@@ -180,8 +192,8 @@ namespace Codelyzer.Analysis.CSharp
             if (semanticModel == null && preportSemanticModel == null) return null;
 
             string type = null;
-            
-            var typeInfo = semanticModel.GetTypeInfo(identifierNameSyntax); 
+
+            var typeInfo = semanticModel.GetTypeInfo(identifierNameSyntax);
             if (typeInfo.Type == null && preportSemanticModel != null)
             {
                 try
@@ -236,7 +248,7 @@ namespace Codelyzer.Analysis.CSharp
         /// <returns>The semantic method signature</returns>
         public static string GetSemanticMethodSignature(SemanticModel semanticModel, SemanticModel originalSemanticModel, BaseMethodDeclarationSyntax syntaxNode)
         {
-            var semanticMethodNameAndParameters = GetDeclaredOriginalSymbol(syntaxNode, semanticModel, originalSemanticModel)?.ToString();            
+            var semanticMethodNameAndParameters = GetDeclaredOriginalSymbol(syntaxNode, semanticModel, originalSemanticModel)?.ToString();
             var joinedModifiers = string.Join(" ", syntaxNode.Modifiers.Select(m => m.ToString()));
 
             return $"{joinedModifiers} {semanticMethodNameAndParameters}".Trim();

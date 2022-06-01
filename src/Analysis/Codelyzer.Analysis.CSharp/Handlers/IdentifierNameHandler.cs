@@ -40,6 +40,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                     Model.Reference.Assembly = GetAssembly(symbol);
                     Model.Reference.Version = GetAssemblyVersion(symbol);
                     Model.Reference.AssemblySymbol = symbol.ContainingAssembly;
+                    Model.FullIdentifier = string.Concat(Model.Reference.Namespace, ".", Model.Identifier);
                 }
                 else
                 {
