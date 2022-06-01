@@ -128,7 +128,14 @@ namespace Codelyzer.Analysis
             classDeclarations.ToList().ForEach(classDeclaration =>
             {
                 var sourceNode = GetClassNode(classDeclaration.FullIdentifier);
+
+                // Check base types list for interfaces
                 var baseTypes = classDeclaration.BaseList;
+                var baseTypeOriginalDefinition = classDeclaration.BaseTypeOriginalDefinition;
+                if(!string.IsNullOrEmpty(baseTypeOriginalDefinition) && baseTypeOriginalDefinition != "object")
+                {
+                    baseTypes.Add(baseTypeOriginalDefinition);
+                }
                 baseTypes.ForEach(baseType =>
                 {
                     var targetNode = GetClassNode(baseType);

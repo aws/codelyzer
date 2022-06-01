@@ -1123,7 +1123,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             };
 
             CodeAnalyzer analyzerWithoutBuild = CodeAnalyzerFactory.GetAnalyzer(configurationWithoutBuild, NullLogger.Instance);
-            CodeAnalyzer analyzerWithBuild = CodeAnalyzerFactory.GetAnalyzer(configurationWithoutBuild, NullLogger.Instance);
+            CodeAnalyzer analyzerWithBuild = CodeAnalyzerFactory.GetAnalyzer(configurationWithBuild, NullLogger.Instance);
             var resultWithoutBuild = await analyzerWithoutBuild.AnalyzeSolutionWithGraph(solutionPath);
             var resultWithBuild = await analyzerWithBuild.AnalyzeSolutionWithGraph(solutionPath);
 
@@ -1149,8 +1149,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(0, projectGraphWithBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).Edges.Count);
 
             // There are 26 classes in the solution
-            Assert.AreEqual(26, classGraphWithoutBuild.Count);
-            Assert.AreEqual(26, classGraphWithBuild.Count);
+            Assert.AreEqual(30, classGraphWithoutBuild.Count);
+            Assert.AreEqual(30, classGraphWithBuild.Count);
 
             // Number of edges for each node
             Assert.AreEqual(1, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.BundleConfig")).Edges.Count);
@@ -1180,6 +1180,11 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(6, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.ICustomerFacade")).Edges.Count);
             Assert.AreEqual(0, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.IProductFacade")).Edges.Count);
 
+            Assert.AreEqual(2, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ChildClass<ObjectType>")).Edges.Count);
+            Assert.AreEqual(1, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ParentClass<T>")).Edges.Count);
+            Assert.AreEqual(2, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ObjectType")).Edges.Count);
+            Assert.AreEqual(1, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.IObjectType")).Edges.Count);
+
             Assert.AreEqual(1, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.BundleConfig")).Edges.Count);
             Assert.AreEqual(1, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.FilterConfig")).Edges.Count);
             Assert.AreEqual(1, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.RouteConfig")).Edges.Count);
@@ -1207,6 +1212,10 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(6, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.ICustomerFacade")).Edges.Count);
             Assert.AreEqual(0, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.IProductFacade")).Edges.Count);
 
+            Assert.AreEqual(2, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ChildClass<ObjectType>")).Edges.Count);
+            Assert.AreEqual(1, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ParentClass<T>")).Edges.Count);
+            Assert.AreEqual(2, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ObjectType")).Edges.Count);
+            Assert.AreEqual(1, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.IObjectType")).Edges.Count);
         }
 
         #region private methods

@@ -29,7 +29,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                     ClassDeclaration.Reference.Assembly = GetAssembly(classSymbol);
                     ClassDeclaration.Reference.Version = GetAssemblyVersion(classSymbol);
                     ClassDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
-                    ClassDeclaration.FullIdentifier = string.Concat(ClassDeclaration.Reference.Namespace, ".", ClassDeclaration.Identifier);
+                    ClassDeclaration.FullIdentifier = classSymbol.OriginalDefinition.ToString();
                 }
                 
                 if(classSymbol.Interfaces != null)
