@@ -249,7 +249,7 @@ namespace Codelyzer.Analysis.Build
             }
             else
             {
-                var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                var allFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
                 foreach (var file in allFiles)
                 {
                     try
