@@ -36,7 +36,7 @@ namespace Codelyzer.Analysis.Build
                     {
                         var result = projectResultEnumerator.Current;
 
-                        if (result.AnalyzerResult != null)
+                        if (result?.AnalyzerResult != null)
                         {
                             using (ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, result.Project, _analyzerConfiguration))
                             {
