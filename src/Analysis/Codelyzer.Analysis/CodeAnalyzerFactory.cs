@@ -16,6 +16,11 @@ namespace Codelyzer.Analysis
         /// <returns></returns>
         public static CodeAnalyzer GetAnalyzer(AnalyzerConfiguration configuration, ILogger logger, string projectFile = "")
         {
+            if (configuration.MetaDataSettings.GenerateBinFiles)
+            {
+                // buildalyzer can't handle bin generation opion 
+                configuration.MetaDataSettings.GenerateBinFiles = false;
+            }
             if (configuration.Language == LanguageOptions.Vb ||projectFile.EndsWith(".vbproj",
                     StringComparison.OrdinalIgnoreCase))
             {

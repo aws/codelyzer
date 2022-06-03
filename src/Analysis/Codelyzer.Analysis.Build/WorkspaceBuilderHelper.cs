@@ -151,6 +151,14 @@ namespace Codelyzer.Analysis.Build
                 {
                     continue;
                 }
+
+                if (_analyzerConfiguration.BuildSettings.BuildOnly)
+                {
+                    BuildSolutionOnlyWithoutOutput(WorkspacePath, requiresNetFramework);
+
+                    return null;
+                }
+
                 IAnalyzerResult analyzerResult = projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework, projectAnalyzer.ProjectFile.ToolsVersion)).FirstOrDefault();
 
                 if (analyzerResult == null)
