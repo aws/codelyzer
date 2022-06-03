@@ -29,18 +29,18 @@ namespace Codelyzer.Analysis.Tests
             Setup(GetType());
             tempDir = GetTstPath(Path.Combine(Constants.TempProjectDirectories));
             downloadsDir = GetTstPath(Path.Combine(Constants.TempProjectDownloadDirectories));
-            /*DeleteDir(tempDir);
+            DeleteDir(tempDir);
             DeleteDir(downloadsDir);
             Directory.CreateDirectory(tempDir);
             Directory.CreateDirectory(downloadsDir);
-            DownloadTestProjects();*/
+            DownloadTestProjects();
         }
 
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            /*DeleteDir(tempDir);
-            DeleteDir(downloadsDir);*/
+            DeleteDir(tempDir);
+            DeleteDir(downloadsDir);
         }
 
         private void DownloadTestProjects()
@@ -1301,7 +1301,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
             
-            var result = await analyzer.AnalyzeSolution(solutionPath);
+            await analyzer.AnalyzeSolution(solutionPath);
 
             //Check that the bin folder was created
             var binPath = Path.Join(Path.GetDirectoryName(solutionPath), "CoreMvc", "bin");
