@@ -29,18 +29,18 @@ namespace Codelyzer.Analysis.Tests
             Setup(GetType());
             tempDir = GetTstPath(Path.Combine(Constants.TempProjectDirectories));
             downloadsDir = GetTstPath(Path.Combine(Constants.TempProjectDownloadDirectories));
-            DeleteDir(tempDir);
+            /*DeleteDir(tempDir);
             DeleteDir(downloadsDir);
             Directory.CreateDirectory(tempDir);
             Directory.CreateDirectory(downloadsDir);
-            DownloadTestProjects();
+            DownloadTestProjects();*/
         }
 
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            DeleteDir(tempDir);
-            DeleteDir(downloadsDir);
+            /*DeleteDir(tempDir);
+            DeleteDir(downloadsDir);*/
         }
 
         private void DownloadTestProjects()
@@ -219,7 +219,7 @@ namespace Codelyzer.Analysis.Tests
         [Test]
         public async Task TestSampleWebApi()
         {
-            string solutionPath = CopySolutionFolderToTemp("WebApi.sln");
+            string solutionPath = CopySolutionFolderToTemp("SampleWebApi.sln");
             string solutionDir = Directory.GetParent(solutionPath).FullName;
 
             FileAssert.Exists(solutionPath);
@@ -318,6 +318,7 @@ namespace Codelyzer.Analysis.Tests
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(16, dllFiles.Count());
 
+
             await RunAgainWithChangedFile(solutionPath, result.ProjectBuildResult.ProjectPath, configuration, analyzer);
         }
 
@@ -346,7 +347,7 @@ namespace Codelyzer.Analysis.Tests
                     LocationData = false,
                     ReferenceData = true,
                     InterfaceDeclarations = true,
-                    //GenerateBinFiles = true,
+                    GenerateBinFiles = true,
                     LoadBuildData = true,
                     ReturnStatements = true,
                     InvocationArguments = true,
@@ -361,10 +362,10 @@ namespace Codelyzer.Analysis.Tests
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
             //Project has 19 nuget references and 18 framework/dll references:
-            Assert.AreEqual(22, result.ProjectResult.ExternalReferences.NugetReferences.Count);
-            Assert.AreEqual(18, result.ProjectResult.ExternalReferences.SdkReferences.Count);
+            Assert.AreEqual(20, result.ProjectResult.ExternalReferences.NugetReferences.Count);
+            Assert.AreEqual(17, result.ProjectResult.ExternalReferences.SdkReferences.Count);
 
-            Assert.AreEqual(41, result.ProjectResult.SourceFiles.Count);
+            Assert.AreEqual(40, result.ProjectResult.SourceFiles.Count);
 
             var helpController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HelpController.vb")).FirstOrDefault();
             Assert.NotNull(helpController);
@@ -421,8 +422,8 @@ namespace Codelyzer.Analysis.Tests
             var helpPageSampleKey = result.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith("HelpPageSampleKey.vb"));
             Assert.AreEqual(52, helpPageSampleKey.AllInvocationExpressions().Count);
 
-            //var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
-            //Assert.AreEqual(16, dllFiles.Count());
+            var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
+            Assert.AreEqual(16, dllFiles.Count());
 
             await RunAgainWithChangedFile(solutionPath, result.ProjectBuildResult.ProjectPath, configuration, analyzer);
         }
