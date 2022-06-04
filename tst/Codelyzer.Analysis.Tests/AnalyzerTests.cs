@@ -29,18 +29,18 @@ namespace Codelyzer.Analysis.Tests
             Setup(GetType());
             tempDir = GetTstPath(Path.Combine(Constants.TempProjectDirectories));
             downloadsDir = GetTstPath(Path.Combine(Constants.TempProjectDownloadDirectories));
-            /*DeleteDir(tempDir);
+            DeleteDir(tempDir);
             DeleteDir(downloadsDir);
             Directory.CreateDirectory(tempDir);
             Directory.CreateDirectory(downloadsDir);
-            DownloadTestProjects();*/
+            DownloadTestProjects();
         }
 
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            /*DeleteDir(tempDir);
-            DeleteDir(downloadsDir);*/
+            DeleteDir(tempDir);
+            DeleteDir(downloadsDir);
         }
 
         private void DownloadTestProjects()
@@ -257,10 +257,10 @@ namespace Codelyzer.Analysis.Tests
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
             //Project has 16 nuget references and 19 framework/dll references:
-            /*Assert.AreEqual(16, result.ProjectResult.ExternalReferences.NugetReferences.Count);
+            Assert.AreEqual(16, result.ProjectResult.ExternalReferences.NugetReferences.Count);
             Assert.AreEqual(19, result.ProjectResult.ExternalReferences.SdkReferences.Count);
 
-            Assert.AreEqual(10, result.ProjectResult.SourceFiles.Count);*/
+            Assert.AreEqual(10, result.ProjectResult.SourceFiles.Count);
 
             var houseController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HouseController.cs")).FirstOrDefault();
             Assert.NotNull(houseController);
@@ -317,8 +317,8 @@ namespace Codelyzer.Analysis.Tests
             var houseMapper = result.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith("HouseMapper.cs"));
             Assert.AreEqual(2, houseMapper.AllInvocationExpressions().Count);
 
-            //var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
-            //Assert.AreEqual(16, dllFiles.Count());
+            var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
+            Assert.AreEqual(16, dllFiles.Count());
 
 
             await RunAgainWithChangedFile(solutionPath, result.ProjectBuildResult.ProjectPath, configuration, analyzer);
@@ -365,7 +365,7 @@ namespace Codelyzer.Analysis.Tests
 
             //Project has 19 nuget references and 18 framework/dll references:
             Assert.AreEqual(20, result.ProjectResult.ExternalReferences.NugetReferences.Count);
-            Assert.AreEqual(17, result.ProjectResult.ExternalReferences.SdkReferences.Count);
+            Assert.AreEqual(20, result.ProjectResult.ExternalReferences.SdkReferences.Count);
 
             Assert.AreEqual(40, result.ProjectResult.SourceFiles.Count);
 
@@ -630,8 +630,8 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(41, result.ProjectResult.SourceFiles.Count);
 
             //Project has 23 nuget references and 22 framework/dll references:
-            Assert.AreEqual(23, result.ProjectResult.ExternalReferences.NugetReferences.Count);
-            Assert.AreEqual(22, result.ProjectResult.ExternalReferences.SdkReferences.Count);
+            Assert.AreEqual(17, result.ProjectResult.ExternalReferences.NugetReferences.Count);
+            Assert.AreEqual(17, result.ProjectResult.ExternalReferences.SdkReferences.Count);
 
             var helpController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HelpController.vb")).FirstOrDefault();
             var homeController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.vb")).FirstOrDefault();
@@ -718,7 +718,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.True(result != null);
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
-            Assert.AreEqual(29, result.ProjectResult.SourceFiles.Count);
+            Assert.AreEqual(28, result.ProjectResult.SourceFiles.Count);
 
             var homeController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.cs")).FirstOrDefault();
             var accountController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("AccountController.cs")).FirstOrDefault();
@@ -1609,8 +1609,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(0, projectGraphWithBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).Edges.Count);
 
             // There are 26 classes in the solution
-            Assert.AreEqual(30, classGraphWithoutBuild.Count);
-            Assert.AreEqual(30, classGraphWithBuild.Count);
+            Assert.AreEqual(26, classGraphWithoutBuild.Count);
+            Assert.AreEqual(26, classGraphWithBuild.Count);
 
             // Number of edges for each node
             Assert.AreEqual(1, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.BundleConfig")).Edges.Count);
