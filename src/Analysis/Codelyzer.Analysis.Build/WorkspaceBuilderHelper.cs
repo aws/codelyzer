@@ -128,13 +128,13 @@ namespace Codelyzer.Analysis.Build
             return BuildIncremental(projectPath);
         }
 
-        private ProjectAnalysisResult BuildIncremental(string WorkspacePath)
+        private ProjectAnalysisResult BuildIncremental(string projectPath)
         {
             Queue<string> queue = new Queue<string>();
             ISet<string> existing = new HashSet<string>();
 
-            queue.Enqueue(WorkspacePath);
-            existing.Add(WorkspacePath);
+            queue.Enqueue(projectPath);
+            existing.Add(projectPath);
 
             /*
              * We need to resolve all the project dependencies to avoid compilation errors.
@@ -186,8 +186,8 @@ namespace Codelyzer.Analysis.Build
                 }
             }
             
-            Project project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.FilePath.Equals(WorkspacePath));
-            Logger.LogDebug("Building complete for {0} - {1}", WorkspacePath, DictAnalysisResult[project.Id.Id].Succeeded ? "Success" : "Fail");
+            Project project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.FilePath.Equals(projectPath));
+            Logger.LogDebug("Building complete for {0} - {1}", projectPath, DictAnalysisResult[project.Id.Id].Succeeded ? "Success" : "Fail");
             return new ProjectAnalysisResult()
             {
                 Project = project,
