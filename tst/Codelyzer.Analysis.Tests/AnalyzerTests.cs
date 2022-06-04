@@ -364,7 +364,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
             //Project has 19 nuget references and 18 framework/dll references:
-            Assert.AreEqual(17, result.ProjectResult.ExternalReferences.NugetReferences.Count);
+            Assert.AreEqual(20, result.ProjectResult.ExternalReferences.NugetReferences.Count);
             Assert.AreEqual(20, result.ProjectResult.ExternalReferences.SdkReferences.Count);
 
             Assert.AreEqual(40, result.ProjectResult.SourceFiles.Count);
@@ -1220,7 +1220,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
             //And it contains DLLs
             var dlls = Directory.EnumerateFiles(binPath, "*.dll", SearchOption.AllDirectories);
-            Assert.AreEqual(47, dlls.Count());
+            Assert.AreEqual(84, dlls.Count());
             Assert.True(dlls.Any(c=> c.Contains("BuildableWebApi.dll")));
         }
 
