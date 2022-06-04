@@ -31,7 +31,9 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 					InvocationArguments = true,
 					DeclarationNodes = true,
 					LambdaMethods = true,
-					InterfaceDeclarations = true
+					InterfaceDeclarations = true,
+					EnumDeclarations = true,
+					Annotations = true
 				}
 			};
 		}
@@ -74,7 +76,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.True(declarationNode.Children.Count >0, "declaration should contain variable node");
 			var variableNode = declarationNode.Children[0];
 
-			Assert.Equal("variable-declaration", variableNode.NodeType);
+			Assert.Equal("variable-declarator", variableNode.NodeType);
 			Assert.True(variableNode.GetType() == typeof(Model.VariableDeclarator));
 		}
 
@@ -110,7 +112,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.True(localDeclareNode.GetType() == typeof(Model.LocalDeclarationStatement));
 			Assert.Single(localDeclareNode.Children);
 			Assert.True(localDeclareNode.Children[0].GetType() == typeof(Model.VariableDeclarator));
-			Assert.Equal("a = \"test\"", localDeclareNode.Children[0].Identifier);
+			Assert.Equal("a", localDeclareNode.Children[0].Identifier);
 			//1:sub-block::2::invocation
 			var invocationNode = subBlockNode.Children[2];
 			Assert.True(invocationNode.GetType() == typeof(Model.InvocationExpression));
