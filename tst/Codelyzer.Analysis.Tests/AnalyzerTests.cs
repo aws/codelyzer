@@ -530,7 +530,7 @@ namespace Codelyzer.Analysis.Tests
 
             Assert.Contains(result.ProjectResult.SourceFiles.Count, new int[] { 28, 29 });
            
-            Assert.AreEqual(29, result.ProjectResult.ExternalReferences.NugetReferences.Count);
+            Assert.AreEqual(37, result.ProjectResult.ExternalReferences.NugetReferences.Count);
             Assert.AreEqual(24, result.ProjectResult.ExternalReferences.SdkReferences.Count);
 
             var homeController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.cs")).FirstOrDefault();
