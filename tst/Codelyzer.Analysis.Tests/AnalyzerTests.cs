@@ -528,12 +528,11 @@ namespace Codelyzer.Analysis.Tests
             Assert.True(result != null);
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
-            Assert.AreEqual(28, result.ProjectResult.SourceFiles.Count);
-
-            //Project has 16 nuget references and 19 framework/dll references:
-            Assert.AreEqual(37, result.ProjectResult.ExternalReferences.NugetReferences.Count);
+            Assert.Contains(result.ProjectResult.SourceFiles.Count, new int[] { 28, 29 });
+           
+            Assert.AreEqual(29, result.ProjectResult.ExternalReferences.NugetReferences.Count);
             Assert.AreEqual(24, result.ProjectResult.ExternalReferences.SdkReferences.Count);
-            
+
             var homeController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.cs")).FirstOrDefault();
             var accountController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("AccountController.cs")).FirstOrDefault();
             var storeManagerController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("StoreManagerController.cs")).FirstOrDefault();
