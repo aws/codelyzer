@@ -528,7 +528,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.True(result != null);
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
-            Assert.AreEqual(29, result.ProjectResult.SourceFiles.Count);
+            Assert.AreEqual(28, result.ProjectResult.SourceFiles.Count);
 
             //Project has 16 nuget references and 19 framework/dll references:
             Assert.AreEqual(37, result.ProjectResult.ExternalReferences.NugetReferences.Count);
