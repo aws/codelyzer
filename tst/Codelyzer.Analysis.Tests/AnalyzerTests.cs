@@ -1500,8 +1500,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                 Assert.NotNull(result);
                 var externalReferenceBuild = resultUsingBuild.ProjectResult.ExternalReferences;
                 var externalReference = result.ProjectResult.ExternalReferences;
-                //Assert.True(externalReference.NugetReferences.SequenceEqual(externalReferenceBuild.NugetReferences));
-                //Assert.True(externalReference.NugetDependencies.SequenceEqual(externalReferenceBuild.NugetDependencies));
+                Assert.True(externalReference.NugetReferences.SequenceEqual(externalReferenceBuild.NugetReferences));
+                Assert.True(externalReference.NugetDependencies.SequenceEqual(externalReferenceBuild.NugetDependencies));
                 Assert.True(externalReference.SdkReferences.SequenceEqual(externalReferenceBuild.SdkReferences));
                 Assert.True(externalReference.ProjectReferences.SequenceEqual(externalReferenceBuild.ProjectReferences));
             });
@@ -1516,7 +1516,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             sourceFiles.ToList().ForEach(sourceFile =>
             {
                 var sourceFileUsingBuild = sourceFilesUsingBuild.FirstOrDefault(s => s.FileFullPath == sourceFile.FileFullPath);
-                //Assert.True(sourceFile.Equals(sourceFileUsingBuild), $"sourceFile {sourceFile.FilePath} not equal to {sourceFileUsingBuild.FilePath} ");
+                Assert.True(sourceFile.Equals(sourceFileUsingBuild), $"sourceFile {sourceFile.FilePath} not equal to {sourceFileUsingBuild.FilePath} ");
             });
         }
 

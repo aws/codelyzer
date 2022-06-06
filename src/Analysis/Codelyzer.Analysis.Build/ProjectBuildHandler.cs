@@ -251,7 +251,7 @@ namespace Codelyzer.Analysis.Build
                     }
                     catch (Exception e)
                     {
-                        Logger.LogError(e, "Error while running syntax analysis");
+                        Logger.LogError(e, "Error while running CSharp syntax analysis");
                         Console.WriteLine(e);
                     }
                 }
@@ -275,7 +275,7 @@ namespace Codelyzer.Analysis.Build
                     }
                     catch (Exception e)
                     {
-                        Logger.LogError(e, "Error while running syntax analysis");
+                        Logger.LogError(e, "Error while running VisualBasic syntax analysis");
                         Console.WriteLine(e);
                     }
                 }
