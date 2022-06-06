@@ -177,40 +177,53 @@ namespace Codelyzer.Analysis.Build
 
             var projPath = Path.GetDirectoryName(Project.FilePath);
             DirectoryInfo directory = new DirectoryInfo(projPath);
-            var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
-            foreach (var file in allFiles)
+
+            if (vbOptions == null)
             {
-                try
+                var allCSharpFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                foreach (var file in allCSharpFiles)
                 {
-                    using (var stream = File.OpenRead(file.FullName))
+                    try
                     {
-                        var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
-                        trees.Add(syntaxTree);
+
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
                     }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
                 }
             }
-            
-            if (trees.Count != 0)
+            else 
             {
-                if (vbOptions != null)
+                var allVbFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
+                foreach (var file in allVbFiles)
                 {
-                    Compilation =
-                        VisualBasicCompilation.Create(Project.AssemblyName,
-                            trees, meta, vbOptions);
-                }
-                else
-                {
-                    if (options != null)
+                    try
                     {
-                        Compilation =
-                            CSharpCompilation.Create(Project.AssemblyName,
-                                trees, meta, options);
+
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
                     }
                 }
+            }
+
+            if (trees.Count != 0)
+            {
+                Compilation = (vbOptions != null)?
+                        VisualBasicCompilation.Create(Project.AssemblyName,trees, meta, vbOptions):
+                        (options!= null)? CSharpCompilation.Create(Project.AssemblyName, trees, meta, options) : null;
             }
         }
         private void SetSyntaxCompilation(List<MetadataReference> metadataReferences)
