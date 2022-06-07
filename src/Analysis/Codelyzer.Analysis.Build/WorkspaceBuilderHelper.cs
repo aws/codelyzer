@@ -128,13 +128,13 @@ namespace Codelyzer.Analysis.Build
             return BuildIncremental(projectPath);
         }
 
-        private ProjectAnalysisResult BuildIncremental(string WorkspacePath)
+        private ProjectAnalysisResult BuildIncremental(string projectPath)
         {
             Queue<string> queue = new Queue<string>();
             ISet<string> existing = new HashSet<string>();
 
-            queue.Enqueue(WorkspacePath);
-            existing.Add(WorkspacePath);
+            queue.Enqueue(projectPath);
+            existing.Add(projectPath);
 
             /*
              * We need to resolve all the project dependencies to avoid compilation errors.
@@ -151,6 +151,14 @@ namespace Codelyzer.Analysis.Build
                 {
                     continue;
                 }
+
+                if (_analyzerConfiguration.BuildSettings.BuildOnly)
+                {
+                    BuildSolutionOnlyWithoutOutput(WorkspacePath, requiresNetFramework);
+
+                    return null;
+                }
+
                 IAnalyzerResult analyzerResult = projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework, projectAnalyzer.ProjectFile.ToolsVersion)).FirstOrDefault();
 
                 if (analyzerResult == null)
@@ -165,7 +173,7 @@ namespace Codelyzer.Analysis.Build
                 if(!DictAnalysisResult.ContainsKey(analyzerResult.ProjectGuid))
                 {
                     DictAnalysisResult[analyzerResult.ProjectGuid] = analyzerResult;
-                    projectAnalyzer.AddToWorkspace(_workspaceIncremental);
+                    analyzerResult.AddToWorkspace(_workspaceIncremental);
 
                     foreach (var pref in analyzerResult.ProjectReferences)
                     {
@@ -178,8 +186,8 @@ namespace Codelyzer.Analysis.Build
                 }
             }
             
-            Project project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.FilePath.Equals(WorkspacePath));
-            Logger.LogDebug("Building complete for {0} - {1}", WorkspacePath, DictAnalysisResult[project.Id.Id].Succeeded ? "Success" : "Fail");
+            Project project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.FilePath.Equals(projectPath));
+            Logger.LogDebug("Building complete for {0} - {1}", projectPath, DictAnalysisResult[project.Id.Id].Succeeded ? "Success" : "Fail");
             return new ProjectAnalysisResult()
             {
                 Project = project,

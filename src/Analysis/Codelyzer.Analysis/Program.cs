@@ -40,7 +40,8 @@ namespace Codelyzer.Analysis
 
             /* 3. Get Analyzer instance based on language */
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(cli.Configuration, 
-                loggerFactory.CreateLogger("Analyzer"));
+                loggerFactory.CreateLogger("Analyzer"),
+                cli.Project ? cli.FilePath : String.Empty);
 
 
             /* 4. Analyze the project or solution */

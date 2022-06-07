@@ -30,6 +30,10 @@ namespace Codelyzer.Analysis.Model
 
         public const string SimpleLambdaExpressionIdName = "simple-lambda-expression";
 
+        public const string SingleLineLambdaExpressionIdName = "singleline-lambda-expression";
+
+        public const string MultiLineLambdaExpressionIdName = "multiline-lambda-expression";
+
         public const string LiteralIdName = "literal";
         
         public const string InvocationIdName = "invocation";
@@ -53,5 +57,65 @@ namespace Codelyzer.Analysis.Model
         public const string ElementAccessIdName = "element-access";
 
         public const string MemberAccessIdName = "member-access";
+
+        public const string ImportsStatementName = "imports-statement";
+
+        public const string ClassBlockName = "class-block";
+
+        public const string ClassStatementName = "class-statement";
+
+        public const string FieldDeclarationName = "field-declaration";
+
+        public const string VariableDeclaratorName = "variable-declarator";
+
+        public const string AttributeListName = "attribute-list";
+
+        public const string SubBlockName = "sub-block";
+
+        public const string EndBlockName = "end-block";
+
+        public const string ArgumentListName = "argument-list";
+
+        public const string LocalDeclarationStatementName = "local-declaration";
+
+        public const string NamespaceBlockIdName = "namespace-block";
+
+        public const string NamespaceStatementIdName = "namespace-statement";
+
+        public const string InterfaceBlockIdName = "interface-block";
+
+        public const string InterfaceStatementIdName = "interface-statement";
+
+        public const string PropertyBlockName = "property-block";
+
+        public const string PropertyStatementName = "property-statement";
+
+        public const string AccessorBlockName = "accessor-block";
+
+        public const string AccessorStatementName = "accessor-statement";
+
+        public const string ModuleBlockName = "module-block";
+
+        public const string ModuleStatementName = "module-statement";
+
+        public const string EnumBlockName = "enum-block";
+
+        public const string EnumStatementName = "enum-statement";
+
+        public const string EnumMemberDeclarationName = "enum-member-declaration";
+
+        public const string SimpleAsClauseName = "simple-as-clause";
+
+        public const string ImplementsStatementName = "implements-statement";
+
+        public const string MultiLineIfBlockName = "multi-line-if-block";
+
+        public const string IfStatementName = "if-statement";
+
+        public const string BinaryExpressionName = "binary-expression";
+
+        public const string ElseBlockName = "else-block";
+
+        public const string ElseStatementName = "else-statement";
     }
 }

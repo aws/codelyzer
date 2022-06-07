@@ -18,7 +18,7 @@ namespace Codelyzer.Analysis.Tests
 
     [TestFixture]
     [NonParallelizable]
-    public class AwsAnalyzerTests : AwsBaseTest
+    public class AnalyzerTests : AwsBaseTest
     {
         public string downloadsDir = ""; // A place to download example solutions one time for all tests
         public string tempDir = ""; // A place to copy example solutions for each test (as needed)
@@ -113,6 +113,28 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(ifaceNumbers, ifaceTestNode.AllInterfaces().Count);
         }
 
+        [Test, TestCaseSource(nameof(TestCliMetaDataSource))]
+        public async Task VBTestCliForMetaDataStringsAsync(string mdArgument, int enumNumbers, int ifaceNumbers)
+        {
+            string projectPath = Directory.EnumerateFiles(downloadsDir, "VBConsoleApp.vbproj", SearchOption.AllDirectories).FirstOrDefault();
+            string[] args = { "-p", projectPath, "-m", mdArgument };
+            AnalyzerCLI cli = new AnalyzerCLI();
+            cli.HandleCommand(args);
+            Assert.NotNull(cli);
+            Assert.NotNull(cli.FilePath);
+            Assert.NotNull(cli.Project);
+            Assert.NotNull(cli.Configuration);
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(cli.Configuration, NullLogger.Instance, projectPath);
+            AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
+            Assert.True(result != null);
+            var testClassRootNode = result.ProjectResult.SourceFileResults
+                    .First(s => s.FileFullPath.EndsWith("Class2.vb"))
+                as UstNode;
+            Assert.AreEqual(enumNumbers, testClassRootNode.AllEnumBlocks().Count);
+            var ifaceTestNode = result.ProjectResult.SourceFileResults.First(s => s.FileFullPath.EndsWith("ITest.vb"));
+            Assert.AreEqual(ifaceNumbers, ifaceTestNode.AllInterfaceBlocks().Count);
+        }
+
         // netcoreapp3.1 project
         [TestCase("CoreWebApi.sln")]
         // net472 project with project references in csproj file
@@ -150,6 +172,39 @@ namespace Codelyzer.Analysis.Tests
             CollectionAssert.IsEmpty(allBuildErrors);
         }
 
+        [TestCase(@"VBWebApi.sln")]
+        public async Task VBTestAnalyzer_Builds_Projects_Successfully(string solutionFileName)
+        {
+            var solutionPath = CopySolutionFolderToTemp(solutionFileName);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    GenerateGremlinOutput = false,
+                    GenerateRDFOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData  = true,
+                    LoadBuildData = true
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            var results = await analyzer.AnalyzeSolution(solutionPath);
+            var allBuildErrors = results.SelectMany(r => r.ProjectBuildResult.BuildErrors);
+
+            CollectionAssert.IsNotEmpty(results);
+            //CollectionAssert.IsEmpty(allBuildErrors);  know issue for build errors
+        }
         private string CopySolutionFolderToTemp(string solutionName)
         {
             string solutionPath = Directory.EnumerateFiles(downloadsDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
@@ -195,7 +250,9 @@ namespace Codelyzer.Analysis.Tests
                 }
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
-            AnalyzerResult result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
+            //AnalyzerResult result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
+            var results = await analyzer.AnalyzeSolution(solutionPath);
+            AnalyzerResult result = results.FirstOrDefault();
             Assert.True(result != null);
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
@@ -263,14 +320,121 @@ namespace Codelyzer.Analysis.Tests
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(16, dllFiles.Count());
 
+
             await RunAgainWithChangedFile(solutionPath, result.ProjectBuildResult.ProjectPath, configuration, analyzer);
         }
 
-        private async Task RunAgainWithChangedFile(string solutionPath, string projectPath, AnalyzerConfiguration configuration, CodeAnalyzer analyzer)
+        [Test]
+        public async Task VBTestSampleWebApi()
+        {
+            string solutionPath = CopySolutionFolderToTemp("VBWebApi.sln");
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+
+            FileAssert.Exists(solutionPath);
+            
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    OutputPath = Path.Combine("/", "tmp", "UnitTests")
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    InterfaceDeclarations = true,
+                    GenerateBinFiles = true,
+                    LoadBuildData = true,
+                    ReturnStatements = true,
+                    InvocationArguments = true,
+                    ElementAccess = true,
+                    MemberAccess = true
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            var results = await analyzer.AnalyzeSolution(solutionPath);
+            AnalyzerResult result = results.FirstOrDefault();
+            Assert.True(result != null);
+            Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
+
+            //Project has 19 nuget references and 18 framework/dll references:
+            Assert.Contains( result.ProjectResult.ExternalReferences.NugetReferences.Count, new int[] { 17, 20});
+            Assert.Contains( result.ProjectResult.ExternalReferences.SdkReferences.Count, new int[] { 17, 20 });
+
+            Assert.AreEqual(40, result.ProjectResult.SourceFiles.Count);
+
+            var helpController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HelpController.vb")).FirstOrDefault();
+            Assert.NotNull(helpController);
+
+            var iModelDocumentationProvider = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("IModelDocumentationProvider.vb")).FirstOrDefault();
+            Assert.NotNull(iModelDocumentationProvider);
+
+            var blockStatements = helpController.AllBlockStatements();
+            var classBlocks = helpController.AllClassBlocks();
+            var expressionStatements = helpController.AllExpressions();
+            var invocationExpressions = helpController.AllInvocationExpressions();
+            var literalExpressions = helpController.AllLiterals();
+            var methodBlocks = helpController.AllMethodBlocks();
+            var constructorBlocks = helpController.AllConstructorBlocks();
+            var returnStatements = helpController.AllReturnStatements();
+            var annotations = helpController.AllAttributeLists();
+            var namespaceBlocks = helpController.AllNamespaceBlocks();
+            var objectCreationExpressions = helpController.AllObjectCreationExpressions();
+            var importStatements = helpController.AllImportsStatements();
+            var interfaces = helpController.AllInterfaceBlocks();
+            var argumentLists = helpController.AllArgumentLists();
+            var memberAccess = helpController.AllMemberAccessExpressions();
+
+            Assert.AreEqual(0, blockStatements.Count);
+            Assert.AreEqual(1, classBlocks.Count);
+            Assert.AreEqual(33, expressionStatements.Count);
+            Assert.AreEqual(28, invocationExpressions.Count);
+            Assert.AreEqual(4, literalExpressions.Count);
+            Assert.AreEqual(3, methodBlocks.Count);
+            Assert.AreEqual(6, returnStatements.Count);
+            Assert.AreEqual(0, annotations.Count);
+            Assert.AreEqual(1, namespaceBlocks.Count);
+            Assert.AreEqual(0, objectCreationExpressions.Count);
+            Assert.AreEqual(5, importStatements.Count);
+            Assert.AreEqual(0, interfaces.Count);
+            Assert.AreEqual(14, argumentLists.Count);
+            Assert.AreEqual(13, memberAccess.Count);
+
+            var semanticMethodSignatures = methodBlocks.Select(m => m.SemanticSignature);
+            Assert.True(semanticMethodSignatures.Any(methodSignature => string.Compare(
+                "Public Public Function Index() As System.Web.Mvc.ActionResult",
+                methodSignature,
+                StringComparison.InvariantCulture) == 0));
+
+            var semanticConstructorSignatures = constructorBlocks.Select(c => c.SemanticSignature);
+            Assert.True(semanticConstructorSignatures.Any(constructorSignature => string.Compare(
+                "Public Public Sub New(config As System.Web.Http.HttpConfiguration)",
+                constructorSignature,
+                StringComparison.InvariantCulture) == 0));
+
+            var helpControllerClass = classBlocks.First(c => c.Identifier == "HelpController");
+            Assert.AreEqual("Public", helpControllerClass.Modifiers);
+
+            var helpPageSampleKey = result.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith("HelpPageSampleKey.vb"));
+            Assert.AreEqual(52, helpPageSampleKey.AllInvocationExpressions().Count);
+
+            var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
+            Assert.AreEqual(16, dllFiles.Count());
+
+            await RunAgainWithChangedFile(solutionPath, result.ProjectBuildResult.ProjectPath, configuration, analyzer, "VisualBasic");
+        }
+
+        private async Task RunAgainWithChangedFile(string solutionPath, string projectPath, AnalyzerConfiguration configuration, CodeAnalyzer analyzer, string language = "CSharp")
         {
             string projectFileContent = File.ReadAllText(projectPath);
             //Change the target to an invalid target to replicate an invalid msbuild installation
-            File.WriteAllText(projectPath, projectFileContent.Replace(@"$(MSBuildBinPath)\Microsoft.CSharp.targets", @"InvalidTarget"));
+            File.WriteAllText(projectPath, projectFileContent.Replace($@"$(MSBuildBinPath)\Microsoft.{language}.targets", @"InvalidTarget"));
 
             //Try without setting the flag, result should be null:
             AnalyzerResult result = (await analyzer.AnalyzeSolution(solutionPath)).First();
@@ -319,8 +483,6 @@ namespace Codelyzer.Analysis.Tests
             var accountController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("AccountController.cs")).FirstOrDefault();
             await TestMvcMusicStoreIncrementalBuildWithAnalyzer(analyzer, result, accountController);
         }
-
-
         [Test]
         public async Task TestMvcMusicStoreUsingGenerator()
         {
@@ -351,7 +513,6 @@ namespace Codelyzer.Analysis.Tests
             };
             CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
 
-
             var resultEnumerator = analyzer.AnalyzeSolutionGeneratorAsync(solutionPath).GetAsyncEnumerator();
 
             if (await resultEnumerator.MoveNextAsync())
@@ -367,10 +528,9 @@ namespace Codelyzer.Analysis.Tests
             Assert.True(result != null);
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
-            Assert.AreEqual(28, result.ProjectResult.SourceFiles.Count);
-
-            //Project has 16 nuget references and 19 framework/dll references:
-            Assert.AreEqual(29, result.ProjectResult.ExternalReferences.NugetReferences.Count);
+            Assert.Contains(result.ProjectResult.SourceFiles.Count, new int[] { 28, 29 });
+           
+            Assert.Contains( result.ProjectResult.ExternalReferences.NugetReferences.Count, new int[] { 37, 29 });
             Assert.AreEqual(24, result.ProjectResult.ExternalReferences.SdkReferences.Count);
 
             var homeController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.cs")).FirstOrDefault();
@@ -420,7 +580,92 @@ namespace Codelyzer.Analysis.Tests
             Assert.IsNull(actionNameAttributeArgument.ArgumentName);
             Assert.AreEqual("\"Delete\"", actionNameAttributeArgument.ArgumentExpression);
         }
+        [Test]
+        public async Task TestVBWebApiUsingGenerator()
+        {
+            string solutionPath = CopySolutionFolderToTemp("VBWebApi.sln");
+            FileAssert.Exists(solutionPath);
 
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    LoadBuildData = true,
+                    ElementAccess = true,
+                    MemberAccess = true
+                    
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+
+
+            var resultEnumerator = analyzer.AnalyzeSolutionGeneratorAsync(solutionPath).GetAsyncEnumerator();
+
+            if (await resultEnumerator.MoveNextAsync())
+            {
+                using var result = resultEnumerator.Current;
+
+                ValidateVBWebApiResult(result);
+            }
+        }
+
+        private void ValidateVBWebApiResult(AnalyzerResult result)
+        {
+            Assert.True(result != null);
+            Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
+
+            Assert.AreEqual(40, result.ProjectResult.SourceFiles.Count);
+
+            //Project has 23 nuget references and 22 framework/dll references:
+            Assert.AreEqual(17, result.ProjectResult.ExternalReferences.NugetReferences.Count);
+            Assert.AreEqual(17, result.ProjectResult.ExternalReferences.SdkReferences.Count);
+
+            var helpController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HelpController.vb")).FirstOrDefault();
+            var homeController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.vb")).FirstOrDefault();
+            var valuesController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("ValuesController.vb")).FirstOrDefault();
+
+            Assert.NotNull(helpController);
+            Assert.NotNull(homeController);
+            Assert.NotNull(valuesController);
+
+            var classBlock = homeController.Children.OfType<Codelyzer.Analysis.Model.ClassBlock>().FirstOrDefault();
+            Assert.Greater(classBlock.Children.Count, 1);
+
+            var helpNamespaceBlock = helpController.Children.OfType<NamespaceBlock>().FirstOrDefault();
+            Assert.NotNull(helpNamespaceBlock);
+
+            var declarationNodes = classBlock.AllDeclarationNodes();
+            var methodBlocks = classBlock.AllMethodBlocks();
+
+            var elementAccess = helpNamespaceBlock.AllElementAccessExpressions();
+            var memberAccess = helpNamespaceBlock.AllMemberAccessExpressions();
+
+            //HouseController has 3 identifiers declared within the class declaration:
+            Assert.AreEqual(4, declarationNodes.Count());
+
+            //It has 2 method declarations
+            Assert.AreEqual(1, methodBlocks.Count());
+
+            Assert.AreEqual(0, elementAccess.Count());
+            Assert.AreEqual(13, memberAccess.Count());
+
+            foreach (var child in helpController.Children)
+            {
+                Assert.AreEqual(helpController, child.Parent);
+            }
+        }
 
         [Test]
         public async Task TestMvcMusicStoreWithReferences()
@@ -760,7 +1005,52 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(1, testClassRootNode.AllConstructors().Count);
         }
 
+        [Test]
+        public async Task VBTestAnalysis()
+        {
+            //string projectPath = string.Concat(GetTstPath(Path.Combine(new string[] { "Projects\\VBConsoleApp", "VBConsoleApp", "VBConsoleApp" })), ".vbproj");
+            string projectPath = Directory.EnumerateFiles(downloadsDir, "VBConsoleApp.vbproj", SearchOption.AllDirectories).FirstOrDefault();
 
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    LambdaMethods = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    LoadBuildData = true
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            AnalyzerResult result = await analyzer.AnalyzeProject(projectPath);
+            Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
+
+            Assert.True(result != null);
+
+            // Extract the subject node
+            var testClassRootNode = result.ProjectResult.SourceFileResults
+                    .First(s => s.FileFullPath.EndsWith("Class2.vb"))
+                as UstNode;
+
+            // Nested class is found
+            Assert.AreEqual(1, testClassRootNode.AllClassBlocks().Count(c => c.Identifier == "NestedClass"));
+
+            // Chained method is found
+            Assert.AreEqual(1, testClassRootNode.AllInvocationExpressions().Count(c => c.MethodName == "ChainedMethod"));
+
+            // Constructor is found
+            Assert.AreEqual(1, testClassRootNode.AllConstructorBlocks().Count);
+        }
         [Test]
         public async Task TestNopCommerce()
         {
@@ -930,6 +1220,51 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             //And it contains DLLs
             var dlls = Directory.EnumerateFiles(binPath, "*.dll", SearchOption.AllDirectories);
             Assert.AreEqual(84, dlls.Count());
+            Assert.True(dlls.Any(c=> c.Contains("BuildableWebApi.dll")));
+        }
+
+        [Test]
+        public async Task VBTestBuildOnlyFramework_Successfully()
+        {
+            var solutionPath = CopySolutionFolderToTemp("VBWebApi.sln");
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    GenerateGremlinOutput = false,
+                    GenerateRDFOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData  = true,
+                    LoadBuildData = true
+                },
+                BuildSettings =
+                {
+                    BuildOnly = true,
+                    BuildArguments = AnalyzerConfiguration.DefaultBuildArguments
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+
+            var result = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
+
+            //Check that the bin folder was created
+            var binPath = Path.Join(Path.GetDirectoryName(solutionPath), "VBWebApi", "bin");
+            Assert.IsTrue(Directory.Exists(binPath));
+
+            //And it contains DLLs
+            var dlls = Directory.EnumerateFiles(binPath, "*.dll", SearchOption.AllDirectories);
+            Assert.AreEqual(51, dlls.Count());
         }
 
         [Test]
@@ -976,7 +1311,49 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(2, dlls.Count());
         }
 
+        [Test]
+        public async Task VBTestBuildOnlyCore_Successfully()
+        {
+            var solutionPath = CopySolutionFolderToTemp("VBClassLibrary.sln");
 
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = true,
+                    GenerateGremlinOutput = false,
+                    GenerateRDFOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData  = true,
+                    LoadBuildData = true
+                },
+                BuildSettings =
+                {
+                    BuildOnly = true,
+                    BuildArguments = AnalyzerConfiguration.DefaultBuildArguments
+                }
+            };
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+
+            var result = await analyzer.AnalyzeSolution(solutionPath);
+
+            //Check that the bin folder was created
+            var binPath = Path.Join(Path.GetDirectoryName(solutionPath), "VBClassLibrary", "bin");
+            Assert.IsTrue(Directory.Exists(binPath));
+
+            //And it contains DLLs
+            var dlls = Directory.EnumerateFiles(binPath, "*.dll", SearchOption.AllDirectories);
+            Assert.AreEqual(1, dlls.Count());
+        }
         [TestCase("SampleWebApi.sln")]
         [TestCase("MvcMusicStore.sln")]
         public async Task TestReferenceBuilds (string solutionName)
@@ -1057,6 +1434,92 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             {
                 var sourceFileUsingBuild = sourceFilesUsingBuild.FirstOrDefault(s => s.FileFullPath == sourceFile.FileFullPath);
                 Assert.True(sourceFile.Equals(sourceFileUsingBuild));
+            });
+        }
+
+        [Test]
+        public async Task VBTestReferenceBuilds()
+        {
+            string solutionPath = CopySolutionFolderToTemp("VBWebApi.sln");
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                ConcurrentThreads = 1,
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true,
+                    GenerateBinFiles = true,
+                    LoadBuildData = true
+                }
+            };
+
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+
+            var resultsUsingBuild = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
+
+            var metaReferences = new Dictionary<string, List<string>>()
+            {
+                {
+                    resultsUsingBuild.FirstOrDefault().ProjectBuildResult.ProjectPath,
+                    resultsUsingBuild.FirstOrDefault().ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList()
+                }
+            };
+
+            //Files that are excluded from the list because they have more data in the reference analysis
+            var exclusionsFile = Path.Combine(solutionDir, "Exclusions.txt");
+            IEnumerable<string> exclusions = new List<string>();
+            if (File.Exists(exclusionsFile))
+            {
+                exclusions = File.ReadAllLines(exclusionsFile).ToList().Select(l => l.Trim());
+            }
+
+            var results = (await analyzer.AnalyzeSolution(solutionPath, null, metaReferences)).ToList();
+
+            resultsUsingBuild.ForEach(resultUsingBuild => {
+                var result = results.FirstOrDefault(r => r.ProjectResult.ProjectFilePath == resultUsingBuild.ProjectResult.ProjectFilePath);
+                Assert.NotNull(result);
+                var externalReferenceBuild = resultUsingBuild.ProjectResult.ExternalReferences;
+                var externalReference = result.ProjectResult.ExternalReferences;
+                Assert.True(externalReference.NugetReferences.SequenceEqual(externalReferenceBuild.NugetReferences));
+                Assert.True(externalReference.NugetDependencies.SequenceEqual(externalReferenceBuild.NugetDependencies));
+                Assert.True(externalReference.SdkReferences.SequenceEqual(externalReferenceBuild.SdkReferences));
+                Assert.True(externalReference.ProjectReferences.SequenceEqual(externalReferenceBuild.ProjectReferences));
+            });
+
+            var sourceFiles = results.SelectMany(r => r.ProjectResult.SourceFileResults)
+                .Where(s => !s.FileFullPath.Contains("AssemblyInfo.vb") &&
+                !s.FileFullPath.Contains(".vbhtml.g") &&
+                !exclusions.Contains(Path.GetFileName(s.FileFullPath)));
+            var sourceFilesUsingBuild = resultsUsingBuild.SelectMany(r => r.ProjectResult.SourceFileResults)
+                .Where(s => !s.FileFullPath.Contains("AssemblyInfo.vb") && !exclusions.Contains(Path.GetFileName(s.FileFullPath)));
+
+            sourceFiles.ToList().ForEach(sourceFile =>
+            {
+                var sourceFileUsingBuild = sourceFilesUsingBuild.FirstOrDefault(s => s.FileFullPath == sourceFile.FileFullPath);
+
+                if (sourceFile.FilePath != @"Areas\HelpPage\ModelDescriptions\ModelDescriptionGenerator.vb")
+                {
+                    Assert.True(sourceFile.Equals(sourceFileUsingBuild), $"sourceFile {sourceFile.FilePath} not equal to {sourceFileUsingBuild.FilePath} ");
+                }
             });
         }
 
@@ -1149,8 +1612,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(0, projectGraphWithBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).Edges.Count);
 
             // There are 26 classes in the solution
-            Assert.AreEqual(30, classGraphWithoutBuild.Count);
-            Assert.AreEqual(30, classGraphWithBuild.Count);
+            Assert.AreEqual(26, classGraphWithoutBuild.Count);
+            Assert.AreEqual(26, classGraphWithBuild.Count);
 
             // Number of edges for each node
             Assert.AreEqual(1, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.BundleConfig")).Edges.Count);
@@ -1180,10 +1643,10 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(6, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.ICustomerFacade")).Edges.Count);
             Assert.AreEqual(0, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.IProductFacade")).Edges.Count);
 
-            Assert.AreEqual(2, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ChildClass<ObjectType>")).Edges.Count);
+/*            Assert.AreEqual(2, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ChildClass<ObjectType>")).Edges.Count);
             Assert.AreEqual(1, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ParentClass<T>")).Edges.Count);
             Assert.AreEqual(2, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ObjectType")).Edges.Count);
-            Assert.AreEqual(1, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.IObjectType")).Edges.Count);
+            Assert.AreEqual(1, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.IObjectType")).Edges.Count);*/
 
             Assert.AreEqual(1, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.BundleConfig")).Edges.Count);
             Assert.AreEqual(1, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.FilterConfig")).Edges.Count);
@@ -1212,12 +1675,55 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(6, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.ICustomerFacade")).Edges.Count);
             Assert.AreEqual(0, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.IProductFacade")).Edges.Count);
 
-            Assert.AreEqual(2, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ChildClass<ObjectType>")).Edges.Count);
+            /*Assert.AreEqual(2, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ChildClass<ObjectType>")).Edges.Count);
             Assert.AreEqual(1, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ParentClass<T>")).Edges.Count);
             Assert.AreEqual(2, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.ObjectType")).Edges.Count);
             Assert.AreEqual(1, classGraphWithBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.IObjectType")).Edges.Count);
+        */
         }
 
+        [Test]
+        public async Task VBLibraryClassAnalyze()
+        {
+            string solutionPath = CopySolutionFolderToTemp("VBClassLibrary.sln");
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+
+            FileAssert.Exists(solutionPath);
+
+            var args = new[]
+            {
+                "-p", solutionPath
+            };
+            AnalyzerCLI cli = new AnalyzerCLI();
+            cli.HandleCommand(args);
+            cli.Configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    LambdaMethods = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    LoadBuildData = true,
+                    ReturnStatements = true,
+                    InterfaceDeclarations = true
+                }
+            };
+
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(cli.Configuration, NullLogger.Instance);
+            var results = await analyzer.AnalyzeSolution(solutionPath);
+            Assert.True(results != null);
+
+        }
         #region private methods
         private void DeleteDir(string path, int retries = 0)
         {

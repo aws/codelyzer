@@ -1,26 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<IsTestProject>false</IsTestProject>
+		<RootNamespace>Codelyzer.Analysis.Build</RootNamespace>
+	</PropertyGroup>
 
-    <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-        <IsTestProject>false</IsTestProject>
-        <RootNamespace>Codelyzer.Analysis.Build</RootNamespace>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Buildalyzer" Version="4.1.3" />
-      <PackageReference Include="Buildalyzer.Logger" Version="4.1.3" />
-      <PackageReference Include="Buildalyzer.Workspaces" Version="4.1.3" />
+	<ItemGroup>
+		<PackageReference Include="Buildalyzer" Version="4.1.4" />
+      <PackageReference Include="Buildalyzer.Logger" Version="4.1.4" />
+      <PackageReference Include="Buildalyzer.Workspaces" Version="4.1.4" />
       <PackageReference Include="NuGet.Packaging" Version="6.0.0" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Codelyzer.Analysis.CSharp\Codelyzer.Analysis.CSharp.csproj" />
-    </ItemGroup>
+	<ItemGroup>
+	  
+	  <ProjectReference Include="..\Codelyzer.Analysis.Common\Codelyzer.Analysis.Common.csproj" />
+	</ItemGroup>
 
-    <ItemGroup>
-      <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
-      <PackageReference Update="Nerdbank.GitVersioning" Version="3.4.255" />
-    </ItemGroup>
-
+	<ItemGroup>
+		<PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+		<PackageReference Update="Nerdbank.GitVersioning" Version="3.4.255" />
+	</ItemGroup>
 </Project>
