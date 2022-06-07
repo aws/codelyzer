@@ -9,7 +9,7 @@
 		<PackageReference Include="Buildalyzer" Version="4.1.4" />
       <PackageReference Include="Buildalyzer.Logger" Version="4.1.4" />
       <PackageReference Include="Buildalyzer.Workspaces" Version="4.1.4" />
-      <PackageReference Include="NuGet.Packaging" Version="6.0.0" />
+      <PackageReference Include="NuGet.Packaging" Version="6.2.0" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
     </ItemGroup>
 
