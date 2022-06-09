@@ -79,6 +79,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             if (invokedSymbol.ContainingType != null)
             {
                 string classNameWithNamespace = invokedSymbol.ContainingType.ToString();
+                Model.SemanticFullClassTypeName = classNameWithNamespace;
                 Model.SemanticClassType = Model.SemanticNamespace == null ? classNameWithNamespace :
                     SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.SemanticNamespace);
             }

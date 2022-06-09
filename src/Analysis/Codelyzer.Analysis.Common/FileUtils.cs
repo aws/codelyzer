@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Codelyzer.Analysis.Common
 {
@@ -105,6 +106,34 @@ namespace Codelyzer.Analysis.Common
                 string solutionDir = Directory.GetParent(solutionPath).FullName;
                 return Directory.EnumerateFiles(solutionDir, "*.csproj", SearchOption.AllDirectories);
             }
+        }
+
+        public static Dictionary<string, HashSet<string>> GetProjectsWithReferences(string solutionPath, ILogger logger = null)
+        {
+            var projectFiles = GetProjectPathsFromSolutionFile(solutionPath);
+
+            Dictionary<string, HashSet<string>> result = new Dictionary<string, HashSet<string>>();
+            foreach (var projectFile in projectFiles)
+            {
+                try
+                {
+                    var projectDocument = XDocument.Load(projectFile);
+                    var projectReferenceNodes = projectDocument
+                        .Root
+                        .Descendants()
+                        .Where(x => x.Name?.LocalName == "ProjectReference")
+                        .Select(p => Path.GetFullPath(p.Attribute("Include").Value, Path.GetDirectoryName(projectFile)))
+                        .Distinct()
+                        .ToHashSet();
+                    result.Add(projectFile, projectReferenceNodes);
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogError(ex, "Error while retrieving project references");
+                }
+            }
+
+            return result;
         }
     }
 }

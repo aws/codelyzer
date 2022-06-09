@@ -20,6 +20,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             typeof(TypeArgumentListSyntax),
             typeof(ObjectCreationExpressionSyntax),
             typeof(QualifiedNameSyntax),
+            typeof(CastExpressionSyntax),
         };
 
         private DeclarationNode Model { get => (DeclarationNode)UstNode; }
@@ -39,6 +40,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                     Model.Reference.Assembly = GetAssembly(symbol);
                     Model.Reference.Version = GetAssemblyVersion(symbol);
                     Model.Reference.AssemblySymbol = symbol.ContainingAssembly;
+                    Model.FullIdentifier = string.Concat(Model.Reference.Namespace, ".", Model.Identifier);
                 }
                 else
                 {

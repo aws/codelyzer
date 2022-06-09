@@ -33,8 +33,9 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 					InvocationArguments = true,
 					DeclarationNodes = true,
 					LambdaMethods = true,
-					InterfaceDeclarations = true
-
+					InterfaceDeclarations = true,
+					Annotations = true
+					
 				}
 			};
 		}
@@ -85,7 +86,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.Single(arguments);
 			//construction: invocationExpress: InvocationExpression
 			Assert.Single(((InvocationExpression)invocationNode).Children);
-			var literalExpressionNode = ((InvocationExpression)invocationNode).Children[0];
+			var literalExpressionNode = ((InvocationExpression)invocationNode).Children[0].Children[0];
 			Assert.Equal(typeof(Model.LiteralExpression), literalExpressionNode.GetType());
 
 			//Child 1: MethodDeclaration - SetName
@@ -128,9 +129,9 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.Equal(2, classNode.Children.Count);
 			var construction1Node = classNode.Children[0];
 			Assert.True(construction1Node.GetType() == typeof(Model.ConstructorDeclaration));
-			Assert.Equal(2, construction1Node.Children.Count(c => c.GetType() == typeof(Model.Parameter)));
-			var p1 =construction1Node.Children.FirstOrDefault(c => c.GetType() == typeof(Model.Parameter));
-			var p2 = construction1Node.Children.LastOrDefault(c => c.GetType() == typeof(Model.Parameter));
+			Assert.Equal(2, construction1Node.Children.Count(c => c.GetType() == typeof(Model.Argument)));
+			var p1 =construction1Node.Children.FirstOrDefault(c => c.GetType() == typeof(Model.Argument));
+			var p2 = construction1Node.Children.LastOrDefault(c => c.GetType() == typeof(Model.Argument));
 			Assert.Equal("lastName", p1.Identifier);
 			Assert.Equal("firstName", p2.Identifier);
 
@@ -169,20 +170,12 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 
 			var blockNode = methodNode.Children[0];
 			Assert.True(blockNode.GetType() == typeof(Model.BlockStatement));
-			Assert.Equal(2, blockNode.Children.Count);
+			Assert.Equal(3, blockNode.Children.Count);
 
-			var literalNode = blockNode.Children[0];
-			Assert.True(literalNode.GetType() == typeof(Model.LiteralExpression));
+			var literalNode = blockNode.Children[1];
+			Assert.Equal(typeof(Model.LiteralExpression), literalNode.GetType());
 			Assert.Equal("test", literalNode.Identifier);
 
-
-			var invocationNode = blockNode.Children[1];
-			Assert.True(invocationNode.GetType() == typeof(Model.InvocationExpression));
-			var invocationExpressionNode = (InvocationExpression)invocationNode;
-			Assert.Equal("Equals", invocationExpressionNode.MethodName);
-
-			Assert.Equal(3, invocationExpressionNode.Arguments.Count);
-			Assert.Equal("a", invocationExpressionNode.Arguments[0].Identifier);
 		}
 		[Fact]
 		public void AttributeHandlerTest()
@@ -210,11 +203,11 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.Equal("AttributeTargets.Class", annotationNode.Children[0].Identifier);
 			Assert.Equal("AllowMultiple = true", annotationNode.Children[1].Identifier);
 
-			var constructionNode = rootNode.Children[1];
+			var constructionNode = classNode.Children[1];
 			Assert.Equal(typeof(Model.ConstructorDeclaration), constructionNode.GetType());
 			Assert.Equal("AuthorAttribute", constructionNode.Identifier);
 
-			var returnNode = rootNode.Children[2];
+			var returnNode = classNode.Children[2];
 			Assert.Equal(typeof(Model.ReturnStatement), returnNode.GetType());
 			Assert.Equal("name", returnNode.Identifier);
 		}
@@ -288,5 +281,12 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 		}
 
 
+	}
+	class TypeName
+	{
+		public void Test()
+		{
+			string.Equals("a", "v", System.StringComparison.Ordinal);
+		}
 	}
 }

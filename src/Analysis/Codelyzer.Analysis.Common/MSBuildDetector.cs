@@ -80,24 +80,41 @@ namespace Codelyzer.Analysis.Common
         public List<VisualStudioInstanceData> GetVisualStudioInstallations()
         {
             var visualStudioInstances = new List<VisualStudioInstanceData>();
-
-            var query = new SetupConfiguration();
-            var query2 = (ISetupConfiguration2)query;
-            var e = query2.EnumAllInstances();
-
-            int fetched;
-            var instances = new ISetupInstance[1];
-            do
+            try
             {
-                e.Next(1, instances, out fetched);
-                if (fetched > 0)
-                {
-                    var visualStudioInstance = ParseVisualStudioInstanceData(instances[0]);
-                    visualStudioInstances.Add(visualStudioInstance);
-                }
-            }
-            while (fetched > 0);
+                var query = new SetupConfiguration();
+                var query2 = (ISetupConfiguration2)query;
+                var e = query2.EnumAllInstances();
 
+                int fetched;
+                var instances = new ISetupInstance[1];
+                do
+                {
+                    e.Next(1, instances, out fetched);
+                    if (fetched > 0)
+                    {
+                        var visualStudioInstance = ParseVisualStudioInstanceData(instances[0]);
+                        visualStudioInstances.Add(visualStudioInstance);
+                    }
+                }
+                while (fetched > 0);
+            }
+            catch (Exception ex)
+            {
+                //Visual studio is not installed
+            }
+            if (!visualStudioInstances.Any())
+            {
+                var msbuildExes = GetFileSystemMsBuildExePath()?.ToList();
+                msbuildExes.ForEach(msbuildExe =>
+                {
+                    visualStudioInstances.Add(new VisualStudioInstanceData()
+                    {
+                        Name = "MSBuild",
+                        VisualStudioMSBuildPath = msbuildExe
+                    });
+                });
+            }
             return visualStudioInstances;
         }
 

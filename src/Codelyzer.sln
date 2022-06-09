@@ -19,12 +19,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Codelyzer.Analysis.VisualBa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Codelyzer.Analysis.Languages.UnitTests", "..\tst\Codelyzer.Analysis.Languages.UnitTests\Codelyzer.Analysis.Languages.UnitTests.csproj", "{F27A5219-8DA1-4C39-A7A0-940530DC53FD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildalyzer", "..\..\..\git3\Buildalyzer\src\Buildalyzer\Buildalyzer.csproj", "{8516D00F-D387-4E2A-8455-596660192A02}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildalyzer.Logger", "..\..\..\git3\Buildalyzer\src\Buildalyzer.Logger\Buildalyzer.Logger.csproj", "{0E336692-DC5C-4D30-92BC-E89EBC06C5F7}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Buildalyzer.Workspaces", "..\..\..\git3\Buildalyzer\src\Buildalyzer.Workspaces\Buildalyzer.Workspaces.csproj", "{ADA4B662-5481-4356-8DB4-BBE860C09BBB}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

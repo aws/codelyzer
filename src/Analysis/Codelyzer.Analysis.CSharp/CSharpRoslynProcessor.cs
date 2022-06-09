@@ -82,6 +82,11 @@ namespace Codelyzer.Analysis.CSharp
             NamespaceDeclarationHandler handler = new NamespaceDeclarationHandler(_context, node);
             return handler.UstNode;
         }
+        public override UstNode VisitFileScopedNamespaceDeclaration(FileScopedNamespaceDeclarationSyntax node)
+        {
+            NamespaceDeclarationHandler handler = new NamespaceDeclarationHandler(_context, node);
+            return handler.UstNode;
+        }
         public override UstNode VisitClassDeclaration(ClassDeclarationSyntax node)
         {
             ClassDeclarationHandler handler = new ClassDeclarationHandler(_context, node);

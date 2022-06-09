@@ -4,6 +4,7 @@ using Codelyzer.Analysis.CSharp;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -36,7 +37,40 @@ namespace Codelyzer.Analysis
         ///<inheritdoc/>
         public override async Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath)
         {
-            return await Analyze(solutionPath);
+            //return await Analyze(solutionPath);
+            var analyzerResults = await AnalyzeSolutionGeneratorAsync(solutionPath).ToListAsync();
+            await GenerateOptionalOutput(analyzerResults);
+            return analyzerResults;
+
+        }
+
+        ///<inheritdoc/>
+        public override CodeGraph GenerateGraph(List<AnalyzerResult> analyzerResults)
+        {
+
+            var codeGraph = new CodeGraph(Logger);
+            try
+            {
+                codeGraph.Initialize(analyzerResults);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error while generating graph");
+            }
+            return codeGraph;
+        }
+
+        ///<inheritdoc/>
+        public override async Task<SolutionAnalyzerResult> AnalyzeSolutionWithGraph(string solutionPath)
+        {
+            var analyzerResults = await AnalyzeSolution(solutionPath);
+            var codeGraph = GenerateGraph(analyzerResults);
+
+            return new SolutionAnalyzerResult()
+            {
+                CodeGraph = codeGraph,
+                AnalyzerResults = analyzerResults
+            };
         }
 
         ///<inheritdoc/>

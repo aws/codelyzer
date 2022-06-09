@@ -15,6 +15,12 @@ namespace Codelyzer.Analysis.CSharp.Handlers
         {
             NamespaceDeclaration.Identifier = syntaxNode.Name.ToString();
         }
+        public NamespaceDeclarationHandler(CodeContext context,
+       FileScopedNamespaceDeclarationSyntax syntaxNode)
+       : base(context, syntaxNode, new NamespaceDeclaration())
+        {
+            NamespaceDeclaration.Identifier = syntaxNode.Name.ToString();
+        }
 
     }
 }

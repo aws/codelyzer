@@ -177,43 +177,56 @@ namespace Codelyzer.Analysis.Build
 
             var projPath = Path.GetDirectoryName(Project.FilePath);
             DirectoryInfo directory = new DirectoryInfo(projPath);
-            var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
-            foreach (var file in allFiles)
+
+            if (vbOptions == null)
             {
-                try
+                var allCSharpFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                foreach (var file in allCSharpFiles)
                 {
-                    using (var stream = File.OpenRead(file.FullName))
+                    try
                     {
-                        var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
-                        trees.Add(syntaxTree);
+
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
                     }
                 }
-                catch (Exception e)
+            }
+            else 
+            {
+                var allVbFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
+                foreach (var file in allVbFiles)
                 {
-                    Console.WriteLine(e);
+                    try
+                    {
+
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
                 }
             }
-            
+
             if (trees.Count != 0)
             {
-                if (vbOptions != null)
-                {
-                    Compilation =
-                        VisualBasicCompilation.Create(Project.AssemblyName,
-                            trees, meta, vbOptions);
-                }
-                else
-                {
-                    if (options != null)
-                    {
-                        Compilation =
-                            CSharpCompilation.Create(Project.AssemblyName,
-                                trees, meta, options);
-                    }
-                }
+                Compilation = (vbOptions != null)?
+                        VisualBasicCompilation.Create(Project.AssemblyName,trees, meta, vbOptions):
+                        (options!= null)? CSharpCompilation.Create(Project.AssemblyName, trees, meta, options) : null;
             }
         }
-        private void SetSyntaxCompilation()
+        private void SetSyntaxCompilation(List<MetadataReference> metadataReferences)
         {
             var trees = new List<SyntaxTree>();
             isSyntaxAnalysis = true;
@@ -225,7 +238,7 @@ namespace Codelyzer.Analysis.Build
             DirectoryInfo directory = new DirectoryInfo(projPath);
             if (!string.IsNullOrEmpty(projPath) && projPath.ToLower().EndsWith(".vbproj"))
             {
-                var allFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
+                var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
                 foreach (var file in allFiles)
                 {
                     try
@@ -238,11 +251,10 @@ namespace Codelyzer.Analysis.Build
                     }
                     catch (Exception e)
                     {
-                        Logger.LogError(e, "Error while running syntax analysis");
+                        Logger.LogError(e, "Error while running CSharp syntax analysis");
                         Console.WriteLine(e);
                     }
                 }
-
                 if (trees.Count != 0)
                 {
                     Compilation = VisualBasicCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
@@ -250,7 +262,7 @@ namespace Codelyzer.Analysis.Build
             }
             else
             {
-                var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                var allFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
                 foreach (var file in allFiles)
                 {
                     try
@@ -263,7 +275,7 @@ namespace Codelyzer.Analysis.Build
                     }
                     catch (Exception e)
                     {
-                        Logger.LogError(e, "Error while running syntax analysis");
+                        Logger.LogError(e, "Error while running VisualBasic syntax analysis");
                         Console.WriteLine(e);
                     }
                 }
@@ -360,9 +372,9 @@ namespace Codelyzer.Analysis.Build
             Logger = logger;
             _analyzerConfiguration = analyzerConfiguration;
 
-            CompilationOptions options = project.CompilationOptions;
+            CompilationOptions options = project?.CompilationOptions;
 
-            if (project.CompilationOptions is CSharpCompilationOptions)
+            if (options is CSharpCompilationOptions)
             {
                 /*
                  * This is to fix the compilation errors related to :
@@ -372,8 +384,8 @@ namespace Codelyzer.Analysis.Build
                 options = options.WithAssemblyIdentityComparer(DesktopAssemblyIdentityComparer.Default);
             }
 
-            this.Project = project.WithCompilationOptions(options);
-            _projectPath = project.FilePath;
+            this.Project = project?.WithCompilationOptions(options);
+            _projectPath = project?.FilePath;
             Errors = new List<string>();
             MissingMetaReferences = new List<string>();
         }
@@ -554,7 +566,12 @@ namespace Codelyzer.Analysis.Build
 
         public ProjectBuildResult SyntaxOnlyBuild()
         {
-            SetSyntaxCompilation();
+            return SyntaxOnlyBuild(null);
+        }
+
+        public ProjectBuildResult SyntaxOnlyBuild(Dictionary<string, MetadataReference> metadataReferences)
+        {
+            SetSyntaxCompilation(metadataReferences?.Values?.ToList());
 
             ProjectBuildResult projectBuildResult = new ProjectBuildResult
             {
@@ -562,7 +579,15 @@ namespace Codelyzer.Analysis.Build
                 ProjectPath = ProjectAnalyzer.ProjectFile.Path,
                 ProjectRootPath = Path.GetDirectoryName(ProjectAnalyzer.ProjectFile.Path),
                 Compilation = Compilation,
-                IsSyntaxAnalysis = isSyntaxAnalysis
+                IsSyntaxAnalysis = isSyntaxAnalysis,
+                ExternalReferences = new ExternalReferences()
+                {
+                    ProjectReferences = metadataReferences?.Select(m=> new ExternalReference()
+                        {
+                            Identity = m.Value.Display,
+                            AssemblyLocation = m.Key
+                        }).ToList()
+                }
             };
 
             projectBuildResult.ProjectGuid = ProjectAnalyzer.ProjectGuid.ToString();

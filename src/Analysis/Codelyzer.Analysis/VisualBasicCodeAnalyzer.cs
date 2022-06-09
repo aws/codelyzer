@@ -37,7 +37,10 @@ namespace Codelyzer.Analysis
         ///<inheritdoc/>
         public override async Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath)
         {
-            return await Analyze(solutionPath);
+            //return await Analyze(solutionPath);
+            var analyzerResults = await AnalyzeSolutionGeneratorAsync(solutionPath).ToListAsync();
+            await GenerateOptionalOutput(analyzerResults);
+            return analyzerResults;
         }
 
         ///<inheritdoc/>
@@ -175,6 +178,7 @@ namespace Codelyzer.Analysis
             {
                 await projectBuildResultEnumerator.DisposeAsync();
             }
+
         }
 
         private async Task GenerateOptionalOutput(List<AnalyzerResult> analyzerResults)
@@ -323,6 +327,32 @@ namespace Codelyzer.Analysis
             });
 
             return result;
+        }
+
+        public override CodeGraph GenerateGraph(List<AnalyzerResult> analyzerResults)
+        {
+            var codeGraph = new CodeGraph(Logger);
+            try
+            {
+                codeGraph.Initialize(analyzerResults);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error while generating graph");
+            }
+            return codeGraph;
+        }
+
+        public override async Task<SolutionAnalyzerResult> AnalyzeSolutionWithGraph(string solutionPath)
+        {
+            var analyzerResults = await AnalyzeSolution(solutionPath);
+            var codeGraph = GenerateGraph(analyzerResults);
+
+            return new SolutionAnalyzerResult()
+            {
+                CodeGraph = codeGraph,
+                AnalyzerResults = analyzerResults
+            };
         }
     }
 }
