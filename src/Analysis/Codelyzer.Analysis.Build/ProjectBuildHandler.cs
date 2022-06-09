@@ -236,16 +236,16 @@ namespace Codelyzer.Analysis.Build
 
             var projPath = Path.GetDirectoryName(ProjectAnalyzer.ProjectFile.Path);
             DirectoryInfo directory = new DirectoryInfo(projPath);
-            if (!string.IsNullOrEmpty(projPath) && projPath.ToLower().EndsWith(".vbproj"))
+            if (string.IsNullOrEmpty(projPath) && projPath.ToLower().EndsWith(".csproj"))
             {
-                var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
-                foreach (var file in allFiles)
+                var allCsharpFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                foreach (var file in allCsharpFiles)
                 {
                     try
                     {
                         using (var stream = File.OpenRead(file.FullName))
                         {
-                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
                             trees.Add(syntaxTree);
                         }
                     }
@@ -257,19 +257,19 @@ namespace Codelyzer.Analysis.Build
                 }
                 if (trees.Count != 0)
                 {
-                    Compilation = VisualBasicCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
+                    Compilation = CSharpCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
                 }
             }
             else
             {
-                var allFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
-                foreach (var file in allFiles)
+                var allVbFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
+                foreach (var file in allVbFiles)
                 {
                     try
                     {
                         using (var stream = File.OpenRead(file.FullName))
                         {
-                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
                             trees.Add(syntaxTree);
                         }
                     }
@@ -282,7 +282,7 @@ namespace Codelyzer.Analysis.Build
 
                 if (trees.Count != 0)
                 {
-                    Compilation = CSharpCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
+                    Compilation = VisualBasicCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
                 }
             }
         }

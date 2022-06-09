@@ -29,8 +29,71 @@ namespace Codelyzer.Analysis.Analyzer
 
         public async Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath)
         {
-            return await Analyze(solutionPath);
+            //return await Analyze(solutionPath);
+            var analyzerResults = await AnalyzeSolutionGeneratorAsync(solutionPath).ToListAsync();
+            await GenerateOptionalOutput(analyzerResults);
+            return analyzerResults;
+
         }
+
+        ///<inheritdoc/>
+        public async IAsyncEnumerable<AnalyzerResult> AnalyzeSolutionGeneratorAsync(string solutionPath)
+        {
+            var result = AnalyzeGeneratorAsync(solutionPath).GetAsyncEnumerator();
+            try
+            {
+                while (await result.MoveNextAsync().ConfigureAwait(false))
+                {
+                    yield return result.Current;
+                }
+            }
+            finally
+            {
+                await result.DisposeAsync();
+            }
+        }
+
+        private async IAsyncEnumerable<AnalyzerResult> AnalyzeGeneratorAsync(string path)
+        {
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException(path);
+            }
+
+            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
+
+            WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
+
+
+            var projectBuildResultEnumerator = builder.BuildProject().GetAsyncEnumerator();
+            try
+            {
+
+                while (await projectBuildResultEnumerator.MoveNextAsync().ConfigureAwait(false))
+                {
+                    var projectBuildResult = projectBuildResultEnumerator.Current;
+                    var workspaceResult = AnalyzeProject(projectBuildResult);
+                    workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
+                    workspaceResult.ProjectType = projectBuildResult.ProjectType;
+                    workspaceResults.Add(workspaceResult);
+
+                    if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+                    {
+                        yield return new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult };
+                    }
+                    else
+                    {
+                        yield return new AnalyzerResult() { ProjectResult = workspaceResult };
+                    }
+                }
+            }
+            finally
+            {
+                await projectBuildResultEnumerator.DisposeAsync();
+            }
+        }
+
+
 
         public async Task<List<AnalyzerResult>> Analyze(string path)
         {
