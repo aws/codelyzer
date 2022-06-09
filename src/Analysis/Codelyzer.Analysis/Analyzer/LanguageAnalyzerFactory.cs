@@ -10,9 +10,4 @@ namespace Codelyzer.Analysis.Analyzer
     {
         public abstract LanguageAnalyzer GetLanguageAnalyzer();
     }
-
-    /*abstract class CardFactory
-    {
-        public abstract CreditCard GetCreditCard();
-    }*/
 }

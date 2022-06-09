@@ -32,7 +32,7 @@ namespace Codelyzer.Analysis.Analyzer
             return await Analyze(solutionPath);
         }
 
-        private async Task<List<AnalyzerResult>> Analyze(string path)
+        public async Task<List<AnalyzerResult>> Analyze(string path)
         {
             if (!File.Exists(path))
             {
@@ -85,26 +85,11 @@ namespace Codelyzer.Analysis.Analyzer
                 }
             }
         }
-
-        private ProjectWorkspace AnalyzeProject(ProjectBuildResult projectResult)
+        public ProjectWorkspace AnalyzeProject(ProjectBuildResult projectResult)
         {
             Logger.LogDebug("Analyzing the project: " + projectResult.ProjectPath);
             var projType = Path.GetExtension(projectResult.ProjectPath).ToLower();
-            LanguageAnalyzerFactory languageAnalyzerFactory;
-            switch (projType.ToLower())
-            {
-                case ".vbproj":
-                    languageAnalyzerFactory = new VBAnalyerFactory(AnalyzerConfiguration, Logger);
-                    break;
-                case ".csproj":
-                    languageAnalyzerFactory = new CSharpAnalyzerFactory(AnalyzerConfiguration, Logger);
-                    break;
-
-                default:
-                    throw new Exception($"invalid project type {projType} from [{projectResult.ProjectPath}]");
-            }
-            var languageAnalyzer = languageAnalyzerFactory.GetLanguageAnalyzer();
-
+            LanguageAnalyzer languageAnalyzer = GetLanguageAnalyzerByProjectType(projType);
             ProjectWorkspace workspace = new ProjectWorkspace(projectResult.ProjectPath)
             {
                 SourceFiles = new UstList<string>(projectResult.SourceFiles),
@@ -126,6 +111,44 @@ namespace Codelyzer.Analysis.Analyzer
             }
 
             return workspace;
+        }
+
+        public LanguageAnalyzer GetLanguageAnalyzerByProjectType(string projType)
+        {
+            LanguageAnalyzerFactory languageAnalyzerFactory;
+            switch (projType.ToLower())
+            {
+                case ".vbproj":
+                    languageAnalyzerFactory = new VBAnalyerFactory(AnalyzerConfiguration, Logger);
+                    break;
+                case ".csproj":
+                    languageAnalyzerFactory = new CSharpAnalyzerFactory(AnalyzerConfiguration, Logger);
+                    break;
+
+                default:
+                    throw new Exception($"invalid project type {projType}");
+            }
+            return languageAnalyzerFactory.GetLanguageAnalyzer();
+            
+        }
+
+        public LanguageAnalyzer GetLanguageAnalyzerByFileType(string fileType)
+        {
+            LanguageAnalyzerFactory languageAnalyzerFactory;
+            switch (fileType.ToLower())
+            {
+                case ".vb":
+                    languageAnalyzerFactory = new VBAnalyerFactory(AnalyzerConfiguration, Logger);
+                    break;
+                case ".cs":
+                    languageAnalyzerFactory = new CSharpAnalyzerFactory(AnalyzerConfiguration, Logger);
+                    break;
+
+                default:
+                    throw new Exception($"invalid project type {fileType}");
+            }
+            return languageAnalyzerFactory.GetLanguageAnalyzer();
+
         }
     }
 }
