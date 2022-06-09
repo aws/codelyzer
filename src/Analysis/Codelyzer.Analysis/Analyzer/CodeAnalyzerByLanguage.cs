@@ -150,5 +150,86 @@ namespace Codelyzer.Analysis.Analyzer
             return languageAnalyzerFactory.GetLanguageAnalyzer();
 
         }
+
+        ///<inheritdoc/>
+        public async Task<SolutionAnalyzerResult> AnalyzeSolutionWithGraph(string solutionPath)
+        {
+            var analyzerResults = await AnalyzeSolution(solutionPath);
+            var codeGraph = GenerateGraph(analyzerResults);
+
+            return new SolutionAnalyzerResult()
+            {
+                CodeGraph = codeGraph,
+                AnalyzerResults = analyzerResults
+            };
+        }
+
+        ///<inheritdoc/>
+        public CodeGraph GenerateGraph(List<AnalyzerResult> analyzerResults)
+        {
+
+            var codeGraph = new CodeGraph(Logger);
+            try
+            {
+                codeGraph.Initialize(analyzerResults);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error while generating graph");
+            }
+            return codeGraph;
+        }
+
+
+        ///<inheritdoc/>
+        public async Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath, Dictionary<string, List<string>> oldReferences, Dictionary<string, List<string>> references)
+        {
+            var analyzerResults = await AnalyzeWithReferences(solutionPath, oldReferences, references);
+            return analyzerResults;
+        }
+
+        private async Task<List<AnalyzerResult>> AnalyzeWithReferences(string path, Dictionary<string, List<string>> oldReferences, Dictionary<string, List<string>> references)
+        {
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException(path);
+            }
+
+            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
+            var analyzerResults = new List<AnalyzerResult>();
+
+            WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
+
+            var projectBuildResults = builder.GenerateNoBuildAnalysis(oldReferences, references);
+
+            foreach (var projectBuildResult in projectBuildResults)
+            {
+                var workspaceResult = await Task.Run(() => AnalyzeProject(projectBuildResult));
+                workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
+                workspaceResult.ProjectType = projectBuildResult.ProjectType;
+                workspaceResults.Add(workspaceResult);
+
+                //Generate Output result
+                if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+                {
+                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
+                }
+                else
+                {
+                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult });
+                }
+            }
+
+            await GenerateOptionalOutput(analyzerResults);
+
+            return analyzerResults;
+        }
+
+        public async Task<AnalyzerResult> AnalyzeProject(string projectPath, List<string> oldReferences, List<string> references)
+        {
+            var analyzerResult = await AnalyzeWithReferences(projectPath, oldReferences?.ToDictionary(r => projectPath, r => oldReferences), references?.ToDictionary(r => projectPath, r => references));
+            return analyzerResult.FirstOrDefault();
+        }
+
     }
 }

@@ -501,45 +501,7 @@ namespace Codelyzer.Analysis.Tests
             
             await TestMvcMusicStoreIncrementalBuildWithAnalyzer(analyzerByLanguage, result, accountController);
         }
-        [Test]
-        public async Task TestMvcMusicStoreUsingGenerator()
-        {
-            string solutionPath = CopySolutionFolderToTemp("MvcMusicStore.sln");
-            string solutionDir = Directory.GetParent(solutionPath).FullName;
-            FileAssert.Exists(solutionPath);
-
-            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
-            {
-                ExportSettings =
-                {
-                    GenerateJsonOutput = false,
-                    OutputPath = @"/tmp/UnitTests"
-                },
-
-                MetaDataSettings =
-                {
-                    LiteralExpressions = true,
-                    MethodInvocations = true,
-                    Annotations = true,
-                    DeclarationNodes = true,
-                    LocationData = false,
-                    ReferenceData = true,
-                    LoadBuildData = true,
-                    ElementAccess = true,
-                    MemberAccess = true
-                }
-            };
-            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
-
-            var resultEnumerator = analyzer.AnalyzeSolutionGeneratorAsync(solutionPath).GetAsyncEnumerator();
-
-            if (await resultEnumerator.MoveNextAsync())
-            {
-                using var result = resultEnumerator.Current;
-
-                ValidateMvcMusicStoreResult(result);
-            }
-        }
+        
 
         private void ValidateMvcMusicStoreResult(AnalyzerResult result)
         {
@@ -598,47 +560,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.IsNull(actionNameAttributeArgument.ArgumentName);
             Assert.AreEqual("\"Delete\"", actionNameAttributeArgument.ArgumentExpression);
         }
-        [Test]
-        public async Task TestVBWebApiUsingGenerator()
-        {
-            string solutionPath = CopySolutionFolderToTemp("VBWebApi.sln");
-            FileAssert.Exists(solutionPath);
-
-            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
-            {
-                ExportSettings =
-                {
-                    GenerateJsonOutput = false,
-                    OutputPath = @"/tmp/UnitTests"
-                },
-
-                MetaDataSettings =
-                {
-                    LiteralExpressions = true,
-                    MethodInvocations = true,
-                    Annotations = true,
-                    DeclarationNodes = true,
-                    LocationData = false,
-                    ReferenceData = true,
-                    LoadBuildData = true,
-                    ElementAccess = true,
-                    MemberAccess = true
-
-                }
-            };
-            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
-
-
-            var resultEnumerator = analyzer.AnalyzeSolutionGeneratorAsync(solutionPath).GetAsyncEnumerator();
-
-            if (await resultEnumerator.MoveNextAsync())
-            {
-                using var result = resultEnumerator.Current;
-
-                ValidateVBWebApiResult(result);
-            }
-        }
-
+        
         private void ValidateVBWebApiResult(AnalyzerResult result)
         {
             Assert.True(result != null);
@@ -715,13 +637,11 @@ namespace Codelyzer.Analysis.Tests
                     MemberAccess = true
                 }
             };
-
-
-            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            CodeAnalyzerByLanguage analyzerByLanguage = new CodeAnalyzerByLanguage(configuration, NullLogger.Instance);
 
             //We need to build initially to generate the references and get their info:
             var start1 = DateTime.Now;
-            using var tempResult = (await analyzer.AnalyzeSolution(solutionPath)).FirstOrDefault();
+            using var tempResult = (await analyzerByLanguage.AnalyzeSolution(solutionPath)).FirstOrDefault();
             var end1 = DateTime.Now - start1;
 
             var references = tempResult.ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList();
@@ -729,7 +649,7 @@ namespace Codelyzer.Analysis.Tests
             referencesInfo.Add(projectPath, references);
 
             var start = DateTime.Now;
-            using var result = (await analyzer.AnalyzeSolution(solutionPath, new Dictionary<string, List<string>>(), referencesInfo)).FirstOrDefault();
+            using var result = (await analyzerByLanguage.AnalyzeSolution(solutionPath, new Dictionary<string, List<string>>(), referencesInfo)).FirstOrDefault();
             var end = DateTime.Now - start;
 
             Assert.True(result != null);
@@ -796,7 +716,8 @@ namespace Codelyzer.Analysis.Tests
             Assert.IsNull(actionNameAttributeArgument.ArgumentName);
             Assert.AreEqual("\"Delete\"", actionNameAttributeArgument.ArgumentExpression);
 
-            await TestMvcMusicStoreIncrementalBuild(projectPath, references, analyzer, accountController);
+            
+            await TestMvcMusicStoreIncrementalBuild(projectPath, references, analyzerByLanguage, accountController);
         }
 
         private async Task TestMvcMusicStoreIncrementalBuildWithAnalyzer(CodeAnalyzerByLanguage analyzerByLanguage, AnalyzerResult result, RootUstNode accountController)
@@ -872,7 +793,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             var updatedSourcefile = result.ProjectResult.SourceFileResults.FirstOrDefault(s => s.FileFullPath.Contains("AccountController.cs"));
         }
 
-        private async Task TestMvcMusicStoreIncrementalBuild(string projectPath, List<string> references, CodeAnalyzer analyzer, RootUstNode accountController)
+        private async Task TestMvcMusicStoreIncrementalBuild(string projectPath, List<string> references, CodeAnalyzerByLanguage analyzerByLanguage, RootUstNode accountController)
         {
             var filePath = accountController.FileFullPath;
             var fileContent = @"using System;
@@ -944,7 +865,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
             var fileInfo = new Dictionary<string, string>();
             fileInfo.Add(filePath, fileContent);
-
+            var projType = Path.GetExtension(projectPath).ToLower();
+            var analyzer = analyzerByLanguage.GetLanguageAnalyzerByProjectType(projType);
             var oneFileResult = await analyzer.AnalyzeFile(projectPath, filePath, null, references);
             var listOfFilesResult = await analyzer.AnalyzeFile(projectPath, new List<string> { filePath }, null, references);
             var fileInfoResult = await analyzer.AnalyzeFile(projectPath, fileInfo, null, references);
@@ -1449,8 +1371,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             {
                 exclusions = File.ReadAllLines(exclusionsFile).ToList().Select(l => l.Trim());
             }
-            var analyzer = analyzerByLanguage.GetLanguageAnalyzerByFileType(".cs");
-            var results = (await analyzer.AnalyzeSolution(solutionPath, null, metaReferences)).ToList();
+            
+            var results = (await analyzerByLanguage.AnalyzeSolution(solutionPath, null, metaReferences)).ToList();
 
             resultsUsingBuild.ForEach(resultUsingBuild => {
                 var result = results.FirstOrDefault(r => r.ProjectResult.ProjectFilePath == resultUsingBuild.ProjectResult.ProjectFilePath);
@@ -1533,8 +1455,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             {
                 exclusions = File.ReadAllLines(exclusionsFile).ToList().Select(l => l.Trim());
             }
-            var analyzer = analyzerByLanguage.GetLanguageAnalyzerByFileType(".vb");
-            var results = (await analyzer.AnalyzeSolution(solutionPath, null, metaReferences)).ToList();
+            
+            var results = (await analyzerByLanguage.AnalyzeSolution(solutionPath, null, metaReferences)).ToList();
 
             resultsUsingBuild.ForEach(resultUsingBuild => {
                 var result = results.FirstOrDefault(r => r.ProjectResult.ProjectFilePath == resultUsingBuild.ProjectResult.ProjectFilePath);
@@ -1627,11 +1549,17 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                 }
             };
 
-            CodeAnalyzer analyzerWithoutBuild = CodeAnalyzerFactory.GetAnalyzer(configurationWithoutBuild, NullLogger.Instance);
+            /*CodeAnalyzer analyzerWithoutBuild = CodeAnalyzerFactory.GetAnalyzer(configurationWithoutBuild, NullLogger.Instance);
             CodeAnalyzer analyzerWithBuild = CodeAnalyzerFactory.GetAnalyzer(configurationWithBuild, NullLogger.Instance);
             var resultWithoutBuild = await analyzerWithoutBuild.AnalyzeSolutionWithGraph(solutionPath);
-            var resultWithBuild = await analyzerWithBuild.AnalyzeSolutionWithGraph(solutionPath);
+            var resultWithBuild = await analyzerWithBuild.AnalyzeSolutionWithGraph(solutionPath);*/
 
+            CodeAnalyzerByLanguage analyzerWithoutBuild = new CodeAnalyzerByLanguage(configurationWithoutBuild, NullLogger.Instance);
+            CodeAnalyzerByLanguage analyzerWithBuild = new CodeAnalyzerByLanguage(configurationWithBuild, NullLogger.Instance);
+            
+            var resultWithoutBuild = await analyzerWithoutBuild.AnalyzeSolutionWithGraph(solutionPath);
+            var resultWithBuild = await analyzerWithBuild.AnalyzeSolutionWithGraph(solutionPath);
+            
             var projectGraphWithoutBuild = resultWithoutBuild.CodeGraph?.ProjectGraph;
             var projectGraphWithBuild = resultWithBuild.CodeGraph?.ProjectGraph;
             var classGraphWithoutBuild = resultWithoutBuild.CodeGraph?.ClassGraph;
