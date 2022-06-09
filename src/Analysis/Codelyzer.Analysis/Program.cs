@@ -52,9 +52,7 @@ namespace Codelyzer.Analysis
             AnalyzerResult analyzerResult = null;
             if (cli.Project)
             {
-                var projType = Path.GetExtension(cli.FilePath).ToLower(); 
-                var analyzer = analyzerByLanguage.GetLanguageAnalyzerByProjectType(projType);
-                analyzerResult = await analyzer.AnalyzeProject(cli.FilePath);
+                analyzerResult = await analyzerByLanguage.AnalyzeProject(cli.FilePath);
                 if (analyzerResult.OutputJsonFilePath != null)
                 {
                     Console.WriteLine("Exported to : " + analyzerResult.OutputJsonFilePath);
