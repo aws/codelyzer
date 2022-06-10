@@ -1050,6 +1050,9 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
             // Constructor is found
             Assert.AreEqual(1, testClassRootNode.AllConstructorBlocks().Count);
+
+            // imports found
+            Assert.IsTrue(testClassRootNode.Children.OfType<ImportsStatement>().Select(i => i.Identifier).Contains("System"));
         }
         [Test]
         public async Task TestNopCommerce()
