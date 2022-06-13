@@ -560,7 +560,46 @@ namespace Codelyzer.Analysis.Tests
             Assert.IsNull(actionNameAttributeArgument.ArgumentName);
             Assert.AreEqual("\"Delete\"", actionNameAttributeArgument.ArgumentExpression);
         }
-        
+
+        [Test]
+        public async Task TestVBWebApiUsingGenerator()
+        {
+            string solutionPath = CopySolutionFolderToTemp("VBWebApi.sln");
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    LoadBuildData = true,
+                    ElementAccess = true,
+                    MemberAccess = true
+
+                }
+            };
+            CodeAnalyzerByLanguage analyzerByLanguage = new CodeAnalyzerByLanguage(configuration, NullLogger.Instance);
+
+            var resultEnumerator = analyzerByLanguage.AnalyzeSolutionGeneratorAsync(solutionPath).GetAsyncEnumerator();
+
+            if (await resultEnumerator.MoveNextAsync())
+            {
+                using var result = resultEnumerator.Current;
+
+                ValidateVBWebApiResult(result);
+            }
+        }
         private void ValidateVBWebApiResult(AnalyzerResult result)
         {
             Assert.True(result != null);
@@ -592,10 +631,8 @@ namespace Codelyzer.Analysis.Tests
             var elementAccess = helpNamespaceBlock.AllElementAccessExpressions();
             var memberAccess = helpNamespaceBlock.AllMemberAccessExpressions();
 
-            //HouseController has 3 identifiers declared within the class declaration:
             Assert.AreEqual(4, declarationNodes.Count());
 
-            //It has 2 method declarations
             Assert.AreEqual(1, methodBlocks.Count());
 
             Assert.AreEqual(0, elementAccess.Count());
@@ -949,7 +986,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         [Test]
         public async Task VBTestAnalysis()
         {
-            //string projectPath = string.Concat(GetTstPath(Path.Combine(new string[] { "Projects\\VBConsoleApp", "VBConsoleApp", "VBConsoleApp" })), ".vbproj");
             string projectPath = Directory.EnumerateFiles(downloadsDir, "VBConsoleApp.vbproj", SearchOption.AllDirectories).FirstOrDefault();
 
             AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
