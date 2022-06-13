@@ -236,7 +236,8 @@ namespace Codelyzer.Analysis.Build
 
             var projPath = Path.GetDirectoryName(ProjectAnalyzer.ProjectFile.Path);
             DirectoryInfo directory = new DirectoryInfo(projPath);
-            if (string.IsNullOrEmpty(projPath) && projPath.ToLower().EndsWith(".csproj"))
+            var extension = Path.GetExtension(projPath);
+            if (!string.IsNullOrEmpty(extension) && extension.Equals(".csproj", StringComparison.InvariantCultureIgnoreCase))
             {
                 var allCsharpFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
                 foreach (var file in allCsharpFiles)
@@ -291,8 +292,8 @@ namespace Codelyzer.Analysis.Build
         {
             var trees = new List<SyntaxTree>();
             DirectoryInfo directory = new DirectoryInfo(Path.GetDirectoryName(projectPath));
-
-            if (!string.IsNullOrEmpty(projectPath) && projectPath.ToLower().EndsWith(".vbproj"))
+            var extension = Path.GetExtension(projectPath);
+            if (!string.IsNullOrEmpty(extension) && extension.Equals(".vbproj", StringComparison.InvariantCultureIgnoreCase))
             {
                 var allFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
                 foreach (var file in allFiles)
@@ -319,8 +320,8 @@ namespace Codelyzer.Analysis.Build
             }
             else
             {
-                var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
-                foreach (var file in allFiles)
+                var allCSharpFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                foreach (var file in allCSharpFiles)
                 {
                     try
                     {

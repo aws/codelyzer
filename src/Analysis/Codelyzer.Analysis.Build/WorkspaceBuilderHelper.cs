@@ -517,7 +517,7 @@ namespace Codelyzer.Analysis.Build
                 Logger.LogDebug(e.StackTrace);
                 // TODO Handle errors
                 // Ignore errors from vbproj until a fix from Buildalyzer
-                if (!projectAnalyzer.ProjectFile.Path.EndsWith("vbproj"))
+                if (!projectAnalyzer.ProjectFile.Path.EndsWith(".vbproj"))
                 {
                     throw;
                 }
