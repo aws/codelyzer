@@ -10,6 +10,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using Assert = NUnit.Framework.Assert;
 
 namespace Codelyzer.Analysis.Tests
@@ -1053,6 +1054,13 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
             // imports found
             Assert.IsTrue(testClassRootNode.Children.OfType<ImportsStatement>().Select(i => i.Identifier).Contains("System"));
+
+            // as clause identifier is found
+            Assert.AreEqual(2,
+                testClassRootNode.AllDeclarationNodes()
+                    .Count(c =>
+                        c.Identifier == "Class2" &&
+                        c.Parent.GetType() == typeof(SimpleAsClause)));
         }
         [Test]
         public async Task TestNopCommerce()
