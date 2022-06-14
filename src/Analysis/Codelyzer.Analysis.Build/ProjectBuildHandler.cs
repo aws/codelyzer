@@ -236,7 +236,7 @@ namespace Codelyzer.Analysis.Build
 
             var projPath = Path.GetDirectoryName(ProjectAnalyzer.ProjectFile.Path);
             DirectoryInfo directory = new DirectoryInfo(projPath);
-            var extension = Path.GetExtension(projPath);
+            var extension = Path.GetExtension(ProjectAnalyzer.ProjectFile.Path);
             if (!string.IsNullOrEmpty(extension) && extension.Equals(".csproj", StringComparison.InvariantCultureIgnoreCase))
             {
                 var allCsharpFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
@@ -261,7 +261,7 @@ namespace Codelyzer.Analysis.Build
                     Compilation = CSharpCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
                 }
             }
-            else
+            else if (!string.IsNullOrEmpty(extension) && extension.Equals(".vbproj", StringComparison.InvariantCultureIgnoreCase))
             {
                 var allVbFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
                 foreach (var file in allVbFiles)
