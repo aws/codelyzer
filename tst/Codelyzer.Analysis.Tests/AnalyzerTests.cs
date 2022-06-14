@@ -653,7 +653,7 @@ namespace Codelyzer.Analysis.Tests
             var memberAccess = helpNamespaceBlock.AllMemberAccessExpressions();
 
             //HouseController has 3 identifiers declared within the class declaration:
-            Assert.AreEqual(4, declarationNodes.Count());
+            Assert.AreEqual(5, declarationNodes.Count());
 
             //It has 2 method declarations
             Assert.AreEqual(1, methodBlocks.Count());
