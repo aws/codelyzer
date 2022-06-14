@@ -20,6 +20,7 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
             typeof(TypeArgumentListSyntax),
             typeof(ObjectCreationExpressionSyntax),
             typeof(QualifiedNameSyntax),
+            typeof(SimpleAsClauseSyntax)
         };
 
         private DeclarationNode Model { get => (DeclarationNode)UstNode; }
