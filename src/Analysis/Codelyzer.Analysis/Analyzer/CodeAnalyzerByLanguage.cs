@@ -29,10 +29,10 @@ namespace Codelyzer.Analysis.Analyzer
 
         public async Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath)
         {
-            //return await Analyze(solutionPath);
-            var analyzerResults = await AnalyzeSolutionGeneratorAsync(solutionPath).ToListAsync();
+            return await Analyze(solutionPath);
+            /*var analyzerResults = await AnalyzeSolutionGeneratorAsync(solutionPath).ToListAsync();
             await GenerateOptionalOutput(analyzerResults);
-            return analyzerResults;
+            return analyzerResults;*/
 
         }
 
