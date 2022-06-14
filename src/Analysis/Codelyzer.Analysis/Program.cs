@@ -1,7 +1,9 @@
-﻿using Codelyzer.Analysis.Model;
+﻿using Codelyzer.Analysis.Analyzer;
+using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -39,16 +41,18 @@ namespace Codelyzer.Analysis
             cli.Configuration.MetaDataSettings.ReferenceData = true;
 
             /* 3. Get Analyzer instance based on language */
-            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(cli.Configuration, 
+            /*CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(cli.Configuration, 
                 loggerFactory.CreateLogger("Analyzer"),
-                cli.Project ? cli.FilePath : String.Empty);
-
+                cli.Project ? cli.FilePath : String.Empty);*/
+            CodeAnalyzerByLanguage analyzerByLanguage = new CodeAnalyzerByLanguage(cli.Configuration,
+                loggerFactory.CreateLogger("Analyzer"));
+           
 
             /* 4. Analyze the project or solution */
             AnalyzerResult analyzerResult = null;
             if (cli.Project)
             {
-                analyzerResult = await analyzer.AnalyzeProject(cli.FilePath);
+                analyzerResult = await analyzerByLanguage.AnalyzeProject(cli.FilePath);
                 if (analyzerResult.OutputJsonFilePath != null)
                 {
                     Console.WriteLine("Exported to : " + analyzerResult.OutputJsonFilePath);
@@ -56,7 +60,7 @@ namespace Codelyzer.Analysis
             }
             else
             {
-                var analyzerResults = await analyzer.AnalyzeSolution(cli.FilePath);
+                var analyzerResults = await analyzerByLanguage.AnalyzeSolution(cli.FilePath);
                 foreach (var aresult in analyzerResults)
                 {
                     if (aresult.OutputJsonFilePath != null)
