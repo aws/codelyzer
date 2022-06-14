@@ -33,7 +33,6 @@ namespace Codelyzer.Analysis.Analyzer
             /*var analyzerResults = await AnalyzeSolutionGeneratorAsync(solutionPath).ToListAsync();
             await GenerateOptionalOutput(analyzerResults);
             return analyzerResults;*/
-
         }
 
         ///<inheritdoc/>
