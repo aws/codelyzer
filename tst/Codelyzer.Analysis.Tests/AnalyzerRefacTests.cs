@@ -631,7 +631,7 @@ namespace Codelyzer.Analysis.Tests
             var elementAccess = helpNamespaceBlock.AllElementAccessExpressions();
             var memberAccess = helpNamespaceBlock.AllMemberAccessExpressions();
 
-            Assert.AreEqual(4, declarationNodes.Count());
+            Assert.AreEqual(5, declarationNodes.Count());
 
             Assert.AreEqual(1, methodBlocks.Count());
 
