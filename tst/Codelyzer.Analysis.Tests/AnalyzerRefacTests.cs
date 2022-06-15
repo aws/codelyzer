@@ -1618,8 +1618,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(0, projectGraphWithBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).Edges.Count);
 
             // There are 26 classes in the solution
-            Assert.AreEqual(30, classGraphWithoutBuild.Count);
-            Assert.AreEqual(30, classGraphWithBuild.Count);
+            Assert.AreEqual(26, classGraphWithoutBuild.Count);
+            Assert.AreEqual(26, classGraphWithBuild.Count);
 
             // Number of edges for each node
             Assert.AreEqual(1, classGraphWithoutBuild.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.BundleConfig")).Edges.Count);
