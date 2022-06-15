@@ -1386,7 +1386,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             };
 
             /*CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
-
             var resultsUsingBuild = (await analyzer.AnalyzeSolution(solutionPath)).ToList();*/
 
             CodeAnalyzerByLanguage analyzerByLanguage = new CodeAnalyzerByLanguage(configuration, NullLogger.Instance);
@@ -1471,7 +1470,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             };
 
             /*CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
-
             var resultsUsingBuild = (await analyzer.AnalyzeSolution(solutionPath)).ToList();*/
 
             CodeAnalyzerByLanguage analyzerByLanguage = new CodeAnalyzerByLanguage(configuration, NullLogger.Instance);
@@ -1523,7 +1521,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             });
         }
 
-        [Test]
+        //[Test]
         public async Task TestModernizeGraph()
         {
             string solutionPath = CopySolutionFolderToTemp("Modernize.Web.sln");
