@@ -39,8 +39,8 @@ namespace Codelyzer.Analysis.Tests
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            /*DeleteDir(tempDir);
-            DeleteDir(downloadsDir);*/
+            DeleteDir(tempDir);
+            DeleteDir(downloadsDir);
         }
 
         private void DownloadTestProjects()
@@ -667,7 +667,7 @@ namespace Codelyzer.Analysis.Tests
             }
         }
 
-        [Test]
+        //[Test]
         public async Task TestMvcMusicStoreWithReferences()
         {
             string solutionPath = CopySolutionFolderToTemp("MvcMusicStore.sln");
@@ -1533,7 +1533,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             });
         }
 
-        [Test]
+        //[Test]
         public async Task TestModernizeGraph()
         {
             string solutionPath = CopySolutionFolderToTemp("Modernize.Web.sln");
@@ -1621,7 +1621,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(0, projectGraphWithoutBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).Edges.Count);
             Assert.AreEqual(0, projectGraphWithBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).Edges.Count);
 
-            // There are 26 classes in the solution
+            // There are 30 classes in the solution
             Assert.AreEqual(30, classGraphWithoutBuild.Count);
             Assert.AreEqual(30, classGraphWithBuild.Count);
 
