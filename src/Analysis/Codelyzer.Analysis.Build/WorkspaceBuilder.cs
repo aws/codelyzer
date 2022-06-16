@@ -65,12 +65,8 @@ namespace Codelyzer.Analysis.Build
                             var projectReferencesMap = FileUtils.GetProjectsWithReferences(_workspacePath);
                             builder.GenerateNoBuildAnalysis();
 
-                            //var projectsInOrder = CreateDependencyQueue(projectReferencesMap);
                             Dictionary<string, MetadataReference> references = new Dictionary<string, MetadataReference>();
 
-                            /*while (projectsInOrder.Count > 0)
-                            {
-                                var projectPath = projectsInOrder.Dequeue();*/
                             var projectPath = result.ProjectAnalyzer.ProjectFile.Path;
                             var project = builder.Projects.Find(p => p.ProjectAnalyzer.ProjectFile.Path.Equals(projectPath));
                             var projectReferencePaths = projectReferencesMap[projectPath]?.Distinct().ToHashSet<string>();
@@ -84,9 +80,7 @@ namespace Codelyzer.Analysis.Build
                                 var projectBuildResult = projectBuildHandler.SyntaxOnlyBuild(projectReferences);
                                 references.Add(projectPath, projectBuildResult.Compilation.ToMetadataReference());
                                 yield return projectBuildResult;
-                                //ProjectResults.Add(result);
                             }
-                            //}
                         }
 
                     }
