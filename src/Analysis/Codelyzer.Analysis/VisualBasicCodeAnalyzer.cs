@@ -37,10 +37,7 @@ namespace Codelyzer.Analysis
         ///<inheritdoc/>
         public override async Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath)
         {
-            //return await Analyze(solutionPath);
-            var analyzerResults = await AnalyzeSolutionGeneratorAsync(solutionPath).ToListAsync();
-            await GenerateOptionalOutput(analyzerResults);
-            return analyzerResults;
+            return await Analyze(solutionPath);
         }
 
         ///<inheritdoc/>

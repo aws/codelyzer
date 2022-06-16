@@ -258,7 +258,7 @@ namespace Codelyzer.Analysis.Build
                 }
                 if (trees.Count != 0)
                 {
-                    Compilation = CSharpCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
+                    Compilation = CSharpCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees, metadataReferences);
                 }
             }
             else if (!string.IsNullOrEmpty(extension) && extension.Equals(".vbproj", StringComparison.InvariantCultureIgnoreCase))
@@ -283,7 +283,7 @@ namespace Codelyzer.Analysis.Build
 
                 if (trees.Count != 0)
                 {
-                    Compilation = VisualBasicCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
+                    Compilation = VisualBasicCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees, metadataReferences);
                 }
             }
         }

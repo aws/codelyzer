@@ -35,27 +35,51 @@ namespace Codelyzer.Analysis.Build
                     while (await projectResultEnumerator.MoveNextAsync().ConfigureAwait(false))
                     {
                         var result = projectResultEnumerator.Current;
-
-                        if (result?.AnalyzerResult != null)
+                        if (!_analyzerConfiguration.BuildSettings.SyntaxOnly)
                         {
-                            using (ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, result.Project, _analyzerConfiguration))
+                            if (result?.AnalyzerResult != null)
                             {
-                                projectBuildHandler.AnalyzerResult = result.AnalyzerResult;
-                                projectBuildHandler.ProjectAnalyzer = result.ProjectAnalyzer;
-                                var projectBuildResult = await projectBuildHandler.Build();
-                                yield return projectBuildResult;
-                            }
-                        }
-                        else
-                        {
-                            if (_analyzerConfiguration.AnalyzeFailedProjects)
-                            {
-                                using (ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, _analyzerConfiguration))
+                                using (ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, result.Project, _analyzerConfiguration))
                                 {
+                                    projectBuildHandler.AnalyzerResult = result.AnalyzerResult;
                                     projectBuildHandler.ProjectAnalyzer = result.ProjectAnalyzer;
-                                    var projectBuildResult = projectBuildHandler.SyntaxOnlyBuild();
+                                    var projectBuildResult = await projectBuildHandler.Build();
                                     yield return projectBuildResult;
                                 }
+                            }
+                            else
+                            {
+                                if (_analyzerConfiguration.AnalyzeFailedProjects)
+                                {
+                                    using (ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, _analyzerConfiguration))
+                                    {
+                                        projectBuildHandler.ProjectAnalyzer = result.ProjectAnalyzer;
+                                        var projectBuildResult = projectBuildHandler.SyntaxOnlyBuild();
+                                        yield return projectBuildResult;
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            
+                            var projectReferencesMap = FileUtils.GetProjectsWithReferences(_workspacePath);
+                            builder.GenerateNoBuildAnalysis();
+
+                            Dictionary<string, MetadataReference> references = new Dictionary<string, MetadataReference>();
+
+                            var projectPath = result.ProjectAnalyzer.ProjectFile.Path;
+                            var project = builder.Projects.Find(p => p.ProjectAnalyzer.ProjectFile.Path.Equals(projectPath));
+                            var projectReferencePaths = projectReferencesMap[projectPath]?.Distinct().ToHashSet<string>();
+
+                            using (ProjectBuildHandler projectBuildHandler =
+                                new ProjectBuildHandler(Logger, project.Project, _analyzerConfiguration))
+                            {
+                                projectBuildHandler.AnalyzerResult = project.AnalyzerResult;
+                                projectBuildHandler.ProjectAnalyzer = project.ProjectAnalyzer;
+                                var projectReferences = references.Where(r => projectReferencePaths.Contains(r.Key)).ToDictionary(p => p.Key, p => p.Value);
+                                var projectBuildResult = projectBuildHandler.SyntaxOnlyBuild(projectReferences);
+                                references.Add(projectPath, projectBuildResult.Compilation.ToMetadataReference());
+                                yield return projectBuildResult;
                             }
                         }
 
@@ -72,7 +96,6 @@ namespace Codelyzer.Analysis.Build
         {
             using (var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
             {
-
                 if (!_analyzerConfiguration.BuildSettings.SyntaxOnly)
                 {
                     builder.Build();
