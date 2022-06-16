@@ -2,6 +2,7 @@ using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.VisualBasic.Syntax;
+using System.Linq;
 
 namespace Codelyzer.Analysis.VisualBasic.Handlers
 {
@@ -70,8 +71,6 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
                 Model.SemanticNamespace = invokedSymbol.ContainingNamespace.ToString();
 
             Model.SemanticMethodSignature = invokedSymbol.ToString();
-            if (invokedSymbol.OriginalDefinition != null)
-                Model.SemanticOriginalDefinition = invokedSymbol.OriginalDefinition.ToString();
 
             if (invokedSymbol.ReturnType != null)
                 Model.SemanticReturnType = invokedSymbol.ReturnType.Name;
@@ -82,6 +81,18 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
                 Model.SemanticClassType = Model.SemanticNamespace == null ? classNameWithNamespace :
                     SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.SemanticNamespace);
             }
+
+            string originalDefinition = "";
+            if (invokedSymbol.IsExtensionMethod && invokedSymbol.ReceiverType != null)
+            {
+                originalDefinition = invokedSymbol.ReceiverType.ToString();
+            }
+            else if (invokedSymbol.ContainingType != null)
+            {
+                originalDefinition = invokedSymbol.ContainingType.ToString();
+            }
+            Model.SemanticOriginalDefinition =
+                $"{originalDefinition}.{Model.MethodName}({string.Join(", ", invokedSymbol.Parameters.Select(p => p.Type))})";
 
 
             Model.Reference.Namespace = GetNamespace(invokedSymbol);

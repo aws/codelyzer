@@ -968,6 +968,9 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
             // Chained method is found
             Assert.AreEqual(1, testClassRootNode.AllInvocationExpressions().Count(c => c.MethodName == "ChainedMethod"));
+            Assert.AreEqual("VBConsoleApp.Class2.ChainedMethod",
+                testClassRootNode.AllInvocationExpressions()
+                    .First(c => c.MethodName == "ChainedMethod"));
 
             // Constructor is found
             Assert.AreEqual(1, testClassRootNode.AllConstructors().Count);
@@ -1694,6 +1697,59 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.True(results != null);
 
         }
+
+        [Test]
+        public async Task VbOwinParadiseAnalyze()
+        {
+            string solutionPath = CopySolutionFolderToTemp("OwinParadiseVb.sln");
+            string solutionDir = Directory.GetParent(solutionPath).FullName;
+
+            FileAssert.Exists(solutionPath);
+
+            var args = new[]
+            {
+                "-p", solutionPath
+            };
+            AnalyzerCLI cli = new AnalyzerCLI();
+            cli.HandleCommand(args);
+            cli.Configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    LambdaMethods = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    LoadBuildData = true,
+                    ReturnStatements = true,
+                    InterfaceDeclarations = true
+                }
+            };
+
+            CodeAnalyzerByLanguage analyzerByLanguage = new CodeAnalyzerByLanguage(cli.Configuration, NullLogger.Instance);
+            var results = await analyzerByLanguage.AnalyzeSolution(solutionPath);
+
+            Assert.True(results != null);
+
+            var testClassRootNode = results.First().ProjectResult.SourceFileResults
+                    .First(s => s.FileFullPath.EndsWith("SignalR.vb"))
+                as UstNode;
+
+            var invocationExpressions = testClassRootNode.AllInvocationExpressions();
+            var mapSignalMethod = invocationExpressions.FirstOrDefault(ex => ex.MethodName == "MapSignalR");
+            Assert.IsNotNull(mapSignalMethod);
+            Assert.AreEqual("Owin.IAppBuilder.MapSignalR()", mapSignalMethod.SemanticOriginalDefinition);
+        }
+
         #region private methods
         private void DeleteDir(string path, int retries = 0)
         {
