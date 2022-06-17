@@ -968,9 +968,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
             // Chained method is found
             Assert.AreEqual(1, testClassRootNode.AllInvocationExpressions().Count(c => c.MethodName == "ChainedMethod"));
-            Assert.AreEqual("VBConsoleApp.Class2.ChainedMethod",
-                testClassRootNode.AllInvocationExpressions()
-                    .First(c => c.MethodName == "ChainedMethod"));
 
             // Constructor is found
             Assert.AreEqual(1, testClassRootNode.AllConstructors().Count);
@@ -1018,6 +1015,9 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
             // Chained method is found
             Assert.AreEqual(1, testClassRootNode.AllInvocationExpressions().Count(c => c.MethodName == "ChainedMethod"));
+            Assert.AreEqual("VBConsoleApp.Class2.ChainedMethod()",
+                testClassRootNode.AllInvocationExpressions()
+                    .First(c => c.MethodName == "ChainedMethod").SemanticOriginalDefinition);
 
             // Constructor is found
             Assert.AreEqual(1, testClassRootNode.AllConstructorBlocks().Count);
