@@ -1578,7 +1578,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(3, projectGraphWithoutBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Mvc")).OutgoingEdges.Count);
 
             // When project is prebuilt, connections are merged with dependent projects
-            Assert.GreaterOrEqual(3, projectGraphWithBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Mvc")).Edges.Count);
+            var mvcDependencies = projectGraphWithBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Mvc")).Edges.Count;
+            Assert.True(mvcDependencies == 3 || mvcDependencies == 4);
 
             // The Models project has 0 Edges
             Assert.AreEqual(0, projectGraphWithoutBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).OutgoingEdges.Count);
