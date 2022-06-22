@@ -225,7 +225,8 @@ namespace Codelyzer.Analysis
                 {
                     NodeType = GetNodeType(ustNode),
                     Name = ustNode.Identifier,
-                    Identifier = ustNode.FullIdentifier
+                    Identifier = ustNode.FullIdentifier,
+                    SourceUstNode = ustNode
                 };
                 ClassGraph.Add(node);
             }
@@ -332,6 +333,7 @@ namespace Codelyzer.Analysis
         public string Name { get; set; }
         public string Identifier { get; set; }
         public NodeType NodeType { get; set; }
+        public UstNode SourceUstNode { get; set; }
         public List<Edge> Edges { get; set; }
         public Dictionary<string, string> Properties { get; set; }
 
