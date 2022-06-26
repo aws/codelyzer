@@ -15,23 +15,44 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             : base(context, syntaxNode, new InterfaceDeclaration())
         {
             var interfaceSymbol = SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
-            InterfaceDeclaration.Identifier = syntaxNode.Identifier.ToString();
-
-
+            Set(InterfaceDeclaration, interfaceSymbol);
+        }
+        private void Set(InterfaceDeclaration interfaceDeclaration, INamedTypeSymbol interfaceSymbol)
+        {
             if (interfaceSymbol != null)
             {
-                if (interfaceSymbol.BaseType != null)
+                var syntaxNodes = interfaceSymbol.DeclaringSyntaxReferences;
+                if (syntaxNodes.Length > 0)
                 {
-                    InterfaceDeclaration.BaseType = interfaceSymbol.BaseType.ToString();
-                    InterfaceDeclaration.BaseTypeOriginalDefinition = GetBaseTypOriginalDefinition(interfaceSymbol);
+                    var syntaxNode = (ClassDeclarationSyntax)syntaxNodes[0].GetSyntax();
+                    interfaceDeclaration.Identifier = syntaxNode.Identifier.ToString();
                 }
+                
+                interfaceDeclaration.Reference.Namespace = GetNamespace(interfaceSymbol);
+                interfaceDeclaration.Reference.Assembly = GetAssembly(interfaceSymbol);
+                interfaceDeclaration.Reference.Version = GetAssemblyVersion(interfaceSymbol);
+                interfaceDeclaration.Reference.AssemblySymbol = interfaceSymbol.ContainingAssembly;
+                interfaceDeclaration.FullIdentifier = string.Concat(interfaceDeclaration.Reference.Namespace, ".", interfaceDeclaration.Identifier);
 
-                InterfaceDeclaration.Reference.Namespace = GetNamespace(interfaceSymbol);
-                InterfaceDeclaration.Reference.Assembly = GetAssembly(interfaceSymbol);
-                InterfaceDeclaration.Reference.Version = GetAssemblyVersion(interfaceSymbol);
-                InterfaceDeclaration.Reference.AssemblySymbol = interfaceSymbol.ContainingAssembly;
-                InterfaceDeclaration.FullIdentifier = string.Concat(InterfaceDeclaration.Reference.Namespace, ".", InterfaceDeclaration.Identifier);
+                if (interfaceSymbol.Interfaces != null)
+                {
+                    interfaceDeclaration.BaseTypeDeclarationList = new();
+                    foreach( var ifs in interfaceSymbol.Interfaces)
+                    {
+                        interfaceDeclaration.BaseTypeDeclarationList.Add(GetBaseTypeDeclaration(ifs));
+                    }
+                }
             }
+        }
+
+        private InterfaceDeclaration GetBaseTypeDeclaration(INamedTypeSymbol baseTypeSymbol)
+        {
+            if (baseTypeSymbol == null) return null;
+
+            InterfaceDeclaration baseDeclaration = new();
+            Set(baseDeclaration, baseTypeSymbol);
+
+            return baseDeclaration;
         }
     }
 }

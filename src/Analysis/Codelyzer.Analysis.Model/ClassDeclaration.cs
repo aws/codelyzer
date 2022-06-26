@@ -6,6 +6,9 @@ namespace Codelyzer.Analysis.Model
 {
     public class ClassDeclaration : UstNode
     {
+        [JsonIgnore]
+        public ClassDeclaration BaseTypeDeclaration { get; set; }
+
         [JsonProperty("base-type", Order = 10)]
         public string BaseType { get; set; }
 

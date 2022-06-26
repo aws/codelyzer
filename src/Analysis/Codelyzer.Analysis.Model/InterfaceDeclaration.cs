@@ -1,10 +1,13 @@
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 
 namespace Codelyzer.Analysis.Model
 {
     public class InterfaceDeclaration : UstNode
     {
+        [JsonIgnore]
+        public List<InterfaceDeclaration> BaseTypeDeclarationList { get; set; }
         [JsonProperty("base-type", Order = 10)]
         public string BaseType { get; set; }
 
