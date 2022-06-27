@@ -10,7 +10,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
     public class ClassDeclarationHandler : UstNodeHandler
     {
         // Key: class full identifier, value: ClassDeclaration.
-        private static Dictionary<string, ClassDeclaration> _classDelcarationCache = new();
+        private static Dictionary<string, ClassDeclaration> _classDeclarationCache = new();
         private ClassDeclaration ClassDeclaration { get => (ClassDeclaration)UstNode; }
 
         public ClassDeclarationHandler(CodeContext context,
@@ -20,23 +20,30 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             var classSymbol = SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
             if (classSymbol != null)
             {
-                var fullIdentifier = classSymbol.OriginalDefinition.ToString();
-                if (_classDelcarationCache.ContainsKey(fullIdentifier))
+                var fullIdentifier = GetFullIdentifier(classSymbol);
+                if (_classDeclarationCache.ContainsKey(fullIdentifier))
                 {
-                    UstNode = _classDelcarationCache[fullIdentifier];
+                    UstNode = _classDeclarationCache[fullIdentifier];
                     return;
                 }
                 Set(ClassDeclaration, classSymbol);
+                _classDeclarationCache.Add(fullIdentifier, ClassDeclaration);
             }
         }
 
         private void Set(ClassDeclaration classDeclaration, INamedTypeSymbol classSymbol)
         {
+            classDeclaration.Identifier = classSymbol.Name;
+            classDeclaration.FullIdentifier = GetFullIdentifier(classSymbol);
+            classDeclaration.Reference.Namespace = GetNamespace(classSymbol);
+            classDeclaration.Reference.Assembly = GetAssembly(classSymbol);
+            classDeclaration.Reference.Version = GetAssemblyVersion(classSymbol);
+            classDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
+
             var syntaxNodes = classSymbol.DeclaringSyntaxReferences;
             if (syntaxNodes.Length > 0)
             {
                 var syntaxNode = (ClassDeclarationSyntax)syntaxNodes[0].GetSyntax();
-                classDeclaration.Identifier = syntaxNode.Identifier.ToString();
                 classDeclaration.Modifiers = syntaxNode.Modifiers.ToString();
             }
 
@@ -44,32 +51,26 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             {
                 classDeclaration.BaseType = classSymbol.BaseType.ToString();
                 classDeclaration.BaseTypeOriginalDefinition = GetBaseTypOriginalDefinition(classSymbol);
-                classDeclaration.Reference.Namespace = GetNamespace(classSymbol);
-                classDeclaration.Reference.Assembly = GetAssembly(classSymbol);
-                classDeclaration.Reference.Version = GetAssemblyVersion(classSymbol);
-                classDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
-                classDeclaration.FullIdentifier = classSymbol.OriginalDefinition.ToString();
+                classDeclaration.BaseTypeDeclaration = GetBaseTypeDeclaration(classSymbol.BaseType);
             }
 
-            if (classSymbol.Interfaces != null)
+            if (classSymbol.AllInterfaces != null)
             {
-                classDeclaration.BaseList = classSymbol.Interfaces.Select(x => x.ToString())?.ToList();
+                classDeclaration.BaseList = classSymbol.AllInterfaces.Select(x => x.ToString())?.ToList();
             }
-            classDeclaration.BaseTypeDeclaration = GetBaseTypeDeclaration(classSymbol.BaseType);
         }
 
         private ClassDeclaration GetBaseTypeDeclaration(INamedTypeSymbol baseTypeSymbol)
         {
-            if (baseTypeSymbol == null) return null;
-
-            var fullIdentifier = baseTypeSymbol.OriginalDefinition.ToString();
-            if (_classDelcarationCache.ContainsKey(fullIdentifier))
+            var fullIdentifier = GetFullIdentifier(baseTypeSymbol);
+            if (_classDeclarationCache.ContainsKey(fullIdentifier))
             {
-                return _classDelcarationCache[fullIdentifier];
+                return _classDeclarationCache[fullIdentifier];
             }
 
             ClassDeclaration baseDeclaration = new();
             Set(baseDeclaration, baseTypeSymbol);
+            _classDeclarationCache.Add(fullIdentifier, baseDeclaration);    
 
             return baseDeclaration;
         }

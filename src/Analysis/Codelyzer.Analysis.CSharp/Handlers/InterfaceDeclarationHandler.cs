@@ -9,7 +9,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
     public class InterfaceDeclarationHandler : UstNodeHandler
     {
         // Key: interface full identifier, value: InterfaceDeclaration.
-        private static Dictionary<string, InterfaceDeclaration> _interfaceDelcarationCache = new();
+        private static Dictionary<string, InterfaceDeclaration> _interfaceDeclarationCache = new();
         private InterfaceDeclaration InterfaceDeclaration { get => (InterfaceDeclaration)UstNode; }
 
         public InterfaceDeclarationHandler(CodeContext context,
@@ -19,57 +19,46 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             var interfaceSymbol = SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
             if (interfaceSymbol != null)
             {
-                var fullIdentifier = interfaceSymbol.OriginalDefinition.ToString();
-                if (_interfaceDelcarationCache.ContainsKey(fullIdentifier))
+                var fullIdentifier = GetFullIdentifier(interfaceSymbol);
+                if (_interfaceDeclarationCache.ContainsKey(fullIdentifier))
                 {
-                    UstNode = _interfaceDelcarationCache[fullIdentifier];
+                    UstNode = _interfaceDeclarationCache[fullIdentifier];
                     return;
                 }
                 Set(InterfaceDeclaration, interfaceSymbol);
+                _interfaceDeclarationCache.Add(fullIdentifier, InterfaceDeclaration);
             }
         }
         private void Set(InterfaceDeclaration interfaceDeclaration, INamedTypeSymbol interfaceSymbol)
         {
-            var fullIdentifier = interfaceSymbol.OriginalDefinition.ToString();
-            if (_interfaceDelcarationCache.ContainsKey(fullIdentifier))
-            {
-
-            }
-            var syntaxNodes = interfaceSymbol.DeclaringSyntaxReferences;
-            if (syntaxNodes.Length > 0)
-            {
-                var syntaxNode = (ClassDeclarationSyntax)syntaxNodes[0].GetSyntax();
-                interfaceDeclaration.Identifier = syntaxNode.Identifier.ToString();
-            }
-            
+            interfaceDeclaration.Identifier = interfaceSymbol.Name;
+            interfaceDeclaration.FullIdentifier = GetFullIdentifier(interfaceSymbol);
             interfaceDeclaration.Reference.Namespace = GetNamespace(interfaceSymbol);
             interfaceDeclaration.Reference.Assembly = GetAssembly(interfaceSymbol);
             interfaceDeclaration.Reference.Version = GetAssemblyVersion(interfaceSymbol);
             interfaceDeclaration.Reference.AssemblySymbol = interfaceSymbol.ContainingAssembly;
-            interfaceDeclaration.FullIdentifier = interfaceSymbol.OriginalDefinition.ToString();
 
-            if (interfaceSymbol.Interfaces != null)
+            if (interfaceSymbol.AllInterfaces != null)
             {
-                interfaceDeclaration.BaseTypeDeclarationList = new();
-                foreach( var ifs in interfaceSymbol.Interfaces)
+                interfaceDeclaration.AllBaseTypeDeclarationList = new();
+                foreach( var ifs in interfaceSymbol.AllInterfaces)
                 {
-                    interfaceDeclaration.BaseTypeDeclarationList.Add(GetBaseTypeDeclaration(ifs));
+                    interfaceDeclaration.AllBaseTypeDeclarationList.Add(GetBaseTypeDeclaration(ifs));
                 }
             }
         }
 
         private InterfaceDeclaration GetBaseTypeDeclaration(INamedTypeSymbol baseTypeSymbol)
         {
-            if (baseTypeSymbol == null) return null;
-
-            var fullIdentifier = baseTypeSymbol.OriginalDefinition.ToString();
-            if (_interfaceDelcarationCache.ContainsKey(fullIdentifier))
+            var fullIdentifier = GetFullIdentifier(baseTypeSymbol);
+            if (_interfaceDeclarationCache.ContainsKey(fullIdentifier))
             {
-                return _interfaceDelcarationCache[fullIdentifier];
+                return _interfaceDeclarationCache[fullIdentifier];
             }
 
             InterfaceDeclaration baseDeclaration = new();
             Set(baseDeclaration, baseTypeSymbol);
+            _interfaceDeclarationCache.Add(fullIdentifier, baseDeclaration);
 
             return baseDeclaration;
         }

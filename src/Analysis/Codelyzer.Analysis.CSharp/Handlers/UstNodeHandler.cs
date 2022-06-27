@@ -40,6 +40,10 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             return symbol.ContainingNamespace != null 
                 ? symbol.ContainingNamespace.ToString().Trim() : string.Empty;
         }
+        protected string GetFullIdentifier(ISymbol symbol)
+        {
+            return GetNamespace(symbol) + "." + symbol.Name;
+        }
         protected string GetAssembly(ISymbol symbol)
         {
             return symbol.ContainingAssembly != null && symbol.ContainingNamespace.Name != null
