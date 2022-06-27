@@ -9,7 +9,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
     public class InterfaceDeclarationHandler : UstNodeHandler
     {
         // Key: interface full identifier, value: InterfaceDeclaration.
-        private static Dictionary<string, InterfaceDeclaration> _interfaceDeclarationCache = new();
+        private Dictionary<string, InterfaceDeclaration> _interfaceDeclarationCache = new();
         private InterfaceDeclaration InterfaceDeclaration { get => (InterfaceDeclaration)UstNode; }
 
         public InterfaceDeclarationHandler(CodeContext context,

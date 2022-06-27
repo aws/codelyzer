@@ -10,7 +10,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
     public class ClassDeclarationHandler : UstNodeHandler
     {
         // Key: class full identifier, value: ClassDeclaration.
-        private static Dictionary<string, ClassDeclaration> _classDeclarationCache = new();
+        private Dictionary<string, ClassDeclaration> _classDeclarationCache = new();
         private ClassDeclaration ClassDeclaration { get => (ClassDeclaration)UstNode; }
 
         public ClassDeclarationHandler(CodeContext context,
