@@ -1742,13 +1742,50 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
             var testClassRootNode = results.First().ProjectResult.SourceFileResults
                     .First(s => s.FileFullPath.EndsWith("SignalR.vb"))
-                as UstNode;
+                as RootUstNode;
 
             var invocationExpressions = testClassRootNode.AllInvocationExpressions();
             var mapSignalMethod = invocationExpressions.FirstOrDefault(ex => ex.MethodName == "MapSignalR");
             Assert.IsNotNull(mapSignalMethod);
             Assert.AreEqual("Owin.IAppBuilder.MapSignalR()", mapSignalMethod.SemanticOriginalDefinition);
+
+            await VbOwinParadiseAnalyzeIncrementalBuild(analyzerByLanguage, results.First(), testClassRootNode);
         }
+
+        private async Task VbOwinParadiseAnalyzeIncrementalBuild(CodeAnalyzerByLanguage analyzerByLanguage, AnalyzerResult result, RootUstNode signalRNode)
+        {
+            File.WriteAllText(signalRNode.FileFullPath, @"Imports Microsoft.Owin.Hosting
+Imports Owin
+Imports Newtonsoft.Json
+
+Namespace PortingParadise
+    Public Class SignalR
+        public class Startup
+            public Sub Configuration(app As IAppBuilder)
+                app.MapSignalR()
+            End Sub
+
+            public Sub Main(args  As String())
+                Dim uri As String = ""http://localhost:9999/""
+                Using (WebApp.Start(Of Startup)(uri))
+                    Console.WriteLine(""Started"")
+                    Process.Start(uri + ""signalr/negotiate"")
+                    Console.ReadKey()
+                End Using
+            End Sub
+        End Class
+    End Class
+End Namespace");
+
+            var analyzer = analyzerByLanguage.GetLanguageAnalyzerByFileType(".vb");
+            result = await analyzer.AnalyzeFile(signalRNode.FileFullPath, result);
+            var references = result.ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList();
+            var updatedSourcefile = result.ProjectResult.SourceFileResults.FirstOrDefault(s => s.FileFullPath.Contains("SignalR.vb"));
+            Assert.IsNotNull(updatedSourcefile);
+            Assert.IsNotNull(references);
+            Assert.Contains("Newtonsoft.Json", updatedSourcefile.AllImportsStatements().Select(s => s.Identifier).ToList());
+        }
+
 
         #region private methods
         private void DeleteDir(string path, int retries = 0)

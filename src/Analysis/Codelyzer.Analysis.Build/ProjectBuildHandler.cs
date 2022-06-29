@@ -122,6 +122,17 @@ namespace Codelyzer.Analysis.Build
             return null;
         }
 
+        private bool CanSkipErrorsForVisualBasic()
+        {
+            // Compilation returns false build errors, it seems like we can work around this with
+            // MSBuildWorkspace instead of using an AdhocWorkspace
+            return Compilation != null &&
+                   Compilation.Language == "Visual Basic" &&
+                   AnalyzerResult.Succeeded &&
+                   Compilation.SyntaxTrees.Any() &&
+                   Compilation.GetSemanticModel(Compilation.SyntaxTrees.First()) != null;
+        }
+
         private async Task SetCompilation()
         {
             PrePortCompilation = await SetPrePortCompilation();         
@@ -129,7 +140,7 @@ namespace Codelyzer.Analysis.Build
             
             var errors = Compilation.GetDiagnostics()
                 .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-            if (errors.Any())
+            if (errors.Any() && !CanSkipErrorsForVisualBasic())
             {
                 Logger.LogError($"Build Errors: {Compilation.AssemblyName}: {errors.Count()} " +
                                 $"compilation errors: \n\t{string.Join("\n\t", errors.Where(e => false).Select(e => e.ToString()))}");
@@ -527,14 +538,25 @@ namespace Codelyzer.Analysis.Build
             await Task.Run(() =>
             {
                 var languageVersion = LanguageVersion.Default;
+
+                SyntaxTree updatedTree;
+                var fileContents = File.ReadAllText(filePath);
                 if (projectBuildResult.Compilation is CSharpCompilation compilation)
                 {
                     languageVersion = compilation.LanguageVersion;
+                    updatedTree = CSharpSyntaxTree.ParseText(SourceText.From(fileContents), path: filePath, options: new CSharpParseOptions(languageVersion));
+
                 }
-
-                var fileContents = File.ReadAllText(filePath);
-                var updatedTree = CSharpSyntaxTree.ParseText(SourceText.From(fileContents), path: filePath, options: new CSharpParseOptions(languageVersion));
-
+                else if (projectBuildResult.Compilation is VisualBasicCompilation vbCompilation)
+                {
+                    updatedTree = VisualBasicSyntaxTree.ParseText(SourceText.From(fileContents), path: filePath, options: new VisualBasicParseOptions(vbCompilation.LanguageVersion));
+                }
+                else
+                {
+                    // fall back to csharp to match old behavior.
+                    updatedTree = CSharpSyntaxTree.ParseText(SourceText.From(fileContents), path: filePath, options: new CSharpParseOptions(languageVersion));
+                }
+                
                 var syntaxTree = Compilation.SyntaxTrees.FirstOrDefault(syntaxTree => syntaxTree.FilePath == filePath);
                 var preportSyntaxTree = Compilation.SyntaxTrees.FirstOrDefault(syntaxTree => syntaxTree.FilePath == filePath);
 
