@@ -34,7 +34,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
         private void Set(ClassDeclaration classDeclaration, INamedTypeSymbol classSymbol)
         {
             classDeclaration.Identifier = classSymbol.Name;
-            classDeclaration.FullIdentifier = GetFullIdentifier(classSymbol);
+            classDeclaration.FullIdentifier = classSymbol.OriginalDefinition.ToString();
             classDeclaration.Reference.Namespace = GetNamespace(classSymbol);
             classDeclaration.Reference.Assembly = GetAssembly(classSymbol);
             classDeclaration.Reference.Version = GetAssemblyVersion(classSymbol);
