@@ -399,8 +399,8 @@ namespace Codelyzer.Analysis.Tests
 
             Assert.AreEqual(0, blockStatements.Count);
             Assert.AreEqual(1, classBlocks.Count);
-            Assert.AreEqual(32, expressionStatements.Count);
-            Assert.AreEqual(27, invocationExpressions.Count);
+            Assert.AreEqual(19, expressionStatements.Count);
+            Assert.AreEqual(14, invocationExpressions.Count);
             Assert.AreEqual(4, literalExpressions.Count);
             Assert.AreEqual(3, methodBlocks.Count);
             Assert.AreEqual(6, returnStatements.Count);
@@ -432,7 +432,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual("Public", helpControllerClass.Modifiers);
 
             var helpPageSampleKey = result.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith("HelpPageSampleKey.vb"));
-            Assert.AreEqual(52, helpPageSampleKey.AllInvocationExpressions().Count);
+            Assert.AreEqual(26, helpPageSampleKey.AllInvocationExpressions().Count);
 
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(16, dllFiles.Count());

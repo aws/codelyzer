@@ -3,6 +3,8 @@ using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using System.Linq;
+using Microsoft.Build.Evaluation;
+using Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE;
 
 namespace Codelyzer.Analysis.VisualBasic.Handlers
 {
@@ -61,11 +63,21 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
 
             if (SemanticModel == null) return;
 
-            IMethodSymbol invokedSymbol = (IMethodSymbol)SemanticHelper.GetSemanticSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
-
+            var symbol = SemanticHelper.GetSemanticSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
+            if (symbol is IPropertySymbol)
+            {
+                HandlePropertySymbol((IPropertySymbol)symbol);
+                return;
+            }
+            
+            var invokedSymbol = (IMethodSymbol)symbol;
             if (invokedSymbol == null) return;
-
             //Set semantic details
+            HandleMethodSymbol(invokedSymbol);
+        }
+
+        private void HandleMethodSymbol(IMethodSymbol invokedSymbol)
+        {
             Model.MethodName = invokedSymbol.Name;
             if (invokedSymbol.ContainingNamespace != null)
                 Model.SemanticNamespace = invokedSymbol.ContainingNamespace.ToString();
@@ -78,8 +90,7 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
             if (invokedSymbol.ContainingType != null)
             {
                 string classNameWithNamespace = invokedSymbol.ContainingType.ToString();
-                Model.SemanticClassType = Model.SemanticNamespace == null ? classNameWithNamespace :
-                    SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.SemanticNamespace);
+                Model.SemanticClassType = Model.SemanticNamespace == null ? classNameWithNamespace : SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.SemanticNamespace);
             }
 
             string originalDefinition = "";
@@ -91,6 +102,7 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
             {
                 originalDefinition = invokedSymbol.ContainingType.ToString();
             }
+
             Model.SemanticOriginalDefinition =
                 $"{originalDefinition}.{Model.MethodName}({string.Join(", ", invokedSymbol.Parameters.Select(p => p.Type))})";
 
@@ -107,7 +119,43 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
 
             //Set method properties
             SemanticHelper.AddMethodProperties(invokedSymbol, Model.SemanticProperties);
+        }
 
+        void HandlePropertySymbol(IPropertySymbol invokedSymbol)
+        {
+            //Set semantic details
+            Model.MethodName = invokedSymbol.Name;
+            if (invokedSymbol.ContainingNamespace != null)
+                Model.SemanticNamespace = invokedSymbol.ContainingNamespace.ToString();
+
+            Model.SemanticMethodSignature = invokedSymbol.ToString();
+
+            if (invokedSymbol.Type != null)
+                Model.SemanticReturnType = invokedSymbol.Type.Name;
+
+            if (invokedSymbol.ContainingType != null)
+            {
+                string classNameWithNamespace = invokedSymbol.ContainingType.ToString();
+                Model.SemanticClassType = Model.SemanticNamespace == null ? classNameWithNamespace :
+                    SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.SemanticNamespace);
+            }
+
+            string originalDefinition = "";
+            if (invokedSymbol.ContainingType != null)
+            {
+                originalDefinition = invokedSymbol.ContainingType.ToString();
+            }
+            Model.SemanticOriginalDefinition =
+                $"{originalDefinition}.{Model.MethodName}({string.Join(", ", invokedSymbol.Parameters.Select(p => p.Type))})";
+
+
+            Model.Reference.Namespace = GetNamespace(invokedSymbol);
+            Model.Reference.Assembly = GetAssembly(invokedSymbol);
+            Model.Reference.Version = GetAssemblyVersion(invokedSymbol);
+            Model.Reference.AssemblySymbol = invokedSymbol.ContainingAssembly;
+
+            //Set method properties
+            SemanticHelper.AddPropertyProperties(invokedSymbol, Model.SemanticProperties);
         }
     }
 }
