@@ -14,6 +14,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             : base(context, syntaxNode, new MethodDeclaration())
         {
             Model.Identifier = syntaxNode.Identifier.ToString();
+            Model.FullIdentifier = syntaxNode.Identifier.ToString();
             SetMetaData(syntaxNode);
         }
 
@@ -51,7 +52,8 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             if (methodSymbol == null) return;
             SemanticHelper.AddMethodProperties(methodSymbol, Model.SemanticProperties);
 
-            Model.SemanticSignature = SemanticHelper.GetSemanticMethodSignature(SemanticModel, OriginalSemanticModel, syntaxNode);
+            Model.SemanticSignature = SemanticHelper.GetSemanticMethodSignature(SemanticModel, OriginalSemanticModel, syntaxNode); 
+            Model.FullIdentifier = methodSymbol.ToString();
         }
     }
 }

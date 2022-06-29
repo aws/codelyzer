@@ -3,6 +3,7 @@ using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Linq;
 
 namespace Codelyzer.Analysis.CSharp.Handlers
 {
@@ -31,7 +32,13 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 InterfaceDeclaration.Reference.Version = GetAssemblyVersion(interfaceSymbol);
                 InterfaceDeclaration.Reference.AssemblySymbol = interfaceSymbol.ContainingAssembly;
                 InterfaceDeclaration.FullIdentifier = string.Concat(InterfaceDeclaration.Reference.Namespace, ".", InterfaceDeclaration.Identifier);
+
+                if (interfaceSymbol.Interfaces != null)
+                {
+                    InterfaceDeclaration.BaseList = interfaceSymbol.Interfaces.Select(x => x.ToString())?.ToList();
+                }
             }
+
         }
     }
 }

@@ -69,9 +69,17 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             if (invokedSymbol.ContainingNamespace != null)
                 Model.SemanticNamespace = invokedSymbol.ContainingNamespace.ToString();
 
+
             Model.SemanticMethodSignature = invokedSymbol.ToString();
             if (invokedSymbol.OriginalDefinition != null)
+            {
                 Model.SemanticOriginalDefinition = invokedSymbol.OriginalDefinition.ToString();
+                Model.FullIdentifier = invokedSymbol.OriginalDefinition.ToString();
+            }
+            else
+            {
+                Model.FullIdentifier = invokedSymbol.ToString();
+            }
 
             if (invokedSymbol.ReturnType != null)
                 Model.SemanticReturnType = invokedSymbol.ReturnType.Name;
