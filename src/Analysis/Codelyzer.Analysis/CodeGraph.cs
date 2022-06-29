@@ -198,6 +198,7 @@ namespace Codelyzer.Analysis
                 }
                 catch (Exception ex)
                 {
+                    Logger.LogError(ex, "Error while removing external edges");
                 }
             });
 
@@ -268,50 +269,50 @@ namespace Codelyzer.Analysis
         }
         private void CreateClassHierarchyEdges(Node sourceNode)
         {
+            // TODO - Create a common Declaration class for classes and interfaces:
+
+            var targetNodes = ClassNodes.Union(InterfaceNodes).ToList();
+
+            var baseTypes = new List<string>();
+            var baseTypeOriginalDefinition = string.Empty;
+
             if (sourceNode.UstNode is ClassDeclaration classDeclaration)
             {
                 // Check base types list for interfaces
-                var baseTypes = classDeclaration.BaseList;
-                var baseTypeOriginalDefinition = classDeclaration.BaseTypeOriginalDefinition;
-                if (!string.IsNullOrEmpty(baseTypeOriginalDefinition) && baseTypeOriginalDefinition != "object")
-                {
-                    baseTypes.Add(baseTypeOriginalDefinition);
-                }
-                baseTypes.ForEach(baseType =>
-                {
-                    var targetNode = ClassNodes.FirstOrDefault(n => n.Identifier == baseType);
-                    if (targetNode != null)
-                    {
-                        var edge = new Edge()
-                        {
-                            EdgeType = EdgeType.Inheritance,
-                            TargetNode = targetNode,
-                            SourceNode = sourceNode
-                        };
-                        sourceNode.OutgoingEdges.Add(edge);
-                        targetNode.IncomingEdges.Add(edge);
-                    }
-                });
+                baseTypes = classDeclaration.BaseList;
+                baseTypeOriginalDefinition = classDeclaration.BaseTypeOriginalDefinition;
             }
             else if (sourceNode.UstNode is InterfaceDeclaration interfaceDeclaration)
             {
-                var baseTypeOriginalDefinition = interfaceDeclaration.BaseTypeOriginalDefinition;
-                if (baseTypeOriginalDefinition != "object")
-                {
-                    var targetNode = InterfaceNodes.FirstOrDefault(n => n.Identifier == interfaceDeclaration.FullIdentifier);
-                    if (targetNode != null)
-                    {
-                        var edge = new Edge()
-                        {
-                            EdgeType = EdgeType.Inheritance,
-                            TargetNode = targetNode,
-                            SourceNode = sourceNode
-                        };
-                        sourceNode.OutgoingEdges.Add(edge);
-                        targetNode.IncomingEdges.Add(edge);
-                    }
-                }
+                // Check base types list for interfaces
+                baseTypes = interfaceDeclaration.BaseList;
+                baseTypeOriginalDefinition = interfaceDeclaration.BaseTypeOriginalDefinition;
             }
+            else
+            {
+                // If it's neither, no need to continue
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(baseTypeOriginalDefinition) && baseTypeOriginalDefinition != "object")
+            {
+                baseTypes.Add(baseTypeOriginalDefinition);
+            }
+            baseTypes.ForEach(baseType =>
+            {
+                var targetNode = targetNodes.FirstOrDefault(n => n.Identifier == baseType);
+                if (targetNode != null)
+                {
+                    var edge = new Edge()
+                    {
+                        EdgeType = EdgeType.Inheritance,
+                        TargetNode = targetNode,
+                        SourceNode = sourceNode
+                    };
+                    sourceNode.OutgoingEdges.Add(edge);
+                    targetNode.IncomingEdges.Add(edge);
+                }
+            });
         }
         private void CreateEdges(Node sourceNode)
         {
