@@ -121,26 +121,27 @@ namespace Codelyzer.Analysis.Build
 
             return null;
         }
-
-        private bool CanSkipErrorsForVisualBasic()
-        {
-            // Compilation returns false build errors, it seems like we can work around this with
-            // MSBuildWorkspace instead of using an AdhocWorkspace
-            return Compilation != null &&
-                   Compilation.Language == "Visual Basic" &&
-                   AnalyzerResult.Succeeded &&
-                   Compilation.SyntaxTrees.Any() &&
-                   Compilation.GetSemanticModel(Compilation.SyntaxTrees.First()) != null;
-        }
-
+        
         private async Task SetCompilation()
         {
-            PrePortCompilation = await SetPrePortCompilation();         
-            Compilation = await Project.GetCompilationAsync();           
-            
+            PrePortCompilation = await SetPrePortCompilation();
+
+            if (Project.Language == "Visual Basic")
+            {
+                var netFrameworkPath = AnalyzerResult.Properties
+                    .FirstOrDefault(s => s.Key == "FrameworkPathOverride")
+                    .Value;
+                if (!string.IsNullOrEmpty(netFrameworkPath))
+                {
+                    Project = Project.AddMetadataReference(
+                        MetadataReference.CreateFromFile(
+                            $"{netFrameworkPath}\\mscorlib.dll"));
+                }
+            }
+            Compilation = await Project.GetCompilationAsync();
             var errors = Compilation.GetDiagnostics()
                 .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-            if (errors.Any() && !CanSkipErrorsForVisualBasic())
+            if (errors.Any())
             {
                 Logger.LogError($"Build Errors: {Compilation.AssemblyName}: {errors.Count()} " +
                                 $"compilation errors: \n\t{string.Join("\n\t", errors.Where(e => false).Select(e => e.ToString()))}");
