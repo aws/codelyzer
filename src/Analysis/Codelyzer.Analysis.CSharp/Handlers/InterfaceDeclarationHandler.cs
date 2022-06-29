@@ -3,6 +3,7 @@ using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Linq;
 
 namespace Codelyzer.Analysis.CSharp.Handlers
 {
@@ -28,6 +29,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 Set(InterfaceDeclaration, interfaceSymbol);
                 _interfaceDeclarationCache.Add(fullIdentifier, InterfaceDeclaration);
             }
+
         }
         private void Set(InterfaceDeclaration interfaceDeclaration, INamedTypeSymbol interfaceSymbol)
         {
@@ -40,10 +42,12 @@ namespace Codelyzer.Analysis.CSharp.Handlers
 
             if (interfaceSymbol.AllInterfaces != null)
             {
+                interfaceDeclaration.BaseList = new();
                 interfaceDeclaration.AllBaseTypeDeclarationList = new();
                 foreach( var ifs in interfaceSymbol.AllInterfaces)
                 {
                     interfaceDeclaration.AllBaseTypeDeclarationList.Add(GetBaseTypeDeclaration(ifs));
+                    interfaceDeclaration.BaseList.Add(ifs.ToString());
                 }
             }
         }
