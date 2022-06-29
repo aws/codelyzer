@@ -122,6 +122,16 @@ namespace Codelyzer.Analysis.Build
             return null;
         }
         
+        private bool CanSkipErrorsForVisualBasic()
+        {
+            // Compilation returns false build errors, it seems like we can work around this with
+            // MSBuildWorkspace instead of using an AdhocWorkspace
+            return Compilation != null &&
+                   Compilation.Language == "Visual Basic" &&
+                   AnalyzerResult.Succeeded &&
+                   Compilation.SyntaxTrees.Any() &&
+                   Compilation.GetSemanticModel(Compilation.SyntaxTrees.First()) != null;
+        }
         private async Task SetCompilation()
         {
             PrePortCompilation = await SetPrePortCompilation();
@@ -141,7 +151,7 @@ namespace Codelyzer.Analysis.Build
             Compilation = await Project.GetCompilationAsync();
             var errors = Compilation.GetDiagnostics()
                 .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-            if (errors.Any())
+            if (errors.Any() && !CanSkipErrorsForVisualBasic())
             {
                 Logger.LogError($"Build Errors: {Compilation.AssemblyName}: {errors.Count()} " +
                                 $"compilation errors: \n\t{string.Join("\n\t", errors.Where(e => false).Select(e => e.ToString()))}");
