@@ -40,10 +40,9 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             classDeclaration.Reference.Version = GetAssemblyVersion(classSymbol);
             classDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
 
-            var syntaxNodes = classSymbol.DeclaringSyntaxReferences;
-            if (syntaxNodes.Length > 0)
+            var syntaxNode = (ClassDeclarationSyntax)classSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+            if (syntaxNode != null)
             {
-                var syntaxNode = (ClassDeclarationSyntax)syntaxNodes[0].GetSyntax();
                 classDeclaration.Modifiers = syntaxNode.Modifiers.ToString();
             }
 
