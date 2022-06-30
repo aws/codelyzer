@@ -43,6 +43,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             var syntaxNode = (ClassDeclarationSyntax)classSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
             if (syntaxNode != null)
             {
+                classDeclaration.Identifier = syntaxNode.Identifier.ToString();
                 classDeclaration.Modifiers = syntaxNode.Modifiers.ToString();
             }
 

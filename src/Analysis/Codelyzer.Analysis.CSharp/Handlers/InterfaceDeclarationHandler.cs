@@ -40,6 +40,12 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             interfaceDeclaration.Reference.Version = GetAssemblyVersion(interfaceSymbol);
             interfaceDeclaration.Reference.AssemblySymbol = interfaceSymbol.ContainingAssembly;
 
+            var syntaxNode = (ClassDeclarationSyntax)interfaceSymbol.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
+            if (syntaxNode != null)
+            {
+                interfaceDeclaration.Identifier = syntaxNode.Identifier.ToString();
+            }
+
             if (interfaceSymbol.AllInterfaces != null)
             {
                 interfaceDeclaration.BaseList = new();
