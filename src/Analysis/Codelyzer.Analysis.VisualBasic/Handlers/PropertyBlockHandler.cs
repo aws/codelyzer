@@ -26,9 +26,10 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
                     };
 
                     if (parameter.AsClause.Type != null)
+                    {
                         param.Type = parameter.AsClause.Type.ToString();
-
-                    param.SemanticType = SemanticHelper.GetSemanticType(parameter.AsClause.Type, SemanticModel, OriginalSemanticModel);
+                        param.SemanticType = SemanticHelper.GetSemanticType(parameter.AsClause.Type, SemanticModel, OriginalSemanticModel);
+                    }
                     Model.Parameters.Add(param);
                 }
             }
