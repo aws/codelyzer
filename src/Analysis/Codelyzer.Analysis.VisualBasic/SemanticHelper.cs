@@ -222,6 +222,18 @@ namespace Codelyzer.Analysis.VisualBasic
             if (invokedSymbol.IsReadOnly) properties.Add("readonly");
         }
 
+        public static void AddPropertyProperties(IPropertySymbol invokedSymbol, List<string> properties)
+        {
+            properties.Add(invokedSymbol.DeclaredAccessibility.ToString());
+            if (invokedSymbol.IsOverride) properties.Add("override");
+            if (invokedSymbol.IsAbstract) properties.Add("abstract");
+            if (invokedSymbol.IsExtern) properties.Add("extern");
+            if (invokedSymbol.IsSealed) properties.Add("sealed");
+            if (invokedSymbol.IsStatic) properties.Add("static");
+            if (invokedSymbol.IsVirtual) properties.Add("virtual");
+            if (invokedSymbol.IsReadOnly) properties.Add("readonly");
+        }
+
         public static string GetSemanticClassType(string classNameWithNamespace, string semanticNamespace)
         {
             Match match = Regex.Match(classNameWithNamespace, String.Format("{0}.(.*)", Regex.Escape(semanticNamespace)));

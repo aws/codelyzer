@@ -6,6 +6,7 @@ using Xunit.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Codelyzer.Analysis.VisualBasic;
 using System.Linq;
+using Codelyzer.Analysis.Model;
 
 namespace Codelyzer.Analysis.Languages.UnitTests
 {
@@ -329,6 +330,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 
 			Assert.True(moduleNode.GetType() == typeof(Model.ModuleBlock));
 			Assert.True(moduleNode.Children[0].GetType() == typeof(Model.ModuleStatement));
+			Assert.True(moduleNode.type == IdConstants.ModuleBlockName);
 		}
 
 		[Fact]

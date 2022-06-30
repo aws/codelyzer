@@ -20,7 +20,7 @@ namespace Codelyzer.Analysis.Model
         public string SemanticAssembly { get; set; }
 
         public ModuleBlock()
-            : base(IdConstants.AccessorBlockName)
+            : base(IdConstants.ModuleBlockName)
         {
             Reference = new Reference();
         }

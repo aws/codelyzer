@@ -209,7 +209,7 @@ namespace Codelyzer.Analysis.Tests
             var allBuildErrors = results.SelectMany(r => r.ProjectBuildResult.BuildErrors);
 
             CollectionAssert.IsNotEmpty(results);
-            //CollectionAssert.IsEmpty(allBuildErrors);  know issue for vb build errors
+            CollectionAssert.IsEmpty(allBuildErrors);
         }
         private string CopySolutionFolderToTemp(string solutionName)
         {
@@ -372,7 +372,7 @@ namespace Codelyzer.Analysis.Tests
 
             //Project has 19 nuget references and 18 framework/dll references:
             Assert.Contains(result.ProjectResult.ExternalReferences.NugetReferences.Count, new int[] { 17, 20 });
-            Assert.Contains(result.ProjectResult.ExternalReferences.SdkReferences.Count, new int[] { 17, 20 });
+            Assert.Contains(result.ProjectResult.ExternalReferences.SdkReferences.Count, new int[] { 18, 20 });
 
             Assert.AreEqual(40, result.ProjectResult.SourceFiles.Count);
 
@@ -400,8 +400,8 @@ namespace Codelyzer.Analysis.Tests
 
             Assert.AreEqual(0, blockStatements.Count);
             Assert.AreEqual(1, classBlocks.Count);
-            Assert.AreEqual(33, expressionStatements.Count);
-            Assert.AreEqual(28, invocationExpressions.Count);
+            Assert.AreEqual(19, expressionStatements.Count);
+            Assert.AreEqual(14, invocationExpressions.Count);
             Assert.AreEqual(4, literalExpressions.Count);
             Assert.AreEqual(3, methodBlocks.Count);
             Assert.AreEqual(6, returnStatements.Count);
@@ -412,6 +412,10 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(0, interfaces.Count);
             Assert.AreEqual(14, argumentLists.Count);
             Assert.AreEqual(13, memberAccess.Count);
+
+            var ex = invocationExpressions.First(expression => 
+                expression.SemanticOriginalDefinition == "System.Web.Mvc.Controller.View(String)");
+            Assert.IsNotNull(ex);
 
             var semanticMethodSignatures = methodBlocks.Select(m => m.SemanticSignature);
             Assert.True(semanticMethodSignatures.Any(methodSignature => string.Compare(
@@ -429,7 +433,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual("Public", helpControllerClass.Modifiers);
 
             var helpPageSampleKey = result.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith("HelpPageSampleKey.vb"));
-            Assert.AreEqual(52, helpPageSampleKey.AllInvocationExpressions().Count);
+            Assert.AreEqual(26, helpPageSampleKey.AllInvocationExpressions().Count);
 
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
             Assert.AreEqual(16, dllFiles.Count());
@@ -598,10 +602,9 @@ namespace Codelyzer.Analysis.Tests
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
 
             Assert.AreEqual(40, result.ProjectResult.SourceFiles.Count);
-
-            //Project has 23 nuget references and 22 framework/dll references:
+            
             Assert.AreEqual(17, result.ProjectResult.ExternalReferences.NugetReferences.Count);
-            Assert.AreEqual(17, result.ProjectResult.ExternalReferences.SdkReferences.Count);
+            Assert.AreEqual(18, result.ProjectResult.ExternalReferences.SdkReferences.Count);
 
             var helpController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HelpController.vb")).FirstOrDefault();
             var homeController = result.ProjectResult.SourceFileResults.Where(f => f.FilePath.EndsWith("HomeController.vb")).FirstOrDefault();
