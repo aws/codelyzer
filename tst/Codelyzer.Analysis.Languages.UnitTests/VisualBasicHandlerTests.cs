@@ -282,7 +282,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 		public void PropertyHandlerTest()
 		{
 			var expressShell = @"
-			Public ReadOnly Property Url() As String
+			Public ReadOnly Property Url As String
 				Get
 					Return UrlValue
 				End Get
@@ -316,6 +316,15 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			var endBlockNode = propertyBlockNode.Children[2];
 			Assert.True(endBlockNode.GetType() == typeof(Model.EndBlockStatement));
 			Assert.Equal("End Property", endBlockNode.Identifier);
+			
+			var syntax = @"
+			Public ReadOnly Property Url(i as Integer, s as String) As String
+				Get
+					Return UrlValue
+				End Get
+			End Property";
+			var propertyBlock = (PropertyBlock)GetVisualBasicUstNode(syntax).Children[0];
+			Assert.True(propertyBlock.Parameters.Count == 2);
 		}
 
 		[Fact]
@@ -506,7 +515,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			
 		}
 
-			private Model.UstNode GetVisualBasicUstNode(string expressionShell)
+		private Model.UstNode GetVisualBasicUstNode(string expressionShell)
         {
             var tree = Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.ParseSyntaxTree(expressionShell);
             var compilation = VisualBasicCompilation.Create(
