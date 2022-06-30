@@ -1,4 +1,5 @@
-﻿using Codelyzer.Analysis.Common;
+﻿using System.Collections.Generic;
+using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using System.Linq;
@@ -14,19 +15,23 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
             PropertyBlockSyntax syntaxNode)
             : base(context, syntaxNode, new PropertyBlock())
         {
-
-            foreach (var parameter in syntaxNode.PropertyStatement.ParameterList?.Parameters)
+            Model.Parameters = new List<Parameter>();
+            if (syntaxNode.PropertyStatement.ParameterList != null)
             {
-                var param = new Parameter
+                foreach (var parameter in syntaxNode.PropertyStatement.ParameterList.Parameters)
                 {
-                    Name = parameter.Identifier.ToString()
-                };
+                    var param = new Parameter
+                    {
+                        Name = parameter.Identifier.ToString()
+                    };
 
-                if (parameter.AsClause.Type != null)
-                    param.Type = parameter.AsClause.Type.ToString();
-
-                param.SemanticType = SemanticHelper.GetSemanticType(parameter.AsClause.Type, SemanticModel, OriginalSemanticModel);
-                Model.Parameters.Add(param);
+                    if (parameter.AsClause.Type != null)
+                    {
+                        param.Type = parameter.AsClause.Type.ToString();
+                        param.SemanticType = SemanticHelper.GetSemanticType(parameter.AsClause.Type, SemanticModel, OriginalSemanticModel);
+                    }
+                    Model.Parameters.Add(param);
+                }
             }
 
             var classSymbol = SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);

@@ -67,7 +67,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 		[Fact]
 		public void FieldDeclarationHandlerTest()
 		{
-			const string vbCodeSnippet = 
+			const string vbCodeSnippet =
 				@"Public FirstName, LastName As String, Age As Integer";
 			var rootNode = GetVisualBasicUstNode(vbCodeSnippet);
 			Assert.Single(rootNode.Children);
@@ -109,7 +109,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.True(subStatementNode.GetType() == typeof(Model.MethodStatement));
 
 			//1:sub-block::1::LocalDeclarationStatement
-			var localDeclareNode = subBlockNode.Children[1]; 
+			var localDeclareNode = subBlockNode.Children[1];
 			Assert.True(localDeclareNode.GetType() == typeof(Model.LocalDeclarationStatement));
 			Assert.Single(localDeclareNode.Children);
 			Assert.True(localDeclareNode.Children[0].GetType() == typeof(Model.VariableDeclarator));
@@ -192,7 +192,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.Single(((Model.MethodStatement)subStatementNode).Parameters);
 			var p1 = ((Model.MethodStatement)subStatementNode).Parameters[0];
 			Assert.Equal("HttpContext", p1.Type);
-			
+
 			var returnNode = funcBlockNode.Children[1];
 			Assert.True(returnNode.GetType() == typeof(Model.ReturnStatement));
 			Assert.Single(returnNode.Children);
@@ -224,12 +224,12 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.Equal("String", p1.Type);
 
 			var subStatementTypeNode = subStatementNode.Children.LastOrDefault();
-			Assert.Equal("Person", ((Model.SimpleAsClause)subStatementTypeNode).Type); 
+			Assert.Equal("Person", ((Model.SimpleAsClause)subStatementTypeNode).Type);
 
 			var returnNode = funcBlockNode.Children[1];
 			Assert.True(returnNode.GetType() == typeof(Model.ReturnStatement));
 			Assert.Single(returnNode.Children);
-			
+
 			var endBlockNode = funcBlockNode.Children[2];
 			Assert.True(endBlockNode.GetType() == typeof(Model.EndBlockStatement));
 			Assert.Equal("End Function", endBlockNode.Identifier);
@@ -282,7 +282,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 		public void PropertyHandlerTest()
 		{
 			var expressShell = @"
-			Public ReadOnly Property Url() As String
+			Public ReadOnly Property Url As String
 				Get
 					Return UrlValue
 				End Get
@@ -293,7 +293,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.True(propertyBlockNode.GetType() == typeof(Model.PropertyBlock));
 			Assert.Equal("PropertyBlock", propertyBlockNode.Identifier);
 			Assert.Equal(3, propertyBlockNode.Children.Count);
-			
+
 			var propertyStatementNode = propertyBlockNode.Children[0];
 			Assert.True(propertyStatementNode.GetType() == typeof(Model.PropertyStatement));
 			Assert.Single(propertyStatementNode.Children);
@@ -316,6 +316,15 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			var endBlockNode = propertyBlockNode.Children[2];
 			Assert.True(endBlockNode.GetType() == typeof(Model.EndBlockStatement));
 			Assert.Equal("End Property", endBlockNode.Identifier);
+
+			var syntax = @"
+			Public ReadOnly Property Url(i as Integer, s as String) As String
+				Get
+					Return UrlValue
+				End Get
+			End Property";
+			var propertyBlock = (PropertyBlock)GetVisualBasicUstNode(syntax).Children[0];
+			Assert.True(propertyBlock.Parameters.Count == 2);
 		}
 
 		[Fact]
@@ -492,7 +501,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.Equal(3, interfaceNode.Children.Count);
 			var interfaceStatementNode = interfaceNode.Children[0];
 			Assert.Equal(typeof(Model.InterfaceStatement), interfaceStatementNode.GetType());
-			
+
 			var methodStatementNode = interfaceNode.Children[1];
 			Assert.Equal(typeof(Model.MethodStatement), methodStatementNode.GetType());
 
@@ -503,10 +512,10 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			var endNode = interfaceNode.Children[2];
 			Assert.Equal(typeof(Model.EndBlockStatement), endNode.GetType());
 
-			
+
 		}
 
-			private Model.UstNode GetVisualBasicUstNode(string expressionShell)
+		private Model.UstNode GetVisualBasicUstNode(string expressionShell)
         {
             var tree = Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.ParseSyntaxTree(expressionShell);
             var compilation = VisualBasicCompilation.Create(
