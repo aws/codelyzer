@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.VisualBasic;
 
 namespace Codelyzer.Analysis.Build
 {
@@ -51,27 +52,14 @@ namespace Codelyzer.Analysis.Build
 
             await Task.Run(() =>
             {
-                foreach (var file in _fileInfo)
+                if (_projectPath.EndsWith(".vbproj", StringComparison.OrdinalIgnoreCase))
                 {
-                    var fileContent = file.Value;
-                    var syntaxTree = CSharpSyntaxTree.ParseText(fileContent, path: file.Key);
-                    trees.Add(syntaxTree);
+                    BuildVisualBasic(trees);
                 }
-                if (trees.Count != 0)
+                else
                 {
-                    var projectName = Path.GetFileNameWithoutExtension(_projectPath);
-
-                    if (_frameworkMetaReferences?.Any() == true)
-                    {
-                        _prePortCompilation = CSharpCompilation.Create(projectName, trees, _frameworkMetaReferences);
-                    }
-                    if (_coreMetaReferences?.Any() == true)
-                    {
-                        _compilation = CSharpCompilation.Create(projectName, trees, _coreMetaReferences);
-                    }
+                    BuildCsharp(trees);
                 }
-
-
                 _fileInfo.Keys.ToList().ForEach(file =>
                 {
                     var sourceFilePath = Path.GetRelativePath(_projectPath, file);
@@ -96,7 +84,57 @@ namespace Codelyzer.Analysis.Build
                 });
             });
             return results;
-        }  
+        }
+
+        private void BuildCsharp(List<SyntaxTree> trees)
+        {
+            foreach (var file in _fileInfo)
+            {
+                var fileContent = file.Value;
+                var syntaxTree = CSharpSyntaxTree.ParseText(fileContent, path: file.Key);
+                trees.Add(syntaxTree);
+            }
+
+            if (trees.Count != 0)
+            {
+                var projectName = Path.GetFileNameWithoutExtension(_projectPath);
+
+                if (_frameworkMetaReferences?.Any() == true)
+                {
+                    _prePortCompilation = CSharpCompilation.Create(projectName, trees, _frameworkMetaReferences);
+                }
+
+                if (_coreMetaReferences?.Any() == true)
+                {
+                    _compilation = CSharpCompilation.Create(projectName, trees, _coreMetaReferences);
+                }
+            }
+        }
+
+        private void BuildVisualBasic(List<SyntaxTree> trees)
+        {
+            foreach (var file in _fileInfo)
+            {
+                var fileContent = file.Value;
+                var syntaxTree = VisualBasicSyntaxTree.ParseText(fileContent, path: file.Key);
+                trees.Add(syntaxTree);
+            }
+
+            if (trees.Count != 0)
+            {
+                var projectName = Path.GetFileNameWithoutExtension(_projectPath);
+
+                if (_frameworkMetaReferences?.Any() == true)
+                {
+                    _prePortCompilation = VisualBasicCompilation.Create(projectName, trees, _frameworkMetaReferences);
+                }
+
+                if (_coreMetaReferences?.Any() == true)
+                {
+                    _compilation = VisualBasicCompilation.Create(projectName, trees, _coreMetaReferences);
+                }
+            }
+        }
 
         public void Dispose()
         {
