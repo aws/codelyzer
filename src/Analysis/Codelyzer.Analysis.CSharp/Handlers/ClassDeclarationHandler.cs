@@ -46,10 +46,5 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 }
             }
         }
-
-        private void Set(ClassDeclaration ClassDeclaration, INamedTypeSymbol classSymbol)
-        {
-            
-        }
     }
 }
