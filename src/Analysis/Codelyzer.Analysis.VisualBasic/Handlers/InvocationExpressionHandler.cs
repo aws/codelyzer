@@ -30,7 +30,7 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
                 //Object or Class invocations
                 var mae = ((MemberAccessExpressionSyntax)syntaxNode.Expression);
                 Model.MethodName = mae.Name.ToString();
-                Model.CallerIdentifier = mae.Expression.ToString();
+                Model.CallerIdentifier = mae.Expression?.ToString() ?? "";
             }
             else
             {
