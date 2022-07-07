@@ -9,8 +9,6 @@ namespace Codelyzer.Analysis.CSharp.Handlers
 {
     public class InterfaceDeclarationHandler : UstNodeHandler
     {
-        // Key: interface full identifier, value: InterfaceDeclaration.
-        private Dictionary<string, InterfaceDeclaration> _interfaceDeclarationCache = new();
         private InterfaceDeclaration InterfaceDeclaration { get => (InterfaceDeclaration)UstNode; }
 
         public InterfaceDeclarationHandler(CodeContext context,
@@ -18,53 +16,22 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             : base(context, syntaxNode, new InterfaceDeclaration())
         {
             var interfaceSymbol = SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
+            InterfaceDeclaration.Identifier = syntaxNode.Identifier.ToString();
+
             if (interfaceSymbol != null)
             {
-                var fullIdentifier = GetFullIdentifier(interfaceSymbol);
-                if (_interfaceDeclarationCache.ContainsKey(fullIdentifier))
-                {
-                    UstNode = _interfaceDeclarationCache[fullIdentifier];
-                    return;
-                }
-                Set(InterfaceDeclaration, interfaceSymbol);
-                _interfaceDeclarationCache.Add(fullIdentifier, InterfaceDeclaration);
-            }
+                InterfaceDeclaration.FullIdentifier = GetFullIdentifier(interfaceSymbol);
+                InterfaceDeclaration.Reference.Namespace = GetNamespace(interfaceSymbol);
+                InterfaceDeclaration.Reference.Assembly = GetAssembly(interfaceSymbol);
+                InterfaceDeclaration.Reference.Version = GetAssemblyVersion(interfaceSymbol);
+                InterfaceDeclaration.Reference.AssemblySymbol = interfaceSymbol.ContainingAssembly;
 
-        }
-        private void Set(InterfaceDeclaration interfaceDeclaration, INamedTypeSymbol interfaceSymbol)
-        {
-            interfaceDeclaration.Identifier = interfaceSymbol.Name;
-            interfaceDeclaration.FullIdentifier = GetFullIdentifier(interfaceSymbol);
-            interfaceDeclaration.Reference.Namespace = GetNamespace(interfaceSymbol);
-            interfaceDeclaration.Reference.Assembly = GetAssembly(interfaceSymbol);
-            interfaceDeclaration.Reference.Version = GetAssemblyVersion(interfaceSymbol);
-            interfaceDeclaration.Reference.AssemblySymbol = interfaceSymbol.ContainingAssembly;
-
-            if (interfaceSymbol.AllInterfaces != null)
-            {
-                interfaceDeclaration.BaseList = new();
-                interfaceDeclaration.AllBaseTypeDeclarationList = new();
-                foreach( var ifs in interfaceSymbol.AllInterfaces)
+                if (interfaceSymbol.AllInterfaces != null)
                 {
-                    interfaceDeclaration.AllBaseTypeDeclarationList.Add(GetBaseTypeDeclaration(ifs));
-                    interfaceDeclaration.BaseList.Add(ifs.ToString());
+                    InterfaceDeclaration.BaseList = interfaceSymbol.AllInterfaces.Select(x => x.ToString())?.ToList();
                 }
             }
-        }
 
-        private InterfaceDeclaration GetBaseTypeDeclaration(INamedTypeSymbol baseTypeSymbol)
-        {
-            var fullIdentifier = GetFullIdentifier(baseTypeSymbol);
-            if (_interfaceDeclarationCache.ContainsKey(fullIdentifier))
-            {
-                return _interfaceDeclarationCache[fullIdentifier];
-            }
-
-            InterfaceDeclaration baseDeclaration = new();
-            Set(baseDeclaration, baseTypeSymbol);
-            _interfaceDeclarationCache.Add(fullIdentifier, baseDeclaration);
-
-            return baseDeclaration;
         }
     }
 }
