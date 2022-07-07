@@ -130,7 +130,24 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			var endBlockNode = classBlockNode.Children[2];
 			Assert.True(endBlockNode.GetType() == typeof(Model.EndBlockStatement));
 			Assert.Equal("End Class", endBlockNode.Identifier);
-		}
+
+
+            var codeText = @"
+			Class TypeName
+				Public Sub Test()
+					Dim a = ""test""
+					String.Equals(a, ""v"", System.StringComparison.Ordinal)
+                    .StrangeMethod()
+				End Sub
+			End Class";
+            rootNode = GetVisualBasicUstNode(codeText);
+            Assert.Single(rootNode.Children);
+            classBlockNode = rootNode.Children[0];
+            Assert.Equal(3, classBlockNode.Children.Count);
+            var allInvocationExpressions = classBlockNode.AllInvocationExpressions();
+			Assert.Equal(2, allInvocationExpressions.Count);
+            Assert.Equal("", allInvocationExpressions.First(e => e.MethodName == "StrangeMethod").CallerIdentifier);
+        }
 
 
 		[Fact]
