@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis;
