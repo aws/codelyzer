@@ -150,7 +150,7 @@ namespace Codelyzer.Analysis
                 try
                 {
                     var projectReferences = projectResult?.ExternalReferences?.ProjectReferences;
-                    var sourceNode = ProjectNodes.FirstOrDefault(p => p.Identifier == projectResult.ProjectFilePath);
+                    var sourceNode = ProjectNodes.FirstOrDefault(p => p.Identifier.Equals(projectResult.ProjectFilePath, StringComparison.InvariantCultureIgnoreCase));
 
                     projectReferences?.ForEach(projectReference =>
                     {
