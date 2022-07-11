@@ -1,6 +1,7 @@
 using Codelyzer.Analysis.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -68,7 +69,7 @@ namespace Codelyzer.Analysis.Build
                             Dictionary<string, MetadataReference> references = new Dictionary<string, MetadataReference>();
 
                             var projectPath = result.ProjectAnalyzer.ProjectFile.Path;
-                            var project = builder.Projects.Find(p => p.ProjectAnalyzer.ProjectFile.Path.Equals(projectPath));
+                            var project = builder.Projects.Find(p => p.ProjectAnalyzer.ProjectFile.Path.Equals(projectPath, StringComparison.InvariantCultureIgnoreCase));
                             var projectReferencePaths = projectReferencesMap[projectPath]?.Distinct().ToHashSet<string>();
 
                             using (ProjectBuildHandler projectBuildHandler =
@@ -135,7 +136,7 @@ namespace Codelyzer.Analysis.Build
                     while (projectsInOrder.Count > 0)
                     {
                         var projectPath = projectsInOrder.Dequeue();
-                        var project = builder.Projects.Find(p => p.ProjectAnalyzer.ProjectFile.Path.Equals(projectPath));
+                        var project = builder.Projects.Find(p => p.ProjectAnalyzer.ProjectFile.Path.Equals(projectPath, StringComparison.InvariantCultureIgnoreCase));
                         var projectReferencePaths = projectReferencesMap[projectPath]?.Distinct().ToHashSet<string>();
 
                         using (ProjectBuildHandler projectBuildHandler =
