@@ -41,8 +41,8 @@ namespace Codelyzer.Analysis.Tests
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            DeleteDir(tempDir);
-            DeleteDir(downloadsDir);
+            //DeleteDir(tempDir);
+            //DeleteDir(downloadsDir);
         }
 
         private void DownloadTestProjects()

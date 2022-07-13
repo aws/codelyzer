@@ -12,6 +12,9 @@ namespace Codelyzer.Analysis
         HashSet<Node> _namespaceNodes;
         HashSet<Node> _classNodes;
         HashSet<Node> _interfaceNodes;
+        HashSet<Node> _structNodes;
+        HashSet<Node> _enumNodes;
+        HashSet<Node> _recordNodes;
         HashSet<Node> _methodNodes;
 
         protected readonly ILogger Logger;
@@ -58,6 +61,39 @@ namespace Codelyzer.Analysis
                     _interfaceNodes = Graph.Where(n => n.NodeType == NodeType.Interface).ToHashSet();
                 }
                 return _interfaceNodes;
+            }
+        }
+        public HashSet<Node> StructNodes
+        {
+            get
+            {
+                if (_structNodes == null)
+                {
+                    _structNodes = Graph.Where(n => n.NodeType == NodeType.Struct).ToHashSet();
+                }
+                return _structNodes;
+            }
+        }
+        public HashSet<Node> EnumNodes
+        {
+            get
+            {
+                if (_enumNodes == null)
+                {
+                    _enumNodes = Graph.Where(n => n.NodeType == NodeType.Enum).ToHashSet();
+                }
+                return _enumNodes;
+            }
+        }
+        public HashSet<Node> RecordNodes
+        {
+            get
+            {
+                if (_recordNodes == null)
+                {
+                    _recordNodes = Graph.Where(n => n.NodeType == NodeType.Record).ToHashSet();
+                }
+                return _recordNodes;
             }
         }
         public HashSet<Node> MethodNodes
@@ -213,6 +249,18 @@ namespace Codelyzer.Analysis
             {
                 return NodeType.Class;
             }
+            else if (ustNode is StructDeclaration)
+            {
+                return NodeType.Struct;
+            }
+            else if (ustNode is EnumDeclaration)
+            {
+                return NodeType.Enum;
+            }
+            else if (ustNode is RecordDeclaration)
+            {
+                return NodeType.Record;
+            }
             else if (ustNode is InterfaceDeclaration)
             {
                 return NodeType.Interface;
@@ -287,6 +335,18 @@ namespace Codelyzer.Analysis
                 // Check base types list for interfaces
                 baseTypes = interfaceDeclaration.BaseList;
                 baseTypeOriginalDefinition = interfaceDeclaration.BaseTypeOriginalDefinition;
+            }
+            else if (sourceNode.UstNode is StructDeclaration structDeclaration)
+            {
+                // Check base types list for interfaces
+                //baseTypes = structDeclaration.BaseList;
+                //baseTypeOriginalDefinition = structDeclaration.BaseTypeOriginalDefinition;
+            }
+            else if (sourceNode.UstNode is RecordDeclaration recordDeclaration)
+            {
+                // Check base types list for interfaces
+                baseTypes = recordDeclaration.BaseList;
+                baseTypeOriginalDefinition = recordDeclaration.BaseTypeOriginalDefinition;
             }
             else
             {
@@ -408,7 +468,8 @@ namespace Codelyzer.Analysis
             }
             return ustNodeEdgeCandidates[parentNode];
         }
-        private bool IsNode(UstNode ustNode) => (ustNode is NamespaceDeclaration || ustNode is ClassDeclaration || ustNode is InterfaceDeclaration || ustNode is MethodDeclaration);
+        private bool IsNode(UstNode ustNode) => (ustNode is NamespaceDeclaration || ustNode is ClassDeclaration || ustNode is InterfaceDeclaration
+            || ustNode is StructDeclaration || ustNode is EnumDeclaration || ustNode is RecordDeclaration || ustNode is MethodDeclaration);
         private bool IsEdgeConnection(UstNode ustNode) => (ustNode is DeclarationNode || ustNode is MemberAccess || ustNode is InvocationExpression);
     }
 
@@ -497,6 +558,9 @@ namespace Codelyzer.Analysis
         Namespace,
         Class,
         Interface,
+        Enum,
+        Struct,
+        Record,
         Method,
         Unknown
     }

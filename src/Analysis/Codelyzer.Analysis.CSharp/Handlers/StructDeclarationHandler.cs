@@ -22,6 +22,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 StructDeclaration.Reference.Assembly = GetAssembly(structSymbol);
                 StructDeclaration.Reference.Version = GetAssemblyVersion(structSymbol);
                 StructDeclaration.Reference.AssemblySymbol = structSymbol.ContainingAssembly;
+                StructDeclaration.FullIdentifier = structSymbol.OriginalDefinition.ToString();
             }
         }
     }
