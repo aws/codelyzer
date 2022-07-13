@@ -1,7 +1,6 @@
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Linq;
 
@@ -18,24 +17,23 @@ namespace Codelyzer.Analysis.CSharp.Handlers
             var interfaceSymbol = SemanticHelper.GetDeclaredSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
             InterfaceDeclaration.Identifier = syntaxNode.Identifier.ToString();
 
-
             if (interfaceSymbol != null)
             {
+                InterfaceDeclaration.FullIdentifier = GetFullIdentifier(interfaceSymbol);
+                InterfaceDeclaration.Reference.Namespace = GetNamespace(interfaceSymbol);
+                InterfaceDeclaration.Reference.Assembly = GetAssembly(interfaceSymbol);
+                InterfaceDeclaration.Reference.Version = GetAssemblyVersion(interfaceSymbol);
+                InterfaceDeclaration.Reference.AssemblySymbol = interfaceSymbol.ContainingAssembly;
+
                 if (interfaceSymbol.BaseType != null)
                 {
                     InterfaceDeclaration.BaseType = interfaceSymbol.BaseType.ToString();
                     InterfaceDeclaration.BaseTypeOriginalDefinition = GetBaseTypOriginalDefinition(interfaceSymbol);
                 }
 
-                InterfaceDeclaration.Reference.Namespace = GetNamespace(interfaceSymbol);
-                InterfaceDeclaration.Reference.Assembly = GetAssembly(interfaceSymbol);
-                InterfaceDeclaration.Reference.Version = GetAssemblyVersion(interfaceSymbol);
-                InterfaceDeclaration.Reference.AssemblySymbol = interfaceSymbol.ContainingAssembly;
-                InterfaceDeclaration.FullIdentifier = string.Concat(InterfaceDeclaration.Reference.Namespace, ".", InterfaceDeclaration.Identifier);
-
-                if (interfaceSymbol.Interfaces != null)
+                if (interfaceSymbol.AllInterfaces != null)
                 {
-                    InterfaceDeclaration.BaseList = interfaceSymbol.Interfaces.Select(x => x.ToString())?.ToList();
+                    InterfaceDeclaration.BaseList = interfaceSymbol.AllInterfaces.Select(x => x.ToString())?.ToList();
                 }
             }
 

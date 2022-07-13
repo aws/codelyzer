@@ -1,6 +1,6 @@
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
-using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Linq;
 
@@ -21,20 +21,27 @@ namespace Codelyzer.Analysis.CSharp.Handlers
 
             if (classSymbol != null)
             {
-                if(classSymbol.BaseType != null)
+                ClassDeclaration.FullIdentifier = classSymbol.OriginalDefinition.ToString();
+                ClassDeclaration.Reference.Namespace = GetNamespace(classSymbol);
+                ClassDeclaration.Reference.Assembly = GetAssembly(classSymbol);
+                ClassDeclaration.Reference.Version = GetAssemblyVersion(classSymbol);
+                ClassDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
+
+                ClassDeclaration.BaseList = new();
+                if (classSymbol.BaseType != null)
                 {
-                    ClassDeclaration.BaseType = classSymbol.BaseType.ToString();               
+                    var baseTypeSymbol = classSymbol.BaseType;
+                    ClassDeclaration.BaseType = baseTypeSymbol.ToString();
                     ClassDeclaration.BaseTypeOriginalDefinition = GetBaseTypOriginalDefinition(classSymbol);
-                    ClassDeclaration.Reference.Namespace = GetNamespace(classSymbol);
-                    ClassDeclaration.Reference.Assembly = GetAssembly(classSymbol);
-                    ClassDeclaration.Reference.Version = GetAssemblyVersion(classSymbol);
-                    ClassDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
-                    ClassDeclaration.FullIdentifier = classSymbol.OriginalDefinition.ToString();
+                    do
+                    {
+                        ClassDeclaration.BaseList.Add(baseTypeSymbol.ToString());
+                    } while ((baseTypeSymbol = baseTypeSymbol.BaseType) != null);
                 }
-                
-                if(classSymbol.Interfaces != null)
+
+                if (classSymbol.AllInterfaces != null)
                 {
-                    ClassDeclaration.BaseList = classSymbol.Interfaces.Select(x => x.ToString())?.ToList();
+                    ClassDeclaration.BaseList.AddRange(classSymbol.AllInterfaces.Select(x => x.ToString())?.ToList());
                 }
             }
         }
