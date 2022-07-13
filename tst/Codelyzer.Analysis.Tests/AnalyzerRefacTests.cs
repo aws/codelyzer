@@ -1662,7 +1662,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         }
         private void ValidateStructEdges(HashSet<Node> nodes)
         {
-            Assert.AreEqual(2, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesStruct")).AllIncomingEdges.Count);
+            Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesStruct")).AllIncomingEdges.Count);
         }
         private void ValidateEnumEdges(HashSet<Node> nodes)
         {
@@ -1670,7 +1670,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         }
         private void ValidateRecordEdges(HashSet<Node> nodes)
         {
-            Assert.AreEqual(2, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesRecord")).AllIncomingEdges.Count);
+            Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesRecord")).AllIncomingEdges.Count);
         }
         private void ValidateMethodEdges(HashSet<Node> nodes)
         {
