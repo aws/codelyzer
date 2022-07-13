@@ -359,8 +359,8 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.True(moduleNode.type == IdConstants.ModuleBlockName);
 		}
 
-		[Fact]
-		public void ImpementHandlerTest()
+        [Fact] 
+        public void ImplementHandlerTest()
 		{
 			var expressShell = @"
 			Public Class AppShutDownHandler
