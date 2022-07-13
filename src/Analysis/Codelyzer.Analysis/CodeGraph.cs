@@ -432,7 +432,7 @@ namespace Codelyzer.Analysis
                         // No constructors found, find the class type
                         if (targetNode is null)
                         {
-                            targetNode = ClassNodes.FirstOrDefault(n => n.Identifier == objectCreationExpression.SemanticFullClassTypeName);
+                            targetNode = TypeNodes.FirstOrDefault(n => n.Identifier == objectCreationExpression.SemanticFullClassTypeName);
                         }
 
                         //Skip methods in same class
