@@ -213,7 +213,8 @@ namespace Codelyzer.Analysis.VisualBasic
             ImplementsStatementHandler handler = new ImplementsStatementHandler(_context, node);
             return handler.UstNode;
         }
-        
+
+
         public override UstNode VisitMultiLineIfBlock(MultiLineIfBlockSyntax node)
         {
             MultiLineIfBlockHandler handler = new MultiLineIfBlockHandler(_context, node);

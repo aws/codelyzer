@@ -1898,6 +1898,49 @@ End Namespace");
             Assert.Contains("Newtonsoft.Json", updatedSourcefile.AllImportsStatements().Select(s => s.Identifier).ToList());
         }
 
+        [Test]
+        public async Task VBConsoleAppWithCodeFactoryAnalyzer()
+        {
+            string solutionPath = CopySolutionFolderToTemp("VBConsoleApp.sln");
+
+            FileAssert.Exists(solutionPath);
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    LambdaMethods = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    LoadBuildData = true,
+                    ReturnStatements = true,
+                    InterfaceDeclarations = true
+                }
+            };
+            var factory = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance, solutionPath);
+
+            List<AnalyzerResult> result = factory.AnalyzeSolution(solutionPath).Result;
+
+            Assert.IsNotNull(result);
+            var projectBuildResult = result.FirstOrDefault().ProjectBuildResult;
+            Assert.IsNotNull(projectBuildResult);
+            Assert.AreEqual(0, projectBuildResult.BuildErrors.Count);
+            var sdkreferences = projectBuildResult.ExternalReferences.SdkReferences;
+            var updatedSourcefile = result.FirstOrDefault().ProjectResult.SourceFileResults.FirstOrDefault();
+            Assert.IsFalse(projectBuildResult.IsSyntaxAnalysis);
+            Assert.IsNotNull(updatedSourcefile);
+            Assert.IsNotNull(sdkreferences);
+        }
+
 
         #region private methods
         private void DeleteDir(string path, int retries = 0)
