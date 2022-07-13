@@ -213,18 +213,7 @@ namespace Codelyzer.Analysis.VisualBasic
             ImplementsStatementHandler handler = new ImplementsStatementHandler(_context, node);
             return handler.UstNode;
         }
-        
-        public override UstNode VisitMultiLineIfBlock(MultiLineIfBlockSyntax node)
-        {
-            MultiLineIfBlockHandler handler = new MultiLineIfBlockHandler(_context, node);
-            return handler.UstNode;
-        }
 
-        public override UstNode VisitIfStatement(IfStatementSyntax node)
-        {
-            IfStatementHandler handler = new IfStatementHandler(_context, node);
-            return handler.UstNode;
-        }
 
         public override UstNode VisitBinaryExpression(BinaryExpressionSyntax node)
         {
@@ -232,17 +221,6 @@ namespace Codelyzer.Analysis.VisualBasic
             return handler.UstNode;
         }
 
-        public override UstNode VisitElseBlock(ElseBlockSyntax node)
-        {
-            ElseBlockHandler handler = new ElseBlockHandler(_context, node);
-            return handler.UstNode;
-        }
-
-        public override UstNode VisitElseStatement(ElseStatementSyntax node)
-        {
-            ElseStatementHandler handler = new ElseStatementHandler(_context, node);
-            return handler.UstNode;
-        }
 
         public override UstNode VisitEnumBlock(EnumBlockSyntax node)
         {

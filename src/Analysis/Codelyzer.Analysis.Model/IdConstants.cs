@@ -108,13 +108,10 @@ namespace Codelyzer.Analysis.Model
 
         public const string ImplementsStatementName = "implements-statement";
 
-        public const string MultiLineIfBlockName = "multi-line-if-block";
-
         public const string IfStatementName = "if-statement";
 
         public const string BinaryExpressionName = "binary-expression";
 
-        public const string ElseBlockName = "else-block";
 
         public const string ElseStatementName = "else-statement";
     }
