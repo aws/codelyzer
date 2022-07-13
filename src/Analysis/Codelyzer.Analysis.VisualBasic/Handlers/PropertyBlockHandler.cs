@@ -32,6 +32,9 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
                     Model.Parameters.Add(param);
                 }
             }
+
+            Model.Identifier = syntaxNode.Kind().ToString();
+            Model.Modifiers = syntaxNode.PropertyStatement.Modifiers.ToString();
         }
     }
 }

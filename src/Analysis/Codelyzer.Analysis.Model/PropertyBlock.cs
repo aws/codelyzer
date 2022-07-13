@@ -6,6 +6,8 @@ namespace Codelyzer.Analysis.Model
 {
     public class PropertyBlock : UstNode
     {
+        [JsonProperty("modifiers", Order = 20)]
+        public string Modifiers { get; set; }
 
         [JsonProperty("references", Order = 99)]
         public Reference Reference { get; set; }

@@ -324,7 +324,7 @@ namespace Codelyzer.Analysis.Tests
             Assert.AreEqual(2, houseMapper.AllInvocationExpressions().Count);
 
             var dllFiles = Directory.EnumerateFiles(Path.Combine(result.ProjectResult.ProjectRootPath, "bin"), "*.dll");
-            Assert.AreEqual(16, dllFiles.Count());
+            Assert.AreEqual(15, dllFiles.Count());
 
 
             await RunAgainWithChangedFile(solutionPath, result.ProjectBuildResult.ProjectPath, configuration, analyzerByLanguage);
@@ -1592,8 +1592,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(0, projectGraphWithBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).OutgoingEdges.Count);
 
             // There are 26 classes in the solution
-            Assert.AreEqual(26, classGraphWithoutBuild.Count);
-            Assert.AreEqual(26, classGraphWithBuild.Count);
+            Assert.AreEqual(27, classGraphWithoutBuild.Count);
+            Assert.AreEqual(27, classGraphWithBuild.Count);
 
             Assert.AreEqual(4, resultWithoutBuild.CodeGraph?.InterfaceNodes.Count);
             Assert.AreEqual(4, resultWithBuild.CodeGraph?.InterfaceNodes.Count);
