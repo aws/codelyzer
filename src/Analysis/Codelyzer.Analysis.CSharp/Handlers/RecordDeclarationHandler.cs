@@ -21,20 +21,27 @@ namespace Codelyzer.Analysis.CSharp.Handlers
 
             if (recordSymbol != null)
             {
-                if(recordSymbol.BaseType != null)
+                RecordDeclaration.FullIdentifier = recordSymbol.OriginalDefinition.ToString();
+                RecordDeclaration.Reference.Namespace = GetNamespace(recordSymbol);
+                RecordDeclaration.Reference.Assembly = GetAssembly(recordSymbol);
+                RecordDeclaration.Reference.Version = GetAssemblyVersion(recordSymbol);
+                RecordDeclaration.Reference.AssemblySymbol = recordSymbol.ContainingAssembly;
+
+                RecordDeclaration.BaseList = new();
+                if (recordSymbol.BaseType != null)
                 {
-                    RecordDeclaration.BaseType = recordSymbol.BaseType.ToString();               
+                    var baseTypeSymbol = recordSymbol.BaseType;
+                    RecordDeclaration.BaseType = baseTypeSymbol.ToString();
                     RecordDeclaration.BaseTypeOriginalDefinition = GetBaseTypOriginalDefinition(recordSymbol);
-                    RecordDeclaration.Reference.Namespace = GetNamespace(recordSymbol);
-                    RecordDeclaration.Reference.Assembly = GetAssembly(recordSymbol);
-                    RecordDeclaration.Reference.Version = GetAssemblyVersion(recordSymbol);
-                    RecordDeclaration.Reference.AssemblySymbol = recordSymbol.ContainingAssembly;
-                    RecordDeclaration.FullIdentifier = recordSymbol.OriginalDefinition.ToString();
+                    do
+                    {
+                        RecordDeclaration.BaseList.Add(baseTypeSymbol.ToString());
+                    } while ((baseTypeSymbol = baseTypeSymbol.BaseType) != null);
                 }
-                
-                if(recordSymbol.Interfaces != null)
+
+                if (recordSymbol.AllInterfaces != null)
                 {
-                    RecordDeclaration.BaseList = recordSymbol.Interfaces.Select(x => x.ToString())?.ToList();
+                    RecordDeclaration.BaseList.AddRange(recordSymbol.AllInterfaces.Select(x => x.ToString())?.ToList());
                 }
             }
         }

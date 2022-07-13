@@ -41,8 +41,8 @@ namespace Codelyzer.Analysis.Tests
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            //DeleteDir(tempDir);
-            //DeleteDir(downloadsDir);
+            DeleteDir(tempDir);
+            DeleteDir(downloadsDir);
         }
 
         private void DownloadTestProjects()
@@ -1591,20 +1591,35 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(0, projectGraphWithoutBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).OutgoingEdges.Count);
             Assert.AreEqual(0, projectGraphWithBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).OutgoingEdges.Count);
 
-            // There are 26 classes in the solution
-            Assert.AreEqual(26, classGraphWithoutBuild.Count);
-            Assert.AreEqual(26, classGraphWithBuild.Count);
+            // There are 27 classes in the solution
+            Assert.AreEqual(27, classGraphWithoutBuild.Count);
+            Assert.AreEqual(27, classGraphWithBuild.Count);
 
             Assert.AreEqual(4, resultWithoutBuild.CodeGraph?.InterfaceNodes.Count);
             Assert.AreEqual(4, resultWithBuild.CodeGraph?.InterfaceNodes.Count);
 
+            Assert.AreEqual(1, resultWithoutBuild.CodeGraph?.StructNodes.Count);
+            Assert.AreEqual(1, resultWithBuild.CodeGraph?.StructNodes.Count);
+
+            Assert.AreEqual(1, resultWithoutBuild.CodeGraph?.EnumNodes.Count);
+            Assert.AreEqual(1, resultWithBuild.CodeGraph?.EnumNodes.Count);
+
+            Assert.AreEqual(1, resultWithoutBuild.CodeGraph?.RecordNodes.Count);
+            Assert.AreEqual(1, resultWithBuild.CodeGraph?.RecordNodes.Count);
+
             ValidateClassEdges(resultWithoutBuild.CodeGraph.ClassNodes);
             ValidateInterfaceEdges(resultWithoutBuild.CodeGraph.InterfaceNodes);
             ValidateMethodEdges(resultWithoutBuild.CodeGraph.MethodNodes);
+            ValidateStructEdges(resultWithoutBuild.CodeGraph.StructNodes);
+            ValidateEnumEdges(resultWithoutBuild.CodeGraph.EnumNodes);
+            ValidateRecordEdges(resultWithoutBuild.CodeGraph.RecordNodes);
 
             ValidateClassEdges(resultWithBuild.CodeGraph.ClassNodes);
             ValidateInterfaceEdges(resultWithBuild.CodeGraph.InterfaceNodes);
             ValidateMethodEdges(resultWithBuild.CodeGraph.MethodNodes);
+            ValidateStructEdges(resultWithBuild.CodeGraph.StructNodes);
+            ValidateEnumEdges(resultWithBuild.CodeGraph.EnumNodes);
+            ValidateRecordEdges(resultWithBuild.CodeGraph.RecordNodes);
         }
 
         private void ValidateClassEdges(HashSet<Node> nodes)
@@ -1635,14 +1650,27 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(17, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Controllers.PurchasesController")).AllOutgoingEdges.Count);
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Controllers.ValuesController")).AllOutgoingEdges.Count);
             Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Data.ModernizeWebMvcContext")).AllOutgoingEdges.Count);
+            Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Data.ModernizeWebMvcContext")).AllOutgoingEdges.Count);
+            Assert.AreEqual(5, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.UtilityClass")).AllOutgoingEdges.Count);
         }
-
         private void ValidateInterfaceEdges(HashSet<Node> nodes)
         {
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.IObjectType")).AllOutgoingEdges.Count);
             Assert.AreEqual(5, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.ICustomerFacade")).AllOutgoingEdges.Count);
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.IProductFacade")).AllOutgoingEdges.Count);
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.IPurchaseFacade")).AllOutgoingEdges.Count);
+        }
+        private void ValidateStructEdges(HashSet<Node> nodes)
+        {
+            Assert.AreEqual(2, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesStruct")).AllIncomingEdges.Count);
+        }
+        private void ValidateEnumEdges(HashSet<Node> nodes)
+        {
+            Assert.AreEqual(1, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesEnum")).AllIncomingEdges.Count);
+        }
+        private void ValidateRecordEdges(HashSet<Node> nodes)
+        {
+            Assert.AreEqual(2, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesRecord")).AllIncomingEdges.Count);
         }
         private void ValidateMethodEdges(HashSet<Node> nodes)
         {

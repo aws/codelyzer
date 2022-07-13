@@ -74,6 +74,13 @@ namespace Codelyzer.Analysis
                 return _structNodes;
             }
         }
+        public HashSet<Node> TypeNodes
+        {
+            get
+            {
+                return ClassNodes.Union(InterfaceNodes).Union(StructNodes).Union(EnumNodes).Union(RecordNodes).ToHashSet();
+            }
+        }
         public HashSet<Node> EnumNodes
         {
             get
@@ -177,6 +184,8 @@ namespace Codelyzer.Analysis
             AddProjectEdges();
             ClassNodes.ToList().ForEach(classNode => { CreateClassHierarchyEdges(classNode); });
             InterfaceNodes.ToList().ForEach(interfaceNode => { CreateClassHierarchyEdges(interfaceNode); });
+            StructNodes.ToList().ForEach(structNode => { CreateClassHierarchyEdges(structNode); });
+            RecordNodes.ToList().ForEach(recordNode => { CreateClassHierarchyEdges(recordNode); });
             filteredUstNodeEdgeCandidates.Keys.ToList().ForEach(key => CreateEdges(key));
         }
         private void AddProjectEdges()
@@ -339,8 +348,8 @@ namespace Codelyzer.Analysis
             else if (sourceNode.UstNode is StructDeclaration structDeclaration)
             {
                 // Check base types list for interfaces
-                //baseTypes = structDeclaration.BaseList;
-                //baseTypeOriginalDefinition = structDeclaration.BaseTypeOriginalDefinition;
+                baseTypes = structDeclaration.BaseList;
+                baseTypeOriginalDefinition = structDeclaration.BaseTypeOriginalDefinition;
             }
             else if (sourceNode.UstNode is RecordDeclaration recordDeclaration)
             {
@@ -382,7 +391,7 @@ namespace Codelyzer.Analysis
             {
                 if (edgeCandidate is DeclarationNode)
                 {
-                    var targetNode = ClassNodes.FirstOrDefault(c => c.Identifier == edgeCandidate.FullIdentifier);
+                    var targetNode = TypeNodes.FirstOrDefault(c => c.Identifier == edgeCandidate.FullIdentifier);
                     if (targetNode?.Equals(sourceNode) == false)
                     {
                         var edge = new Edge()
@@ -397,7 +406,7 @@ namespace Codelyzer.Analysis
                 }
                 else if (edgeCandidate is MemberAccess memberAccess)
                 {
-                    var targetNode = ClassNodes.FirstOrDefault(c => c.Identifier == memberAccess.SemanticFullClassTypeName);
+                    var targetNode = TypeNodes.FirstOrDefault(c => c.Identifier == memberAccess.SemanticFullClassTypeName);
 
                     //Skip methods in same class
                     if (targetNode?.Equals(sourceNode) == false)
@@ -543,7 +552,6 @@ namespace Codelyzer.Analysis
                     && edge.SourceNode == this.SourceNode
                     && edge.TargetNode == this.TargetNode;
             }
-
             return false;
         }
         public override int GetHashCode()
