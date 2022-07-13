@@ -1651,7 +1651,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Controllers.ValuesController")).AllOutgoingEdges.Count);
             Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Data.ModernizeWebMvcContext")).AllOutgoingEdges.Count);
             Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Data.ModernizeWebMvcContext")).AllOutgoingEdges.Count);
-            Assert.AreEqual(5, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.UtilityClass")).AllOutgoingEdges.Count);
+            Assert.AreEqual(7, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.UtilityClass")).AllOutgoingEdges.Count);
         }
         private void ValidateInterfaceEdges(HashSet<Node> nodes)
         {
