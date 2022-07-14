@@ -1666,7 +1666,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         }
         private void ValidateEnumEdges(HashSet<Node> nodes)
         {
-            Assert.AreEqual(1, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesEnum")).AllIncomingEdges.Count);
+            Assert.AreEqual(2, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesEnum")).AllIncomingEdges.Count);
         }
         private void ValidateRecordEdges(HashSet<Node> nodes)
         {
