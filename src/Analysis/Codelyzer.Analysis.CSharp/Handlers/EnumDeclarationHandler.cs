@@ -23,6 +23,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 EnumDeclaration.Reference.Assembly = GetAssembly(EnumSymbol);
                 EnumDeclaration.Reference.Version = GetAssemblyVersion(EnumSymbol);
                 EnumDeclaration.Reference.AssemblySymbol = EnumSymbol.ContainingAssembly;
+                EnumDeclaration.FullIdentifier = EnumSymbol.OriginalDefinition.ToString();
             }
         }
     }

@@ -12,6 +12,9 @@ namespace Codelyzer.Analysis
         HashSet<Node> _namespaceNodes;
         HashSet<Node> _classNodes;
         HashSet<Node> _interfaceNodes;
+        HashSet<Node> _structNodes;
+        HashSet<Node> _enumNodes;
+        HashSet<Node> _recordNodes;
         HashSet<Node> _methodNodes;
 
         protected readonly ILogger Logger;
@@ -58,6 +61,46 @@ namespace Codelyzer.Analysis
                     _interfaceNodes = Graph.Where(n => n.NodeType == NodeType.Interface).ToHashSet();
                 }
                 return _interfaceNodes;
+            }
+        }
+        public HashSet<Node> StructNodes
+        {
+            get
+            {
+                if (_structNodes == null)
+                {
+                    _structNodes = Graph.Where(n => n.NodeType == NodeType.Struct).ToHashSet();
+                }
+                return _structNodes;
+            }
+        }
+        public HashSet<Node> TypeNodes
+        {
+            get
+            {
+                return ClassNodes.Union(InterfaceNodes).Union(StructNodes).Union(EnumNodes).Union(RecordNodes).ToHashSet();
+            }
+        }
+        public HashSet<Node> EnumNodes
+        {
+            get
+            {
+                if (_enumNodes == null)
+                {
+                    _enumNodes = Graph.Where(n => n.NodeType == NodeType.Enum).ToHashSet();
+                }
+                return _enumNodes;
+            }
+        }
+        public HashSet<Node> RecordNodes
+        {
+            get
+            {
+                if (_recordNodes == null)
+                {
+                    _recordNodes = Graph.Where(n => n.NodeType == NodeType.Record).ToHashSet();
+                }
+                return _recordNodes;
             }
         }
         public HashSet<Node> MethodNodes
@@ -141,6 +184,8 @@ namespace Codelyzer.Analysis
             AddProjectEdges();
             ClassNodes.ToList().ForEach(classNode => { CreateClassHierarchyEdges(classNode); });
             InterfaceNodes.ToList().ForEach(interfaceNode => { CreateClassHierarchyEdges(interfaceNode); });
+            StructNodes.ToList().ForEach(structNode => { CreateClassHierarchyEdges(structNode); });
+            RecordNodes.ToList().ForEach(recordNode => { CreateClassHierarchyEdges(recordNode); });
             filteredUstNodeEdgeCandidates.Keys.ToList().ForEach(key => CreateEdges(key));
         }
         private void AddProjectEdges()
@@ -212,6 +257,18 @@ namespace Codelyzer.Analysis
             else if (ustNode is ClassDeclaration)
             {
                 return NodeType.Class;
+            }
+            else if (ustNode is StructDeclaration)
+            {
+                return NodeType.Struct;
+            }
+            else if (ustNode is EnumDeclaration)
+            {
+                return NodeType.Enum;
+            }
+            else if (ustNode is RecordDeclaration)
+            {
+                return NodeType.Record;
             }
             else if (ustNode is InterfaceDeclaration)
             {
@@ -288,6 +345,18 @@ namespace Codelyzer.Analysis
                 baseTypes = interfaceDeclaration.BaseList;
                 baseTypeOriginalDefinition = interfaceDeclaration.BaseTypeOriginalDefinition;
             }
+            else if (sourceNode.UstNode is StructDeclaration structDeclaration)
+            {
+                // Check base types list for interfaces
+                baseTypes = structDeclaration.BaseList;
+                baseTypeOriginalDefinition = structDeclaration.BaseTypeOriginalDefinition;
+            }
+            else if (sourceNode.UstNode is RecordDeclaration recordDeclaration)
+            {
+                // Check base types list for interfaces
+                baseTypes = recordDeclaration.BaseList;
+                baseTypeOriginalDefinition = recordDeclaration.BaseTypeOriginalDefinition;
+            }
             else
             {
                 // If it's neither, no need to continue
@@ -322,7 +391,7 @@ namespace Codelyzer.Analysis
             {
                 if (edgeCandidate is DeclarationNode)
                 {
-                    var targetNode = ClassNodes.FirstOrDefault(c => c.Identifier == edgeCandidate.FullIdentifier);
+                    var targetNode = TypeNodes.FirstOrDefault(c => c.Identifier == edgeCandidate.FullIdentifier);
                     if (targetNode?.Equals(sourceNode) == false)
                     {
                         var edge = new Edge()
@@ -337,7 +406,7 @@ namespace Codelyzer.Analysis
                 }
                 else if (edgeCandidate is MemberAccess memberAccess)
                 {
-                    var targetNode = ClassNodes.FirstOrDefault(c => c.Identifier == memberAccess.SemanticFullClassTypeName);
+                    var targetNode = TypeNodes.FirstOrDefault(c => c.Identifier == memberAccess.SemanticFullClassTypeName);
 
                     //Skip methods in same class
                     if (targetNode?.Equals(sourceNode) == false)
@@ -363,7 +432,7 @@ namespace Codelyzer.Analysis
                         // No constructors found, find the class type
                         if (targetNode is null)
                         {
-                            targetNode = ClassNodes.FirstOrDefault(n => n.Identifier == objectCreationExpression.SemanticFullClassTypeName);
+                            targetNode = TypeNodes.FirstOrDefault(n => n.Identifier == objectCreationExpression.SemanticFullClassTypeName);
                         }
 
                         //Skip methods in same class
@@ -408,7 +477,8 @@ namespace Codelyzer.Analysis
             }
             return ustNodeEdgeCandidates[parentNode];
         }
-        private bool IsNode(UstNode ustNode) => (ustNode is NamespaceDeclaration || ustNode is ClassDeclaration || ustNode is InterfaceDeclaration || ustNode is MethodDeclaration);
+        private bool IsNode(UstNode ustNode) => (ustNode is NamespaceDeclaration || ustNode is ClassDeclaration || ustNode is InterfaceDeclaration
+            || ustNode is StructDeclaration || ustNode is EnumDeclaration || ustNode is RecordDeclaration || ustNode is MethodDeclaration);
         private bool IsEdgeConnection(UstNode ustNode) => (ustNode is DeclarationNode || ustNode is MemberAccess || ustNode is InvocationExpression);
     }
 
@@ -482,7 +552,6 @@ namespace Codelyzer.Analysis
                     && edge.SourceNode == this.SourceNode
                     && edge.TargetNode == this.TargetNode;
             }
-
             return false;
         }
         public override int GetHashCode()
@@ -497,6 +566,9 @@ namespace Codelyzer.Analysis
         Namespace,
         Class,
         Interface,
+        Enum,
+        Struct,
+        Record,
         Method,
         Unknown
     }

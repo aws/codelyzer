@@ -2,6 +2,7 @@ using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Linq;
 
 namespace Codelyzer.Analysis.CSharp.Handlers
 {
@@ -22,6 +23,24 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 StructDeclaration.Reference.Assembly = GetAssembly(structSymbol);
                 StructDeclaration.Reference.Version = GetAssemblyVersion(structSymbol);
                 StructDeclaration.Reference.AssemblySymbol = structSymbol.ContainingAssembly;
+                StructDeclaration.FullIdentifier = structSymbol.OriginalDefinition.ToString();
+
+                StructDeclaration.BaseList = new();
+                if (structSymbol.BaseType != null)
+                {
+                    var baseTypeSymbol = structSymbol.BaseType;
+                    StructDeclaration.BaseType = baseTypeSymbol.ToString();
+                    StructDeclaration.BaseTypeOriginalDefinition = GetBaseTypOriginalDefinition(structSymbol);
+                    do
+                    {
+                        StructDeclaration.BaseList.Add(baseTypeSymbol.ToString());
+                    } while ((baseTypeSymbol = baseTypeSymbol.BaseType) != null);
+                }
+
+                if (structSymbol.AllInterfaces != null)
+                {
+                    StructDeclaration.BaseList.AddRange(structSymbol.AllInterfaces.Select(x => x.ToString())?.ToList());
+                }
             }
         }
     }
