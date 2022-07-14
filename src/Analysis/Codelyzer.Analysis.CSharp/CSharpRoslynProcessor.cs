@@ -218,7 +218,6 @@ namespace Codelyzer.Analysis.CSharp
 
             return handler.UstNode;
         }
-
         public override UstNode VisitElementAccessExpression(ElementAccessExpressionSyntax node)
         {
             if (!MetaDataSettings.ElementAccess) return null;
@@ -227,7 +226,6 @@ namespace Codelyzer.Analysis.CSharp
             HandleReferences(((ElementAccess)handler.UstNode).Reference);
             return handler.UstNode;
         }
-
         public override UstNode VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
         {
             if (!MetaDataSettings.MemberAccess) return null;
@@ -236,7 +234,6 @@ namespace Codelyzer.Analysis.CSharp
             HandleReferences(((MemberAccess)handler.UstNode).Reference);
             return handler.UstNode;
         }
-
         public override UstNode VisitSimpleLambdaExpression(SimpleLambdaExpressionSyntax node)
         {
             if (!MetaDataSettings.LambdaMethods) return null;
@@ -244,12 +241,17 @@ namespace Codelyzer.Analysis.CSharp
             var handler = new SimpleLambdaExpressionHandler(_context, node);
             return handler.UstNode;
         }
-
         public override UstNode VisitParenthesizedLambdaExpression(ParenthesizedLambdaExpressionSyntax node)
         {
             if (!MetaDataSettings.LambdaMethods) return null;
 
             var handler = new ParenthesizedLambdaExpressionHandler(_context, node);
+            return handler.UstNode;
+        }
+        public override UstNode VisitRecordDeclaration(RecordDeclarationSyntax node)
+        {
+            RecordDeclarationHandler handler = new RecordDeclarationHandler(_context, node);
+            HandleReferences(((RecordDeclaration)handler.UstNode).Reference);
             return handler.UstNode;
         }
 
