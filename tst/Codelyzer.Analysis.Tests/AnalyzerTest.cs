@@ -397,7 +397,7 @@ namespace Codelyzer.Analysis.Tests
             var memberAccess = accountClassDeclaration.AllMemberAccessExpressions();
 
             //HouseController has 3 identifiers declared within the class declaration:
-            Assert.AreEqual(5, declarationNodes.Count());
+            Assert.AreEqual(6, declarationNodes.Count());
 
             //It has 2 method declarations
             Assert.AreEqual(2, methodDeclarations.Count());
@@ -711,7 +711,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.NotNull(updatedSourceFile);
             Assert.AreEqual(3, updatedSourceFile.AllMethods().Count);
             Assert.AreEqual(5, updatedSourceFile.AllLiterals().Count);
-            Assert.AreEqual(24, updatedSourceFile.AllDeclarationNodes().Count);
+            Assert.AreEqual(10, updatedSourceFile.AllDeclarationNodes().Count);
         }
 
         [Test]
