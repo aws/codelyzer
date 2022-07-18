@@ -366,6 +366,11 @@ namespace Codelyzer.Analysis.Build
          * */
         private void BuildSolution(IAnalyzerManager manager)
         {
+            if (manager.Projects.Count <= 0)
+            {
+                Logger.LogError($"Solution {manager.SolutionFilePath} does not have any projects");
+                return;
+            }
             var isSupportedProject = TryGetRequiresNetFramework(manager.Projects.First().Value.ProjectFile, out var isFramework);            
 
             //If we are building only, we don't need to run through the rest of the logic
