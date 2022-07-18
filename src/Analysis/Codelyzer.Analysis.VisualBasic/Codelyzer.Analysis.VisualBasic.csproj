@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<IsTestProject>false</IsTestProject>
+		<RootNamespace>Codelyzer.Analysis.VisualBasic</RootNamespace>
+	</PropertyGroup>
+	
+	<ItemGroup>
+		<ProjectReference Include="..\Codelyzer.Analysis.Common\Codelyzer.Analysis.Common.csproj" />
+		<ProjectReference Include="..\Codelyzer.Analysis.Model\Codelyzer.Analysis.Model.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
+		<PackageReference Update="Nerdbank.GitVersioning" Version="3.4.255" />
+	</ItemGroup>
+</Project>

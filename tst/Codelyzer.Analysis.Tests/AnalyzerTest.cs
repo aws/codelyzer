@@ -1,4 +1,4 @@
-using Codelyzer.Analysis.Common;
+﻿using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
@@ -397,7 +397,7 @@ namespace Codelyzer.Analysis.Tests
             var memberAccess = accountClassDeclaration.AllMemberAccessExpressions();
 
             //HouseController has 3 identifiers declared within the class declaration:
-            Assert.AreEqual(5, declarationNodes.Count());
+            Assert.AreEqual(6, declarationNodes.Count());
 
             //It has 2 method declarations
             Assert.AreEqual(2, methodDeclarations.Count());
@@ -711,7 +711,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.NotNull(updatedSourceFile);
             Assert.AreEqual(3, updatedSourceFile.AllMethods().Count);
             Assert.AreEqual(5, updatedSourceFile.AllLiterals().Count);
-            Assert.AreEqual(24, updatedSourceFile.AllDeclarationNodes().Count);
+            Assert.AreEqual(10, updatedSourceFile.AllDeclarationNodes().Count);
         }
 
         [Test]
@@ -759,96 +759,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             // Constructor is found
             Assert.AreEqual(1, testClassRootNode.AllConstructors().Count);
         }
-
-
-        [Test]
-        public async Task TestNopCommerce()
-        {
-            string solutionPath = Directory.EnumerateFiles(downloadsDir, "nopCommerce.sln", SearchOption.AllDirectories).FirstOrDefault();
-            FileAssert.Exists(solutionPath);
-
-            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
-            {
-                ExportSettings =
-                {
-                    GenerateJsonOutput = false,
-                    OutputPath = @"/tmp/UnitTests"
-                },
-                MetaDataSettings =
-                {
-                    LiteralExpressions = true,
-                    MethodInvocations = true,
-                    Annotations = true,
-                    DeclarationNodes = true,
-                    LocationData = false,
-                    ReferenceData = true,
-                    EnumDeclarations = true,
-                    StructDeclarations = true,
-                    InterfaceDeclarations = true,
-                    ElementAccess = true,
-                    LambdaMethods = true,
-                    InvocationArguments = true
-                }
-            };
-
-            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
-            var results = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
-
-            var enumDeclarations = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllEnumDeclarations().Count > 0).Sum(s => s.AllEnumDeclarations().Count));
-            var structDeclarations = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllStructDeclarations().Count > 0).Sum(s => s.AllStructDeclarations().Count));
-            var arrowClauseStatements = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllArrowExpressionClauses().Count > 0).Sum(s => s.AllArrowExpressionClauses().Count));
-            var elementAccessStatements = results.Sum(r => r.ProjectResult.SourceFileResults.Where(s => s.AllElementAccessExpressions().Count > 0).Sum(s => s.AllElementAccessExpressions().Count));
-            
-            Assert.AreEqual(80, enumDeclarations);
-            Assert.AreEqual(1, structDeclarations);
-            Assert.AreEqual(1217, arrowClauseStatements);
-            Assert.AreEqual(742, elementAccessStatements);
-
-            var project = "Nop.Web";
-            var file = @"Admin\Controllers\VendorController.cs";
-            var webProject = results.First(r => r.ProjectResult.ProjectName == project);
-            var simpleLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllSimpleLambdaExpressions();
-            var parenthesizedLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllParenthesizedLambdaExpressions();
-            var allLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllLambdaExpressions();
-            Assert.AreEqual(9, simpleLambdas.Count);
-            Assert.AreEqual(0, parenthesizedLambdas.Count);
-            Assert.AreEqual(9, allLambdas.Count);
-
-            project = "Nop.Plugin.Tax.Avalara";
-            file = "AvalaraTaxController.cs";
-            webProject = results.First(r => r.ProjectResult.ProjectName == project);
-            simpleLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllSimpleLambdaExpressions();
-            parenthesizedLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllParenthesizedLambdaExpressions();
-            allLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllLambdaExpressions();
-            Assert.AreEqual(5, simpleLambdas.Count);
-            Assert.AreEqual(3, parenthesizedLambdas.Count);
-            Assert.AreEqual(8, allLambdas.Count);
-
-            project = "Nop.Services";
-            file = "CustomerService.cs";
-            webProject = results.First(r => r.ProjectResult.ProjectName == project);
-            simpleLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllSimpleLambdaExpressions();
-            parenthesizedLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllParenthesizedLambdaExpressions();
-            allLambdas = webProject.ProjectResult.SourceFileResults.First(f => f.FilePath.EndsWith(file))
-                .AllLambdaExpressions();
-            var parenLambdasNoParameters = parenthesizedLambdas.Where(l => l.Parameters.Count == 0);
-            var parenLambdas2Parameters = parenthesizedLambdas.Where(l => l.Parameters.Count == 2);
-            Assert.AreEqual(88, simpleLambdas.Count);
-            Assert.AreEqual(17, parenthesizedLambdas.Count);
-            Assert.AreEqual(105, allLambdas.Count);
-            Assert.AreEqual(8, parenLambdasNoParameters.Count());
-            Assert.AreEqual(9, parenLambdas2Parameters.Count());
-            results.ForEach(r => r.Dispose());
-        }
-
 
         [Test]
         public async Task TestSampleNet60()

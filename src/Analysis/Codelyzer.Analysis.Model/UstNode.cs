@@ -23,6 +23,9 @@ namespace Codelyzer.Analysis.Model
         [JsonIgnore]
         public UstNode Parent { get; set; }
 
+        [JsonIgnore]
+        public string FullIdentifier { get; set; }
+
         [JsonProperty("children", Order = 100)]
         public UstList<UstNode> Children { get; set; }
 

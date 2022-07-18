@@ -1,3 +1,4 @@
+using System;
 using Microsoft.Extensions.Logging;
 
 namespace Codelyzer.Analysis
@@ -13,8 +14,13 @@ namespace Codelyzer.Analysis
         /// <param name="configuration">Configuration of the analyzer</param>
         /// <param name="logger">Logger object</param>
         /// <returns></returns>
-        public static CodeAnalyzer GetAnalyzer(AnalyzerConfiguration configuration, ILogger logger)
+        public static CodeAnalyzer GetAnalyzer(AnalyzerConfiguration configuration, ILogger logger, string projectFile = "")
         {
+            if (configuration.Language == LanguageOptions.Vb ||projectFile.EndsWith(".vbproj",
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return new VisualBasicCodeAnalyzer(configuration, logger);
+            }
             return new CSharpCodeAnalyzer(configuration, logger);
         }
     }

@@ -15,7 +15,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using Microsoft.CodeAnalysis.VisualBasic;
 using Constants = Codelyzer.Analysis.Common.Constants;
+using LanguageVersion = Microsoft.CodeAnalysis.CSharp.LanguageVersion;
 
 namespace Codelyzer.Analysis.Build
 {
@@ -119,15 +121,37 @@ namespace Codelyzer.Analysis.Build
 
             return null;
         }
-
+        
+        private bool CanSkipErrorsForVisualBasic()
+        {
+            // Compilation returns false build errors, it seems like we can work around this with
+            // MSBuildWorkspace instead of using an AdhocWorkspace
+            return Compilation != null &&
+                   Compilation.Language == "Visual Basic" &&
+                   AnalyzerResult.Succeeded &&
+                   Compilation.SyntaxTrees.Any() &&
+                   Compilation.GetSemanticModel(Compilation.SyntaxTrees.First()) != null;
+        }
         private async Task SetCompilation()
         {
-            PrePortCompilation = await SetPrePortCompilation();         
-            Compilation = await Project.GetCompilationAsync();           
-            
+            PrePortCompilation = await SetPrePortCompilation();
+
+            if (Project.Language == "Visual Basic")
+            {
+                var netFrameworkPath = AnalyzerResult.Properties
+                    .FirstOrDefault(s => s.Key == "FrameworkPathOverride")
+                    .Value;
+                if (!string.IsNullOrEmpty(netFrameworkPath))
+                {
+                    Project = Project.AddMetadataReference(
+                        MetadataReference.CreateFromFile(
+                            $"{netFrameworkPath}\\mscorlib.dll"));
+                }
+            }
+            Compilation = await Project.GetCompilationAsync();
             var errors = Compilation.GetDiagnostics()
                 .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
-            if (errors.Any())
+            if (errors.Any() && !CanSkipErrorsForVisualBasic())
             {
                 Logger.LogError($"Build Errors: {Compilation.AssemblyName}: {errors.Count()} " +
                                 $"compilation errors: \n\t{string.Join("\n\t", errors.Where(e => false).Select(e => e.ToString()))}");
@@ -165,35 +189,66 @@ namespace Codelyzer.Analysis.Build
 
         private void FallbackCompilation()
         {
-            var options = (CSharpCompilationOptions) this.Project.CompilationOptions;
+            var vbOptions =
+                Project.CompilationOptions is VisualBasicCompilationOptions
+                    ? (VisualBasicCompilationOptions) Project.CompilationOptions
+                    : null;
+            var options = vbOptions != null ? null : (CSharpCompilationOptions) Project.CompilationOptions;
             var meta = this.Project.MetadataReferences;
             var trees = new List<SyntaxTree>();
 
             var projPath = Path.GetDirectoryName(Project.FilePath);
             DirectoryInfo directory = new DirectoryInfo(projPath);
-            var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
-            foreach (var file in allFiles)
+
+            if (vbOptions == null)
             {
-                try
+                var allCSharpFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                foreach (var file in allCSharpFiles)
                 {
-                    using (var stream = File.OpenRead(file.FullName))
+                    try
                     {
-                        var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
-                        trees.Add(syntaxTree);
+
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
                     }
                 }
-                catch (Exception e)
+            }
+            else 
+            {
+                var allVbFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
+                foreach (var file in allVbFiles)
                 {
-                    Console.WriteLine(e);
+                    try
+                    {
+
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                    }
                 }
             }
-            
+
             if (trees.Count != 0)
             {
-                Compilation = CSharpCompilation.Create(Project.AssemblyName, trees, meta, options);
+                Compilation = (vbOptions != null)?
+                        VisualBasicCompilation.Create(Project.AssemblyName,trees, meta, vbOptions):
+                        (options!= null)? CSharpCompilation.Create(Project.AssemblyName, trees, meta, options) : null;
             }
         }
-        private void SetSyntaxCompilation()
+        private void SetSyntaxCompilation(List<MetadataReference> metadataReferences)
         {
             var trees = new List<SyntaxTree>();
             isSyntaxAnalysis = true;
@@ -203,27 +258,55 @@ namespace Codelyzer.Analysis.Build
 
             var projPath = Path.GetDirectoryName(ProjectAnalyzer.ProjectFile.Path);
             DirectoryInfo directory = new DirectoryInfo(projPath);
-            var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
-            foreach (var file in allFiles)
+            var extension = Path.GetExtension(ProjectAnalyzer.ProjectFile.Path);
+            if (!string.IsNullOrEmpty(extension) && extension.Equals(".csproj", StringComparison.InvariantCultureIgnoreCase))
             {
-                try
+                var allCsharpFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                foreach (var file in allCsharpFiles)
                 {
-                    using (var stream = File.OpenRead(file.FullName))
+                    try
                     {
-                        var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
-                        trees.Add(syntaxTree);
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e, "Error while running CSharp syntax analysis");
+                        Console.WriteLine(e);
                     }
                 }
-                catch (Exception e)
+                if (trees.Count != 0)
                 {
-                    Logger.LogError(e, "Error while running syntax analysis");
-                    Console.WriteLine(e);
+                    Compilation = CSharpCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees, metadataReferences);
                 }
             }
-
-            if (trees.Count != 0)
+            else if (!string.IsNullOrEmpty(extension) && extension.Equals(".vbproj", StringComparison.InvariantCultureIgnoreCase))
             {
-                Compilation = CSharpCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees);
+                var allVbFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
+                foreach (var file in allVbFiles)
+                {
+                    try
+                    {
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e, "Error while running VisualBasic syntax analysis");
+                        Console.WriteLine(e);
+                    }
+                }
+
+                if (trees.Count != 0)
+                {
+                    Compilation = VisualBasicCompilation.Create(ProjectAnalyzer.ProjectInSolution.ProjectName, trees, metadataReferences);
+                }
             }
         }
 
@@ -231,28 +314,56 @@ namespace Codelyzer.Analysis.Build
         {
             var trees = new List<SyntaxTree>();
             DirectoryInfo directory = new DirectoryInfo(Path.GetDirectoryName(projectPath));
-
-            var allFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
-            foreach (var file in allFiles)
+            var extension = Path.GetExtension(projectPath);
+            if (!string.IsNullOrEmpty(extension) && extension.Equals(".vbproj", StringComparison.InvariantCultureIgnoreCase))
             {
-                try
+                var allFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
+                foreach (var file in allFiles)
                 {
-                    using (var stream = File.OpenRead(file.FullName))
+                    try
                     {
-                        var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
-                        trees.Add(syntaxTree);
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e, "Error while running syntax analysis");
+                        Console.WriteLine(e);
                     }
                 }
-                catch (Exception e)
+
+                if (trees.Count != 0)
                 {
-                    Logger.LogError(e, "Error while running syntax analysis");
-                    Console.WriteLine(e);
+                    return VisualBasicCompilation.Create(Path.GetFileNameWithoutExtension(projectPath), trees, references?.Select(r => MetadataReference.CreateFromFile(r)));
                 }
             }
-
-            if (trees.Count != 0)
+            else
             {
-                return CSharpCompilation.Create(Path.GetFileNameWithoutExtension(projectPath), trees, references?.Select(r => MetadataReference.CreateFromFile(r)));
+                var allCSharpFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                foreach (var file in allCSharpFiles)
+                {
+                    try
+                    {
+                        using (var stream = File.OpenRead(file.FullName))
+                        {
+                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            trees.Add(syntaxTree);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(e, "Error while running syntax analysis");
+                        Console.WriteLine(e);
+                    }
+                }
+
+                if (trees.Count != 0)
+                {
+                    return CSharpCompilation.Create(Path.GetFileNameWithoutExtension(projectPath), trees, references?.Select(r => MetadataReference.CreateFromFile(r)));
+                }
             }
             return null;
         }
@@ -284,9 +395,9 @@ namespace Codelyzer.Analysis.Build
             Logger = logger;
             _analyzerConfiguration = analyzerConfiguration;
 
-            CompilationOptions options = project.CompilationOptions;
+            CompilationOptions options = project?.CompilationOptions;
 
-            if (project.CompilationOptions is CSharpCompilationOptions)
+            if (options is CSharpCompilationOptions)
             {
                 /*
                  * This is to fix the compilation errors related to :
@@ -296,8 +407,8 @@ namespace Codelyzer.Analysis.Build
                 options = options.WithAssemblyIdentityComparer(DesktopAssemblyIdentityComparer.Default);
             }
 
-            this.Project = project.WithCompilationOptions(options);
-            _projectPath = project.FilePath;
+            this.Project = project?.WithCompilationOptions(options);
+            _projectPath = project?.FilePath;
             Errors = new List<string>();
             MissingMetaReferences = new List<string>();
         }
@@ -438,14 +549,25 @@ namespace Codelyzer.Analysis.Build
             await Task.Run(() =>
             {
                 var languageVersion = LanguageVersion.Default;
+
+                SyntaxTree updatedTree;
+                var fileContents = File.ReadAllText(filePath);
                 if (projectBuildResult.Compilation is CSharpCompilation compilation)
                 {
                     languageVersion = compilation.LanguageVersion;
+                    updatedTree = CSharpSyntaxTree.ParseText(SourceText.From(fileContents), path: filePath, options: new CSharpParseOptions(languageVersion));
+
                 }
-
-                var fileContents = File.ReadAllText(filePath);
-                var updatedTree = CSharpSyntaxTree.ParseText(SourceText.From(fileContents), path: filePath, options: new CSharpParseOptions(languageVersion));
-
+                else if (projectBuildResult.Compilation is VisualBasicCompilation vbCompilation)
+                {
+                    updatedTree = VisualBasicSyntaxTree.ParseText(SourceText.From(fileContents), path: filePath, options: new VisualBasicParseOptions(vbCompilation.LanguageVersion));
+                }
+                else
+                {
+                    // fall back to csharp to match old behavior.
+                    updatedTree = CSharpSyntaxTree.ParseText(SourceText.From(fileContents), path: filePath, options: new CSharpParseOptions(languageVersion));
+                }
+                
                 var syntaxTree = Compilation.SyntaxTrees.FirstOrDefault(syntaxTree => syntaxTree.FilePath == filePath);
                 var preportSyntaxTree = Compilation.SyntaxTrees.FirstOrDefault(syntaxTree => syntaxTree.FilePath == filePath);
 
@@ -478,7 +600,12 @@ namespace Codelyzer.Analysis.Build
 
         public ProjectBuildResult SyntaxOnlyBuild()
         {
-            SetSyntaxCompilation();
+            return SyntaxOnlyBuild(null);
+        }
+
+        public ProjectBuildResult SyntaxOnlyBuild(Dictionary<string, MetadataReference> metadataReferences)
+        {
+            SetSyntaxCompilation(metadataReferences?.Values?.ToList());
 
             ProjectBuildResult projectBuildResult = new ProjectBuildResult
             {
@@ -486,7 +613,15 @@ namespace Codelyzer.Analysis.Build
                 ProjectPath = ProjectAnalyzer.ProjectFile.Path,
                 ProjectRootPath = Path.GetDirectoryName(ProjectAnalyzer.ProjectFile.Path),
                 Compilation = Compilation,
-                IsSyntaxAnalysis = isSyntaxAnalysis
+                IsSyntaxAnalysis = isSyntaxAnalysis,
+                ExternalReferences = new ExternalReferences()
+                {
+                    ProjectReferences = metadataReferences?.Select(m=> new ExternalReference()
+                        {
+                            Identity = m.Value.Display,
+                            AssemblyLocation = m.Key
+                        }).ToList()
+                }
             };
 
             projectBuildResult.ProjectGuid = ProjectAnalyzer.ProjectGuid.ToString();
