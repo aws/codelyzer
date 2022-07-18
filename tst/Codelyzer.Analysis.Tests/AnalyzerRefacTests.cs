@@ -1946,6 +1946,40 @@ End Namespace");
             Assert.IsNotNull(sdkreferences);
         }
 
+        [Test]
+        public async Task TestAnalyzeSolutionNoProjects()
+        {
+            AnalyzerCLI cli = new AnalyzerCLI();
+            cli.Configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    LambdaMethods = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    LoadBuildData = true,
+                    ReturnStatements = true,
+                    InterfaceDeclarations = true
+                }
+            };
+            string solutionPath = CopySolutionFolderToTemp("SolutionNoprojects.sln");
+            CodeAnalyzerByLanguage analyzerByLanguage = new CodeAnalyzerByLanguage(cli.Configuration, NullLogger.Instance);
+            var results = await analyzerByLanguage.AnalyzeSolution(solutionPath);
+            // results should return not null with no exceptions thrown, but with 0 results because no projects
+            Assert.IsNotNull(results);
+            Assert.IsTrue(results.Count == 0);
+        }
+
 
         #region private methods
         private void DeleteDir(string path, int retries = 0)
