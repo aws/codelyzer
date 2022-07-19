@@ -1467,7 +1467,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                 exclusions = File.ReadAllLines(exclusionsFile).ToList().Select(l => l.Trim());
             }
             
-            var results = (await analyzerByLanguage.AnalyzeSolutionGenerator(solutionPath, null, metaReferences)).ToList();
+            var results = (await analyzerByLanguage.AnalyzeSolution(solutionPath, null, metaReferences)).ToList();
 
             resultsUsingBuild.ForEach(resultUsingBuild => {
                 var result = results.FirstOrDefault(r => r.ProjectResult.ProjectFilePath == resultUsingBuild.ProjectResult.ProjectFilePath);
@@ -1903,49 +1903,7 @@ End Namespace");
             Assert.Contains("Newtonsoft.Json", updatedSourcefile.AllImportsStatements().Select(s => s.Identifier).ToList());
         }
 
-        [Test]
-        public async Task VBConsoleAppWithCodeFactoryAnalyzer()
-        {
-            string solutionPath = CopySolutionFolderToTemp("VBConsoleApp.sln");
-
-            FileAssert.Exists(solutionPath);
-            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
-            {
-                ExportSettings =
-                {
-                    GenerateJsonOutput = false,
-                    OutputPath = @"/tmp/UnitTests"
-                },
-
-                MetaDataSettings =
-                {
-                    LiteralExpressions = true,
-                    MethodInvocations = true,
-                    Annotations = true,
-                    LambdaMethods = true,
-                    DeclarationNodes = true,
-                    LocationData = true,
-                    ReferenceData = true,
-                    LoadBuildData = true,
-                    ReturnStatements = true,
-                    InterfaceDeclarations = true
-                }
-            };
-            var factory = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance, solutionPath);
-
-            List<AnalyzerResult> result = factory.AnalyzeSolutionGenerator(solutionPath).Result;
-
-            Assert.IsNotNull(result);
-            var projectBuildResult = result.FirstOrDefault().ProjectBuildResult;
-            Assert.IsNotNull(projectBuildResult);
-            Assert.AreEqual(0, projectBuildResult.BuildErrors.Count);
-            var sdkreferences = projectBuildResult.ExternalReferences.SdkReferences;
-            var updatedSourcefile = result.FirstOrDefault().ProjectResult.SourceFileResults.FirstOrDefault();
-            Assert.IsFalse(projectBuildResult.IsSyntaxAnalysis);
-            Assert.IsNotNull(updatedSourcefile);
-            Assert.IsNotNull(sdkreferences);
-        }
-
+        
         [Test]
         public async Task TestAnalyzeSolutionNoProjects()
         {
