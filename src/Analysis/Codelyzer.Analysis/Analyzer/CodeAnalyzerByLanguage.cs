@@ -29,11 +29,17 @@ namespace Codelyzer.Analysis.Analyzer
 
         public async Task<List<AnalyzerResult>> AnalyzeSolution(string solutionPath)
         {
-            //return await Analyze(solutionPath);
+            return await Analyze(solutionPath);
+        }
+
+
+        public async Task<List<AnalyzerResult>> AnalyzeSolutionGenerator(string solutionPath)
+        {
             var analyzerResults = await AnalyzeSolutionGeneratorAsync(solutionPath).ToListAsync();
             await GenerateOptionalOutput(analyzerResults);
             return analyzerResults;
         }
+
 
         ///<inheritdoc/>
         public async IAsyncEnumerable<AnalyzerResult> AnalyzeSolutionGeneratorAsync(string solutionPath)
@@ -217,6 +223,18 @@ namespace Codelyzer.Analysis.Analyzer
         public async Task<SolutionAnalyzerResult> AnalyzeSolutionWithGraph(string solutionPath)
         {
             var analyzerResults = await AnalyzeSolution(solutionPath);
+            var codeGraph = GenerateGraph(analyzerResults);
+
+            return new SolutionAnalyzerResult()
+            {
+                CodeGraph = codeGraph,
+                AnalyzerResults = analyzerResults
+            };
+        }
+
+        public async Task<SolutionAnalyzerResult> AnalyzeSolutionGeneratorWithGraph(string solutionPath)
+        {
+            var analyzerResults = await AnalyzeSolutionGenerator(solutionPath);
             var codeGraph = GenerateGraph(analyzerResults);
 
             return new SolutionAnalyzerResult()
