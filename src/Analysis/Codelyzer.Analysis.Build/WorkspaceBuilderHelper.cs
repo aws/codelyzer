@@ -70,6 +70,7 @@ namespace Codelyzer.Analysis.Build
                 {
                     string solutionFilePath = NormalizePath(WorkspacePath);
                     SolutionFile solutionFile = SolutionFile.Parse(solutionFilePath);
+                    var reverse = solutionFile.ProjectsInOrder.Reverse().ToList<ProjectInSolution>().AsReadOnly();
                     foreach (var project in solutionFile.ProjectsInOrder)
                     {
                         string projectPath = project.AbsolutePath;

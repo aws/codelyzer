@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
 namespace Codelyzer.Analysis.Build
 {
     public class WorkspaceBuilder
@@ -24,17 +23,21 @@ namespace Codelyzer.Analysis.Build
             this.Logger = logger;
             _analyzerConfiguration = analyzerConfiguration;
         }
-
+       
         public async IAsyncEnumerable<ProjectBuildResult> BuildProject()
         {         
             using (var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
             {
+                
                 var projectResultEnumerator = builder.BuildProjectIncremental().GetAsyncEnumerator();
+                Dictionary<string, MetadataReference> references = new Dictionary<string, MetadataReference>();
+                var projectReferencesMap = FileUtils.GetProjectsWithReferences(_workspacePath);
 
                 try
                 {
                     while (await projectResultEnumerator.MoveNextAsync().ConfigureAwait(false))
                     {
+                        
                         var result = projectResultEnumerator.Current;
                         if (!_analyzerConfiguration.BuildSettings.SyntaxOnly)
                         {
@@ -63,11 +66,8 @@ namespace Codelyzer.Analysis.Build
                         }
                         else {
                             
-                            var projectReferencesMap = FileUtils.GetProjectsWithReferences(_workspacePath);
                             builder.GenerateNoBuildAnalysis();
-
-                            Dictionary<string, MetadataReference> references = new Dictionary<string, MetadataReference>();
-
+                            
                             var projectPath = result.ProjectAnalyzer.ProjectFile.Path;
                             var project = builder.Projects.Find(p => p.ProjectAnalyzer.ProjectFile.Path.Equals(projectPath, StringComparison.InvariantCultureIgnoreCase));
                             var projectReferencePaths = projectReferencesMap[projectPath]?.Distinct().ToHashSet<string>();
