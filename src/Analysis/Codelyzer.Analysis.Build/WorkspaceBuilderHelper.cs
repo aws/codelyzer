@@ -72,7 +72,7 @@ namespace Codelyzer.Analysis.Build
                     SolutionFile solutionFile = SolutionFile.Parse(solutionFilePath);
                     foreach (var project in solutionFile.ProjectsInOrder)
                     {
-                        string projectPath = project.AbsolutePath;
+                        string projectPath = project.AbsolutePath; 
                         if (IsProjectFile(project))
                         {
                             // if it is part of analyzer manager

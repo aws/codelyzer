@@ -24,20 +24,19 @@ namespace Codelyzer.Analysis.Build
             this.Logger = logger;
             _analyzerConfiguration = analyzerConfiguration;
         }
-
+       
         public async IAsyncEnumerable<ProjectBuildResult> BuildProject()
         {         
             using (var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
             {
-                var projectResultEnumerator = builder.BuildProjectIncremental().GetAsyncEnumerator();
-
                 try
                 {
-                    while (await projectResultEnumerator.MoveNextAsync().ConfigureAwait(false))
+                    if (!_analyzerConfiguration.BuildSettings.SyntaxOnly)
                     {
-                        var result = projectResultEnumerator.Current;
-                        if (!_analyzerConfiguration.BuildSettings.SyntaxOnly)
+                        var projectResultEnumerator = builder.BuildProjectIncremental().GetAsyncEnumerator();
+                        while (await projectResultEnumerator.MoveNextAsync().ConfigureAwait(false))
                         {
+                            var result = projectResultEnumerator.Current;
                             if (result?.AnalyzerResult != null)
                             {
                                 using (ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger, result.Project, _analyzerConfiguration))
@@ -61,34 +60,36 @@ namespace Codelyzer.Analysis.Build
                                 }
                             }
                         }
-                        else {
-                            
-                            var projectReferencesMap = FileUtils.GetProjectsWithReferences(_workspacePath);
-                            builder.GenerateNoBuildAnalysis();
+                        await projectResultEnumerator.DisposeAsync();
+                    }
+                    else 
+                    {
+                        var projectReferencesMap = FileUtils.GetProjectsWithReferences(_workspacePath);
+                        builder.GenerateNoBuildAnalysis();
 
-                            Dictionary<string, MetadataReference> references = new Dictionary<string, MetadataReference>();
+                        var projectsInOrder = CreateDependencyQueue(projectReferencesMap);
+                        Dictionary<string, MetadataReference> references = new Dictionary<string, MetadataReference>();
 
-                            var projectPath = result.ProjectAnalyzer.ProjectFile.Path;
+                        foreach (string projectPath in projectsInOrder)
+                        {
                             var project = builder.Projects.Find(p => p.ProjectAnalyzer.ProjectFile.Path.Equals(projectPath, StringComparison.InvariantCultureIgnoreCase));
                             var projectReferencePaths = projectReferencesMap[projectPath]?.Distinct().ToHashSet<string>();
 
                             using (ProjectBuildHandler projectBuildHandler =
-                                new ProjectBuildHandler(Logger, project.Project, _analyzerConfiguration))
+                                   new ProjectBuildHandler(Logger, project.Project, _analyzerConfiguration))
                             {
                                 projectBuildHandler.AnalyzerResult = project.AnalyzerResult;
                                 projectBuildHandler.ProjectAnalyzer = project.ProjectAnalyzer;
                                 var projectReferences = references.Where(r => projectReferencePaths.Contains(r.Key)).ToDictionary(p => p.Key, p => p.Value);
-                                var projectBuildResult = projectBuildHandler.SyntaxOnlyBuild(projectReferences);
-                                references.Add(projectPath, projectBuildResult.Compilation.ToMetadataReference());
-                                yield return projectBuildResult;
+                                var result = projectBuildHandler.SyntaxOnlyBuild(projectReferences);
+                                references.Add(projectPath, result.Compilation.ToMetadataReference());
+                                yield return result;
                             }
                         }
-
                     }
                 }
                 finally
                 {
-                    await projectResultEnumerator.DisposeAsync();
                 }
             }
         }
