@@ -302,8 +302,13 @@ namespace Codelyzer.Analysis
                             {
                                 childNodes.Add(currentNode);
                                 Graph.Add(currentNode);
-                                currentNode.ChildNodes = InitializeNodesHelper(child, currentNode);
                             }
+                            else
+                            {
+                                currentNode = Graph.FirstOrDefault(n => n.Equals(currentNode));
+                            }
+                            var children = InitializeNodesHelper(child, currentNode);
+                            children.ToList().ForEach(child => currentNode.ChildNodes.Add(child));                            
                         }
                         else
                         {
@@ -528,7 +533,7 @@ namespace Codelyzer.Analysis
         }
         public override int GetHashCode()
         {
-            return HashCode.Combine(Identifier, NodeType, IncomingEdges, OutgoingEdges, ParentNode, ChildNodes);
+            return HashCode.Combine(Identifier, NodeType);
         }
     }
     public class Edge
