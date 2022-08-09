@@ -122,10 +122,10 @@ namespace Codelyzer.Analysis.Common
                         .Root
                         .Descendants()
                         .Where(x => x.Name?.LocalName == "ProjectReference")
-                        .Select(p => Path.GetFullPath(p.Attribute("Include").Value, Path.GetDirectoryName(projectFile)))
+                        .Select(p => Path.GetFullPath(p.Attribute("Include").Value, Path.GetDirectoryName(projectFile)).ToLower())
                         .Distinct()
                         .ToHashSet();
-                    result.Add(projectFile, projectReferenceNodes);
+                    result.Add(projectFile.ToLower(), projectReferenceNodes);
                 }
                 catch (Exception ex)
                 {

@@ -154,7 +154,7 @@ namespace Codelyzer.Analysis
                     {
                         NodeType = NodeType.Project,
                         Name = analyzerResult.ProjectResult.ProjectName,
-                        Identifier = analyzerResult.ProjectResult.ProjectFilePath
+                        Identifier = analyzerResult.ProjectResult.ProjectFilePath.ToLower()
                     };
 
                     Graph.Add(projectNode);
@@ -199,7 +199,7 @@ namespace Codelyzer.Analysis
 
                     projectReferences?.ForEach(projectReference =>
                     {
-                        var targetNode = Graph.FirstOrDefault(p => p.Identifier == projectReference.AssemblyLocation);
+                        var targetNode = ProjectNodes.FirstOrDefault(p => p.Identifier.Equals(projectReference.AssemblyLocation, StringComparison.InvariantCultureIgnoreCase)); 
                         var edge = new Edge() { EdgeType = EdgeType.ProjectReference, TargetNode = targetNode, SourceNode = sourceNode };
                         sourceNode.OutgoingEdges.Add(edge);
                         targetNode.IncomingEdges.Add(edge);
