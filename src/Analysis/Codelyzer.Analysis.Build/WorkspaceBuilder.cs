@@ -163,9 +163,16 @@ namespace Codelyzer.Analysis.Build
             var builtProjects = new HashSet<string>();
             foreach (var project in projectReferencesMap.Keys)
             {
-                if (!builtProjects.Contains(project))
+                try
                 {
-                    CreateDependencyQueueHelper(project, builtProjects, projectReferencesMap, projectsInOrder);
+                    if (!builtProjects.Contains(project))
+                    {
+                        CreateDependencyQueueHelper(project, builtProjects, projectReferencesMap, projectsInOrder);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, $"Error while getting dependencies for project {project}");
                 }
             }
             return projectsInOrder;
