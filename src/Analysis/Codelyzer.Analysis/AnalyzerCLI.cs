@@ -45,6 +45,9 @@ namespace Codelyzer.Analysis
         [Option('y', "build-only", Required = false, HelpText = "Runs build without any analysis")]
         public string BuildOnly { get; set; }
 
+        [Option('c', "syntax-only", Required = false, HelpText = "Creates an analysis without building")]
+        public string SyntaxOnly { get; set; }
+
         [Option('a', "build-arguments", Required = false, HelpText = "Build arguments string, pipe separated, e.g: arg1|arg2|arg3", Separator = '|')]
         public IEnumerable<string> BuildArguments { get; set; }
     }
@@ -146,6 +149,11 @@ namespace Codelyzer.Analysis
                     if (!string.IsNullOrEmpty(o.BuildOnly))
                     {
                         Configuration.BuildSettings.BuildOnly = o.BuildOnly.ToLower() == bool.TrueString.ToLower();
+                    }
+
+                    if (!string.IsNullOrEmpty(o.SyntaxOnly))
+                    {
+                        Configuration.BuildSettings.SyntaxOnly = o.SyntaxOnly.ToLower() == bool.TrueString.ToLower();
                     }
 
                     if (o.BuildArguments.Count() > 0)
