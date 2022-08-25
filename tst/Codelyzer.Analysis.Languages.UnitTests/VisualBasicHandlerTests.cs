@@ -41,11 +41,11 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 
 		[Fact]
 		public void ClassStatementHandlerTest()
-        {
-            const string vbCodeSnippet = @"
+		{
+			const string vbCodeSnippet = @"
 				Class Book
 				End Class";
-            var rootNode = GetVisualBasicUstNode(vbCodeSnippet);
+			var rootNode = GetVisualBasicUstNode(vbCodeSnippet);
 			Assert.Single(rootNode.Children);
 			var classNode = rootNode.Children[0];
 			Assert.Equal("class-block", classNode.NodeType);
@@ -74,7 +74,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			var declarationNode = rootNode.Children[0];
 			Assert.Equal("field-declaration", declarationNode.NodeType);
 			Assert.True(declarationNode.GetType() == typeof(Model.FieldDeclaration));
-			Assert.True(declarationNode.Children.Count >0, "declaration should contain variable node");
+			Assert.True(declarationNode.Children.Count > 0, "declaration should contain variable node");
 			var variableNode = declarationNode.Children[0];
 
 			Assert.Equal("variable-declarator", variableNode.NodeType);
@@ -117,7 +117,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			//1:sub-block::2::invocation
 			var invocationNode = subBlockNode.Children[2];
 			Assert.True(invocationNode.GetType() == typeof(Model.InvocationExpression));
-			var invocationArgsNode =((Model.InvocationExpression)invocationNode).Arguments;
+			var invocationArgsNode = ((Model.InvocationExpression)invocationNode).Arguments;
 			Assert.Equal(3, invocationArgsNode.Count);
 			Assert.Equal("a", invocationArgsNode[0].Identifier);
 			Assert.Equal("\"v\"", invocationArgsNode[1].Identifier);
@@ -132,7 +132,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.Equal("End Class", endBlockNode.Identifier);
 
 
-            var codeText = @"
+			var codeText = @"
 			Class TypeName
 				Public Sub Test()
 					Dim a = ""test""
@@ -140,14 +140,48 @@ namespace Codelyzer.Analysis.Languages.UnitTests
                     .StrangeMethod()
 				End Sub
 			End Class";
-            rootNode = GetVisualBasicUstNode(codeText);
-            Assert.Single(rootNode.Children);
-            classBlockNode = rootNode.Children[0];
-            Assert.Equal(3, classBlockNode.Children.Count);
-            var allInvocationExpressions = classBlockNode.AllInvocationExpressions();
+			rootNode = GetVisualBasicUstNode(codeText);
+			Assert.Single(rootNode.Children);
+			classBlockNode = rootNode.Children[0];
+			Assert.Equal(3, classBlockNode.Children.Count);
+			var allInvocationExpressions = classBlockNode.AllInvocationExpressions();
 			Assert.Equal(2, allInvocationExpressions.Count);
-            Assert.Equal("", allInvocationExpressions.First(e => e.MethodName == "StrangeMethod").CallerIdentifier);
-        }
+			Assert.Equal("", allInvocationExpressions.First(e => e.MethodName == "StrangeMethod").CallerIdentifier);
+
+			codeText = @"
+			Imports System
+
+Module Program
+    Sub Main(args As String())
+        Console.WriteLine('Hello World!')
+		Dim value = New ClassEnchant()
+	End Sub
+
+	Public Class ClassPA
+		Public Sub New()
+			Console.WriteLine('ClassPA New() called.')
+		End Sub
+
+		Public Sub New(ByVal ClassPA)
+			Console.WriteLine('ClassPA New() called With parameter.' + ClassPA)
+		End Sub
+	End Class
+
+
+	Public Class ClassEnchant
+		Inherits ClassPA
+		Public Sub New()
+
+			MyBase.New()
+			Console.WriteLine('ClassEnchant New() called.')
+		End Sub
+	End Class
+End Module";
+			rootNode = GetVisualBasicUstNode(codeText);
+			Assert.True(rootNode.Children.Count == 2);
+			var invExpressions = rootNode.Children[1].AllInvocationExpressions();
+			Assert.True(invExpressions.Count > 0);
+		}
 
 
 		[Fact]
@@ -173,7 +207,7 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			var rootNode = GetVisualBasicUstNode(expressShell);
 			Assert.Single(rootNode.Children);
 			var classBlockNode = rootNode.Children[0];
-			Assert.Single(classBlockNode.Children.Where(c=> c.GetType() == typeof(Model.ClassStatement)));
+			Assert.Single(classBlockNode.Children.Where(c => c.GetType() == typeof(Model.ClassStatement)));
 			var classStatementNode = classBlockNode.Children.Single(c => c.GetType() == typeof(Model.ClassStatement));
 			Assert.Single(classStatementNode.Children);
 			var attributeListNode = classStatementNode.Children[0];
@@ -359,8 +393,8 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 			Assert.True(moduleNode.type == IdConstants.ModuleBlockName);
 		}
 
-        [Fact] 
-        public void ImplementHandlerTest()
+		[Fact]
+		public void ImplementHandlerTest()
 		{
 			var expressShell = @"
 			Public Class AppShutDownHandler
@@ -533,22 +567,22 @@ namespace Codelyzer.Analysis.Languages.UnitTests
 		}
 
 		private Model.UstNode GetVisualBasicUstNode(string expressionShell)
-        {
-            var tree = Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.ParseSyntaxTree(expressionShell);
-            var compilation = VisualBasicCompilation.Create(
-                "test.dll",
-                options: new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
-                syntaxTrees: new[] { tree },
-                references: new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) });
+		{
+			var tree = Microsoft.CodeAnalysis.VisualBasic.SyntaxFactory.ParseSyntaxTree(expressionShell);
+			var compilation = VisualBasicCompilation.Create(
+				"test.dll",
+				options: new VisualBasicCompilationOptions(OutputKind.DynamicallyLinkedLibrary),
+				syntaxTrees: new[] { tree },
+				references: new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) });
 
-            // Check for errors
-            //var diagnostics = compilation.GetDiagnostics();
+			// Check for errors
+			//var diagnostics = compilation.GetDiagnostics();
 
-            CodeContext codeContext = new CodeContext(null, null, tree, null, null, Configuration, new NullLogger<VisualBasicRoslynProcessor>());
-            VisualBasicRoslynProcessor processor = new VisualBasicRoslynProcessor(codeContext);
+			CodeContext codeContext = new CodeContext(null, null, tree, null, null, Configuration, new NullLogger<VisualBasicRoslynProcessor>());
+			VisualBasicRoslynProcessor processor = new VisualBasicRoslynProcessor(codeContext);
 
-            var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
-            return result;
-        }
-    }
+			var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
+			return result;
+		}
+	}
 }
