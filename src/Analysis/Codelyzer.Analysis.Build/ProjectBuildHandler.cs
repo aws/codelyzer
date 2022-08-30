@@ -646,7 +646,7 @@ namespace Codelyzer.Analysis.Build
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, $"Error while analyzing project {ProjectAnalyzer.ProjectFile.Path}");
+                Logger.LogError(ex, $"Error while analyzing project {ProjectAnalyzer?.ProjectFile?.Path}");
             }
             return projectBuildResult;
         }
