@@ -112,35 +112,9 @@ namespace Codelyzer.Analysis.Analyzer
             {
                 throw new FileNotFoundException(path);
             }
-
-            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
-            var analyzerResults = new List<AnalyzerResult>();
-
             WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
-
             var projectBuildResults = await builder.Build();
-
-            foreach (var projectBuildResult in projectBuildResults)
-            {
-                var workspaceResult = await Task.Run(() => AnalyzeProject(projectBuildResult));
-                workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
-                workspaceResult.ProjectType = projectBuildResult.ProjectType;
-                workspaceResults.Add(workspaceResult);
-
-                //Generate Output result
-                if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
-                {
-                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
-                }
-                else
-                {
-                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult });
-                }
-            }
-
-            await GenerateOptionalOutput(analyzerResults);
-
-            return analyzerResults;
+            return await AnalyzeBuildResults(projectBuildResults);
         }
 
         private async Task GenerateOptionalOutput(List<AnalyzerResult> analyzerResults)
@@ -281,34 +255,9 @@ namespace Codelyzer.Analysis.Analyzer
                 throw new FileNotFoundException(path);
             }
 
-            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
-            var analyzerResults = new List<AnalyzerResult>();
-
             WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
-
             var projectBuildResults = builder.GenerateNoBuildAnalysis(oldReferences, references);
-
-            foreach (var projectBuildResult in projectBuildResults)
-            {
-                var workspaceResult = await Task.Run(() => AnalyzeProject(projectBuildResult));
-                workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
-                workspaceResult.ProjectType = projectBuildResult.ProjectType;
-                workspaceResults.Add(workspaceResult);
-
-                //Generate Output result
-                if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
-                {
-                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
-                }
-                else
-                {
-                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult });
-                }
-            }
-
-            await GenerateOptionalOutput(analyzerResults);
-
-            return analyzerResults;
+            return await AnalyzeBuildResults(projectBuildResults);
         }
 
         public async Task<AnalyzerResult> AnalyzeProject(string projectPath, List<string> oldReferences, List<string> references)
@@ -320,44 +269,17 @@ namespace Codelyzer.Analysis.Analyzer
         public async Task<List<AnalyzerResult>> AnalyzeSolutionUsingVSWorkspace(string solutionPath, string workspaceConfig = null)
         {
             if (workspaceConfig == null)
+            {
                 return await Analyze(solutionPath);
-            else
-                return await AnalyzeUsingVSWorkspace(solutionPath, workspaceConfig);
+            }
+            return await AnalyzeUsingVSWorkspace(workspaceConfig);
         }
 
-        public async Task<List<AnalyzerResult>> AnalyzeUsingVSWorkspace(string path, string workspaceConfig = null)
+        private async Task<List<AnalyzerResult>> AnalyzeUsingVSWorkspace(string workspaceConfig)
         {
-            if (!File.Exists(path))
-            {
-                throw new FileNotFoundException(path);
-            }
-
-            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
-            var analyzerResults = new List<AnalyzerResult>();
             var adhocWorkspace = ConstructWorkspaceObject(workspaceConfig);
             var projectBuildResults = BuildUsingAdHocWorkspace(adhocWorkspace);
-
-            foreach (var projectBuildResult in projectBuildResults)
-            {
-                var workspaceResult = await Task.Run(() => AnalyzeProject(projectBuildResult));
-                workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
-                workspaceResult.ProjectType = projectBuildResult.ProjectType;
-                workspaceResults.Add(workspaceResult);
-
-                //Generate Output result
-                if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
-                {
-                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
-                }
-                else
-                {
-                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult });
-                }
-            }
-
-            await GenerateOptionalOutput(analyzerResults);
-
-            return analyzerResults;
+            return await AnalyzeBuildResults(projectBuildResults);
         }
 
         public Workspace ConstructWorkspaceObject(string workspace)
@@ -365,7 +287,7 @@ namespace Codelyzer.Analysis.Analyzer
             try
             {
                 WorkspaceConfiguration workspaceConfig = JsonConvert.DeserializeObject<WorkspaceConfiguration>(workspace);
-                AdhocWorkspace adhocWorkspace = new AdhocWorkspace();// JsonConvert.DeserializeObject<AdhocWorkspace>(workspaceConfig.workspace);
+                AdhocWorkspace adhocWorkspace = new AdhocWorkspace();
 
                 foreach (var curProject in workspaceConfig.solution.projects)
                 {
@@ -373,15 +295,22 @@ namespace Codelyzer.Analysis.Analyzer
                     var projectId = ProjectId.CreateFromSerialized(new Guid(curProject.projectId));
                     foreach (var doc in curProject.documents)
                     {
-                        DocumentInfo docInfo = DocumentInfo.Create(
-                            DocumentId.CreateFromSerialized(projectId, new Guid(doc.documentId)),
-                            curProject.assemblyName,
-                            loader: TextLoader.From(
-                            TextAndVersion.Create(
-                            SourceText.From(File.ReadAllText(doc.filePath), Encoding.Unicode), VersionStamp.Create())),
-                            filePath: doc.filePath);
+                        try
+                        {
+                            DocumentInfo docInfo = DocumentInfo.Create(
+                                DocumentId.CreateFromSerialized(projectId, new Guid(doc.documentId)),
+                                curProject.assemblyName,
+                                loader: TextLoader.From(
+                                    TextAndVersion.Create(
+                                        SourceText.From(File.ReadAllText(doc.filePath), Encoding.Unicode), VersionStamp.Create())),
+                                filePath: doc.filePath);
 
-                        docInfoLst.Add(docInfo);
+                            docInfoLst.Add(docInfo);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e.ToString());
+                        }
                     }
 
                     List<MetadataReference> metadataReferencesLst = new List<MetadataReference>();
@@ -465,6 +394,33 @@ namespace Codelyzer.Analysis.Analyzer
                 Logger);
 
             return externalReferenceLoader.Load();
+        }
+
+        private async Task<List<AnalyzerResult>> AnalyzeBuildResults(List<ProjectBuildResult> projectBuildResults)
+        {
+            var analyzerResults = new List<AnalyzerResult>();
+            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
+            foreach (var projectBuildResult in projectBuildResults)
+            {
+                var workspaceResult = await Task.Run(() => AnalyzeProject(projectBuildResult));
+                workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
+                workspaceResult.ProjectType = projectBuildResult.ProjectType;
+                workspaceResults.Add(workspaceResult);
+
+                //Generate Output result
+                if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+                {
+                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
+                }
+                else
+                {
+                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult });
+                }
+            }
+
+            await GenerateOptionalOutput(analyzerResults);
+
+            return analyzerResults;
         }
     }
 }
