@@ -72,7 +72,7 @@ namespace Codelyzer.Analysis.Build
                     SolutionFile solutionFile = SolutionFile.Parse(solutionFilePath);
                     foreach (var project in solutionFile.ProjectsInOrder)
                     {
-                        string projectPath = project.AbsolutePath; 
+                        string projectPath = project.AbsolutePath;
                         if (IsProjectFile(project))
                         {
                             // if it is part of analyzer manager
@@ -89,7 +89,7 @@ namespace Codelyzer.Analysis.Build
                                 }
                             });
                             yield return result;
-                        }                      
+                        }
                     }
                 }
             }
@@ -101,12 +101,17 @@ namespace Codelyzer.Analysis.Build
             Logger.LogDebug(_sb.ToString());
             _writer.Flush();
             _writer.Close();
-             ProcessLog(_writer.ToString());
+            ProcessLog(_writer.ToString());
         }
 
         private ProjectAnalysisResult RunTask(string projectPath)
         {
-            Logger.LogDebug("Building the project : " + projectPath);
+            return TryGetSavedProjectAnalysisResult(projectPath, out var result) ? result : BuildIncremental(projectPath);
+        }
+
+        private bool TryGetSavedProjectAnalysisResult(string projectPath, out ProjectAnalysisResult projectAnalysisResult)
+        {
+            projectAnalysisResult = null;
             var project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.FilePath == projectPath);
 
             if (project != null)
@@ -116,25 +121,24 @@ namespace Codelyzer.Analysis.Build
                 if (DictAnalysisResult.ContainsKey(projectGuid))
                 {
                     IProjectAnalyzer projectAnalyzerResult = _analyzerManager.Projects.Values.FirstOrDefault(p => p.ProjectGuid.Equals(projectGuid));
-                    return new ProjectAnalysisResult()
+                    projectAnalysisResult = new ProjectAnalysisResult()
                     {
                         Project = project,
                         AnalyzerResult = DictAnalysisResult[projectGuid],
                         ProjectAnalyzer = projectAnalyzerResult
                     };
+                    return true;
                 }
             }
 
-            return BuildIncremental(projectPath);
+            return false;
+
         }
 
         private ProjectAnalysisResult BuildIncremental(string projectPath)
         {
             Queue<string> queue = new Queue<string>();
-            ISet<string> existing = new HashSet<string>();
-
             queue.Enqueue(projectPath);
-            existing.Add(projectPath);
 
             /*
              * We need to resolve all the project dependencies to avoid compilation errors.
@@ -142,10 +146,8 @@ namespace Codelyzer.Analysis.Build
              */
             while (queue.Count > 0)
             {
-                var path = queue.Dequeue();
-                Logger.LogInformation("Building: " + path);
-
-                IProjectAnalyzer projectAnalyzer = _analyzerManager.GetProject(path);
+                var deQueuedPath = queue.Dequeue();
+                IProjectAnalyzer projectAnalyzer = _analyzerManager.GetProject(deQueuedPath);
 
                 if (!TryGetRequiresNetFramework(projectAnalyzer.ProjectFile, out bool requiresNetFramework))
                 {
@@ -155,37 +157,41 @@ namespace Codelyzer.Analysis.Build
                 if (_analyzerConfiguration.BuildSettings.BuildOnly)
                 {
                     BuildSolutionOnlyWithoutOutput(WorkspacePath, requiresNetFramework);
-
                     return null;
                 }
+                
+                // If a ProjectAnalysis from a previous build exists, nothing needs to be done.
+                if (TryGetSavedProjectAnalysisResult(deQueuedPath, out var result))
+                {
+                    Logger.LogDebug("Reusing {0}", deQueuedPath);
+                    continue;
+                }
 
+
+                Logger.LogDebug("[{0}] Building project : {1}", Thread.CurrentThread.ManagedThreadId, deQueuedPath);
                 IAnalyzerResult analyzerResult = projectAnalyzer.Build(GetEnvironmentOptions(requiresNetFramework, projectAnalyzer.ProjectFile.ToolsVersion)).FirstOrDefault();
 
                 if (analyzerResult == null)
                 {
-                    Logger.LogDebug("Building complete for {0} - {1}", path, "Fail");
+                    Logger.LogDebug("Building complete for {0} - {1}", deQueuedPath, "Fail");
                     return new ProjectAnalysisResult()
                     {
                         ProjectAnalyzer = projectAnalyzer
                     };
                 }
 
-                if(!DictAnalysisResult.ContainsKey(analyzerResult.ProjectGuid))
+                DictAnalysisResult[analyzerResult.ProjectGuid] = analyzerResult;
+                analyzerResult.AddToWorkspace(_workspaceIncremental);
+                foreach (var projectReference in analyzerResult.ProjectReferences)
                 {
-                    DictAnalysisResult[analyzerResult.ProjectGuid] = analyzerResult;
-                    analyzerResult.AddToWorkspace(_workspaceIncremental);
-
-                    foreach (var pref in analyzerResult.ProjectReferences)
+                    if (!queue.Contains(projectReference))
                     {
-                        if (!existing.Contains(pref))
-                        {
-                            existing.Add(pref);
-                            queue.Enqueue(pref);
-                        }
-                    }                   
+                        queue.Enqueue(projectReference);
+                    }
                 }
+
             }
-            
+
             Project project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.FilePath.Equals(projectPath));
             Logger.LogDebug("Building complete for {0} - {1}", projectPath, DictAnalysisResult[project.Id.Id].Succeeded ? "Success" : "Fail");
             return new ProjectAnalysisResult()
@@ -248,7 +254,7 @@ namespace Codelyzer.Analysis.Build
                         Logger.LogInformation("Building: " + path);
 
                         IProjectAnalyzer projectAnalyzer = analyzerManager.GetProject(path);
-                        
+
                         if (!TryGetRequiresNetFramework(projectAnalyzer.ProjectFile, out bool requiresNetFramework))
                         {
                             continue;
@@ -371,7 +377,7 @@ namespace Codelyzer.Analysis.Build
                 Logger.LogError($"Solution {manager.SolutionFilePath} does not have any projects");
                 return;
             }
-            var isSupportedProject = TryGetRequiresNetFramework(manager.Projects.First().Value.ProjectFile, out var isFramework);            
+            var isSupportedProject = TryGetRequiresNetFramework(manager.Projects.First().Value.ProjectFile, out var isFramework);
 
             //If we are building only, we don't need to run through the rest of the logic
             if (_analyzerConfiguration.BuildSettings.BuildOnly)
@@ -393,8 +399,8 @@ namespace Codelyzer.Analysis.Build
             Parallel.ForEach(manager.Projects.Values, options, p =>
             {
                 Logger.LogDebug("Building the project : " + p.ProjectFile.Path);
-                
-                if(IsProjectFile(p.ProjectInSolution))
+
+                if (IsProjectFile(p.ProjectInSolution))
                 {
                     var buildResult = BuildProject(p);
                     if (buildResult != null)
@@ -415,7 +421,7 @@ namespace Codelyzer.Analysis.Build
                 {
                     Logger.LogDebug("Building skipped for {0} - {1}", p.ProjectFile.Path, "Skipped");
                 }
-                
+
             });
 
             List<IAnalyzerResult> results = concurrentResults.ToList();
@@ -499,7 +505,7 @@ namespace Codelyzer.Analysis.Build
                 process.Start();
                 process.WaitForExit();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.LogError(ex, "Unable to build. Project type used is not supported");
                 throw;
@@ -580,7 +586,8 @@ namespace Codelyzer.Analysis.Build
                 {
                     Logger.LogError(ex, "Build error: Codelyzer wasn't able to retrieve the MSBuild path");
                 }
-                _analyzerConfiguration.BuildSettings.BuildArguments.ForEach(argument => {
+                _analyzerConfiguration.BuildSettings.BuildArguments.ForEach(argument =>
+                {
                     options.Arguments.Add(argument);
                 });
             }
@@ -633,7 +640,7 @@ namespace Codelyzer.Analysis.Build
 
             if (IsSolutionFile())
             {
-                
+
                 analyzerManager = new AnalyzerManager(WorkspacePath, analyzerManagerOptions);
             }
             else
