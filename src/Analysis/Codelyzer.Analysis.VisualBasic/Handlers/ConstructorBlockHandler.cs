@@ -19,18 +19,21 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
 
         private void SetMetaData(ConstructorBlockSyntax syntaxNode)
         {
-            foreach (var parameter in syntaxNode.SubNewStatement.ParameterList.Parameters)
+            if (syntaxNode.SubNewStatement.ParameterList != null)
             {
-                var param = new Parameter
+                foreach (var parameter in syntaxNode.SubNewStatement.ParameterList.Parameters)
                 {
-                    Name = parameter.Identifier.ToString()
-                };
-                
-                if (parameter.AsClause.Type != null)
-                    param.Type = parameter.AsClause.Type.ToString();
+                    var param = new Parameter
+                    {
+                        Name = parameter.Identifier.ToString()
+                    };
+                    
+                    if (parameter.AsClause.Type != null)
+                        param.Type = parameter.AsClause.Type.ToString();
 
-                param.SemanticType = SemanticHelper.GetSemanticType(parameter.AsClause.Type, SemanticModel, OriginalSemanticModel);
-                Model.Parameters.Add(param);
+                    param.SemanticType = SemanticHelper.GetSemanticType(parameter.AsClause.Type, SemanticModel, OriginalSemanticModel);
+                    Model.Parameters.Add(param);
+                }
             }
 
             Model.Modifiers = syntaxNode.SubNewStatement.Modifiers.ToString();
