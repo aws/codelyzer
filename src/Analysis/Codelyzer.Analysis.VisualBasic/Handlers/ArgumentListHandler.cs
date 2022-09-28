@@ -23,23 +23,28 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
             {
                 foreach (var argumentSyntax in syntaxNode.Arguments)
                 {
-                    Parameter parameter = new Parameter();
-                    if (argumentSyntax.GetExpression() != null)
-                        parameter.Name = argumentSyntax.GetExpression().ToString();
+                    var identifier = "";
+                    var semanticType = "";
 
-                    parameter.SemanticType =
-                        SemanticHelper.GetSemanticType(argumentSyntax.GetExpression(), SemanticModel, OriginalSemanticModel);
-#pragma warning disable CS0618 // Type or member is obsolete
-                    if (Model.Parameters != null)
+                    if (argumentSyntax is not OmittedArgumentSyntax)
                     {
-                        Model.Parameters.Add(parameter);
+                        identifier = argumentSyntax.GetExpression().ToString();
+                        semanticType = SemanticHelper.GetSemanticType(argumentSyntax.GetExpression(), SemanticModel);
                     }
+
+                    var parameter = new Parameter()
+                    {
+                        Name = identifier,
+                        SemanticType = semanticType
+                    };
+#pragma warning disable CS0618 // Type or member is obsolete
+                    Model.Parameters.Add(parameter);
 #pragma warning restore CS0618 // Type or member is obsolete
 
                     var argument = new Argument
                     {
-                        Identifier = argumentSyntax.GetExpression().ToString(),
-                        SemanticType = SemanticHelper.GetSemanticType(argumentSyntax.GetExpression(), SemanticModel, OriginalSemanticModel)
+                        Identifier = identifier,
+                        SemanticType = semanticType
                     };
                     Model.Arguments.Add(argument);
                 }
