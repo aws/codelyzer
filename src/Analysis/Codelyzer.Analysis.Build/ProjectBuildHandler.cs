@@ -610,37 +610,44 @@ namespace Codelyzer.Analysis.Build
             ProjectBuildResult projectBuildResult = new ProjectBuildResult
             {
                 BuildErrors = Errors,
-                ProjectPath = ProjectAnalyzer.ProjectFile.Path,
+                ProjectPath = ProjectAnalyzer?.ProjectFile?.Path,
                 ProjectRootPath = Path.GetDirectoryName(ProjectAnalyzer.ProjectFile.Path),
                 Compilation = Compilation,
                 IsSyntaxAnalysis = isSyntaxAnalysis,
                 ExternalReferences = new ExternalReferences()
                 {
-                    ProjectReferences = metadataReferences?.Select(m=> new ExternalReference()
-                        {
-                            Identity = m.Value.Display,
-                            AssemblyLocation = m.Key
-                        }).ToList()
+                    ProjectReferences = metadataReferences?.Select(m => new ExternalReference()
+                    {
+                        Identity = m.Value?.Display,
+                        AssemblyLocation = m.Key
+                    }).ToList()
                 }
             };
 
-            projectBuildResult.ProjectGuid = ProjectAnalyzer.ProjectGuid.ToString();
-            projectBuildResult.ProjectType = ProjectAnalyzer.ProjectInSolution != null ? ProjectAnalyzer.ProjectInSolution.ProjectType.ToString() : string.Empty;
-
-            foreach (var syntaxTree in Compilation.SyntaxTrees)
+            try
             {
-                var sourceFilePath = Path.GetRelativePath(projectBuildResult.ProjectRootPath, syntaxTree.FilePath);
-                var fileResult = new SourceFileBuildResult
-                {
-                    SyntaxTree = syntaxTree,
-                    SemanticModel = Compilation.GetSemanticModel(syntaxTree),
-                    SourceFileFullPath = syntaxTree.FilePath,
-                    SourceFilePath = sourceFilePath
-                };
-                projectBuildResult.SourceFileBuildResults.Add(fileResult);
-                projectBuildResult.SourceFiles.Add(sourceFilePath);
-            }
+                projectBuildResult.ProjectGuid = ProjectAnalyzer.ProjectGuid.ToString();
+                projectBuildResult.ProjectType = ProjectAnalyzer.ProjectInSolution != null ? ProjectAnalyzer.ProjectInSolution.ProjectType.ToString() : string.Empty;
 
+                foreach (var syntaxTree in Compilation.SyntaxTrees)
+                {
+                    var sourceFilePath = Path.GetRelativePath(projectBuildResult.ProjectRootPath, syntaxTree.FilePath);
+                    var fileResult = new SourceFileBuildResult
+                    {
+                        SyntaxTree = syntaxTree,
+                        SemanticModel = Compilation.GetSemanticModel(syntaxTree),
+                        SourceFileFullPath = syntaxTree.FilePath,
+                        SourceFilePath = sourceFilePath
+                    };
+                    projectBuildResult.SourceFileBuildResults.Add(fileResult);
+                    projectBuildResult.SourceFiles.Add(sourceFilePath);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, $"Error while analyzing project {ProjectAnalyzer?.ProjectFile?.Path}");
+            }
             return projectBuildResult;
         }
         private void GetTargetFrameworks(ProjectBuildResult result, Buildalyzer.IAnalyzerResult analyzerResult)

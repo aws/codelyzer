@@ -39,26 +39,35 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
                     Model.MethodName = syntaxNode.Expression.ToString();
             }
 
-            foreach (var argumentSyntax in syntaxNode.ArgumentList.Arguments)
+            if (syntaxNode.ArgumentList != null)
             {
-                Parameter parameter = new Parameter();
-                if (argumentSyntax.GetExpression() != null)
-                    parameter.Name = argumentSyntax.GetExpression().ToString();
-
-                parameter.SemanticType =
-                    SemanticHelper.GetSemanticType(argumentSyntax.GetExpression(), SemanticModel);
-
-#pragma warning disable CS0618 // Type or member is obsolete
-                Model.Parameters.Add(parameter);
-#pragma warning restore CS0618 // Type or member is obsolete
-
-                var argument = new Argument
+                foreach (var argumentSyntax in syntaxNode.ArgumentList.Arguments)
                 {
-                    Identifier = argumentSyntax.GetExpression().ToString(),
-                    SemanticType = SemanticHelper.GetSemanticType(argumentSyntax.GetExpression(), SemanticModel)
-                };
+                    var identifier = "";
+                    var semanticType = "";
 
-                Model.Arguments.Add(argument);
+                    if (argumentSyntax is not OmittedArgumentSyntax)
+                    {
+                        identifier = argumentSyntax.GetExpression().ToString();
+                        semanticType = SemanticHelper.GetSemanticType(argumentSyntax.GetExpression(), SemanticModel);
+                    }
+
+                    var parameter = new Parameter()
+                    {
+                        Name = identifier,
+                        SemanticType = semanticType
+                    };
+    #pragma warning disable CS0618 // Type or member is obsolete
+                    Model.Parameters.Add(parameter);
+    #pragma warning restore CS0618 // Type or member is obsolete
+
+                    var argument = new Argument
+                    {
+                        Identifier = identifier,
+                        SemanticType = semanticType
+                    };
+                    Model.Arguments.Add(argument);
+                }
             }
 
             if (SemanticModel == null) return;

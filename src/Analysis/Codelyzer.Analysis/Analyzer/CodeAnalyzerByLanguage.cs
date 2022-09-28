@@ -36,6 +36,7 @@ namespace Codelyzer.Analysis.Analyzer
         public async Task<List<AnalyzerResult>> AnalyzeSolutionGenerator(string solutionPath)
         {
             var analyzerResults = await AnalyzeSolutionGeneratorAsync(solutionPath).ToListAsync();
+
             await GenerateOptionalOutput(analyzerResults);
             return analyzerResults;
         }
@@ -65,22 +66,16 @@ namespace Codelyzer.Analysis.Analyzer
                 throw new FileNotFoundException(path);
             }
 
-            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
-
             WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
-
-
             var projectBuildResultEnumerator = builder.BuildProject().GetAsyncEnumerator();
             try
             {
-
                 while (await projectBuildResultEnumerator.MoveNextAsync().ConfigureAwait(false))
                 {
                     var projectBuildResult = projectBuildResultEnumerator.Current;
                     var workspaceResult = AnalyzeProject(projectBuildResult);
                     workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
                     workspaceResult.ProjectType = projectBuildResult.ProjectType;
-                    workspaceResults.Add(workspaceResult);
 
                     if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
                     {
@@ -156,7 +151,7 @@ namespace Codelyzer.Analysis.Analyzer
         public ProjectWorkspace AnalyzeProject(ProjectBuildResult projectResult)
         {
             Logger.LogDebug("Analyzing the project: " + projectResult.ProjectPath);
-            var projType = Path.GetExtension(projectResult.ProjectPath).ToLower();
+            var projType = Path.GetExtension(projectResult.ProjectPath)?.ToLower();
             LanguageAnalyzer languageAnalyzer = GetLanguageAnalyzerByProjectType(projType);
             ProjectWorkspace workspace = new ProjectWorkspace(projectResult.ProjectPath)
             {
@@ -197,7 +192,7 @@ namespace Codelyzer.Analysis.Analyzer
                     throw new Exception($"invalid project type {projType}");
             }
             return languageAnalyzerFactory.GetLanguageAnalyzer();
-            
+
         }
 
         public LanguageAnalyzer GetLanguageAnalyzerByFileType(string fileType)

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Xunit;
 using Microsoft.CodeAnalysis;
 using Codelyzer.Analysis.Common;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Codelyzer.Analysis.VisualBasic;
 using System.Linq;
 using Codelyzer.Analysis.Model;
+using Microsoft.Extensions.Logging;
 
 namespace Codelyzer.Analysis.Languages.UnitTests
 {
@@ -181,6 +183,51 @@ End Module";
 			Assert.True(rootNode.Children.Count == 2);
 			var invExpressions = rootNode.Children[1].AllInvocationExpressions();
 			Assert.True(invExpressions.Count > 0);
+		}
+
+		[Fact]
+		public void InvocationExpressionHandlerTestOmittedParamAndNoParams()
+		{
+			var expressShell = @"
+			Class TypeName
+				Public Sub New
+					MyBase.New	
+				End Sub
+
+				Public Sub Test()
+					TestFunction(""hello"", )
+				End Sub
+
+				Private Sub TestFunction (a as String, Optional b as Boolean)
+					If B
+						Console.WriteLine(""True"")
+					Else 
+						Console.WriteLine(""False"")
+					End If
+				End Sub
+			End Class";
+			var rootNode = GetVisualBasicUstNode(expressShell);
+			Assert.Single(rootNode.Children);
+			var classBlockNode = rootNode.Children[0];
+			Assert.Equal(5, classBlockNode.Children.Count);
+
+			//0:class-statement
+			var classStatementNode = classBlockNode.Children[0];
+			Assert.True(classStatementNode.GetType() == typeof(Model.ClassStatement));
+			//1:sub-block
+			var subBlockNode = classBlockNode.Children[3];
+			Assert.True(subBlockNode.GetType() == typeof(Model.MethodBlock));
+			Assert.Equal("SubBlock", subBlockNode.Identifier);
+			Assert.Equal(3, subBlockNode.Children.Count);
+
+			var invocationExpressions = classBlockNode.AllInvocationExpressions().ToList();
+			var myBaseNew = invocationExpressions.FirstOrDefault(e => e.Identifier == "MyBase.New");
+			var omitted = invocationExpressions.FirstOrDefault(e => e.MethodName == "TestFunction");
+			Assert.NotNull(myBaseNew);
+			Assert.NotNull(omitted);
+			Assert.Empty(myBaseNew.Arguments);
+			Assert.Equal(2, omitted.Arguments.Count);
+			Assert.Equal("", omitted.Arguments[1].SemanticType);
 		}
 
 
@@ -564,6 +611,25 @@ End Module";
 			Assert.Equal(typeof(Model.EndBlockStatement), endNode.GetType());
 
 
+		}
+
+		[Fact]
+		public void MethodStatementHandlerTest()
+		{
+			var expressShell = @"
+				Class TestClass
+					Public Sub sfLoad(ByVal pArgs())
+					End Sub
+				End Class";
+			var rootNode = GetVisualBasicUstNode(expressShell);
+
+			var classNode = rootNode.Children.FirstOrDefault();
+			Assert.NotNull(classNode);
+			var methodBlock = classNode.AllMethodBlocks().FirstOrDefault();
+			Assert.NotNull(methodBlock);
+			var methodStatement = (MethodStatement) methodBlock.Children.FirstOrDefault(c => c is MethodStatement);
+			Assert.NotNull(methodStatement);
+			Assert.Single(methodStatement.Parameters);
 		}
 
 		private Model.UstNode GetVisualBasicUstNode(string expressionShell)
