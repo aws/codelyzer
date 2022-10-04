@@ -62,7 +62,10 @@ namespace Codelyzer.Analysis.CSharp.Handlers
 
             IMethodSymbol invokedSymbol = (IMethodSymbol)SemanticHelper.GetSemanticSymbol(syntaxNode, SemanticModel, OriginalSemanticModel);
 
-            if (invokedSymbol == null) return;
+            if (invokedSymbol == null)
+            {
+                return;
+            }
 
             //Set semantic details
             Model.MethodName = invokedSymbol.Name;

@@ -7,34 +7,34 @@ namespace Codelyzer.Analysis.Build.Models
 {
     public class WorkspaceConfiguration
     {
-        public string workspace { get; set; }
-        public SolutionConfig solution { get; set; }
+        public string Workspace { get; set; }
+        public SolutionConfig Solution { get; set; }
     }
 
     public class SolutionConfig
     {
-        public List<ProjectConfig> projects { get; set; }
+        public List<ProjectConfig> Projects { get; set; }
     }
 
     public class ProjectConfig
     {
-        public string projectId { get; set; }
-        public string assemblyName { get; set; }
-        public string language { get; set; }
-        public string filePath { get; set; }
-        public string outputFilePath { get; set; }
-        public List<DocumentConfig> documents { get; set; }
-        public List<string> projectReferences { get; set; }
-        public List<String> metadataReferencesFilePath { get; set; }
-        public List<AnalyzerReference> analyzerReferences { get; set; }
-        public ParseOptions parseOptions { get; set; }
-        public CompilationOptions compilationOptions { get; set; }
+        public string ProjectId { get; set; }
+        public string AssemblyName { get; set; }
+        public string Language { get; set; }
+        public string FilePath { get; set; }
+        public string OutputFilePath { get; set; }
+        public List<DocumentConfig> Documents { get; set; }
+        public List<string> ReferencedProjectIds { get; set; }
+        public List<string> MetadataReferencesFilePath { get; set; }
+        public List<string> AnalyzerReferencePaths { get; set; }
+        public ParseOptions ParseOptions { get; set; }
+        public CompilationOptions CompilationOptions { get; set; }
     }
 
     public class DocumentConfig
     {
-        public string documentId { get; set; }
-        public string assemblyName { get; set; }
-        public string filePath { get; set; }
+        public string DocumentId { get; set; }
+        public string AssemblyName { get; set; }
+        public string FilePath { get; set; }
     }
 }

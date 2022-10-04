@@ -4,12 +4,15 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Buildalyzer;
 using Codelyzer.Analysis.Build;
 using Codelyzer.Analysis.Build.Models;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -278,7 +281,7 @@ namespace Codelyzer.Analysis.Analyzer
         private async Task<List<AnalyzerResult>> AnalyzeUsingVSWorkspace(string workspaceConfig)
         {
             var adhocWorkspace = ConstructWorkspaceObject(workspaceConfig);
-            var projectBuildResults = BuildUsingAdHocWorkspace(adhocWorkspace);
+            var projectBuildResults = await BuildUsingAdHocWorkspaceAsync(adhocWorkspace);
             return await AnalyzeBuildResults(projectBuildResults);
         }
 
@@ -287,23 +290,24 @@ namespace Codelyzer.Analysis.Analyzer
             try
             {
                 WorkspaceConfiguration workspaceConfig = JsonConvert.DeserializeObject<WorkspaceConfiguration>(workspace);
-                AdhocWorkspace adhocWorkspace = new AdhocWorkspace();
+                Workspace adhocWorkspace = new AdhocWorkspace();
+                IAnalyzerAssemblyLoader assemblyLoader = adhocWorkspace.Services.GetRequiredService<IAnalyzerService>().GetLoader();
 
-                foreach (var curProject in workspaceConfig.solution.projects)
+                foreach (var curProject in workspaceConfig.Solution.Projects)
                 {
                     List<DocumentInfo> docInfoLst = new List<DocumentInfo>();
-                    var projectId = ProjectId.CreateFromSerialized(new Guid(curProject.projectId));
-                    foreach (var doc in curProject.documents)
+                    var projectId = ProjectId.CreateFromSerialized(new Guid(curProject.ProjectId));
+                    foreach (var doc in curProject.Documents)
                     {
                         try
                         {
                             DocumentInfo docInfo = DocumentInfo.Create(
-                                DocumentId.CreateFromSerialized(projectId, new Guid(doc.documentId)),
-                                curProject.assemblyName,
+                                DocumentId.CreateFromSerialized(projectId, new Guid(doc.DocumentId)),
+                                curProject.AssemblyName,
                                 loader: TextLoader.From(
                                     TextAndVersion.Create(
-                                        SourceText.From(File.ReadAllText(doc.filePath), Encoding.Unicode), VersionStamp.Create())),
-                                filePath: doc.filePath);
+                                        SourceText.From(File.ReadAllText(doc.FilePath), Encoding.Unicode), VersionStamp.Create())),
+                                filePath: doc.FilePath);
 
                             docInfoLst.Add(docInfo);
                         }
@@ -313,27 +317,39 @@ namespace Codelyzer.Analysis.Analyzer
                         }
                     }
 
-                    List<MetadataReference> metadataReferencesLst = new List<MetadataReference>();
-                    foreach (string filePath in curProject.metadataReferencesFilePath)
+                    List<MetadataReference> metadataReferencesLst = new();
+                    foreach (string filePath in curProject.MetadataReferencesFilePath)
                     {
                         metadataReferencesLst.Add(MetadataReference.CreateFromFile(filePath));
                     }
 
+                    List<ProjectReference> projectReferencesLst = new();
+                    foreach(var referencedId in curProject.ReferencedProjectIds)
+                    {
+                        projectReferencesLst.Add(
+                            new ProjectReference(ProjectId.CreateFromSerialized(new Guid(referencedId))));
+                    }
+
+                    List<AnalyzerReference> analyzerReferences = new();
+                    foreach(var referencePath in curProject.AnalyzerReferencePaths)
+                    {
+                        analyzerReferences.Add(new AnalyzerFileReference(referencePath, assemblyLoader));
+                    }
 
                     var projectInfo = ProjectInfo.Create(
-                        projectId,
-                        VersionStamp.Create(),
-                        curProject.assemblyName,
-                        curProject.assemblyName,
-                        curProject.language,
-                        filePath: curProject.filePath,
-                        outputFilePath: curProject.outputFilePath,
-                        documents: docInfoLst,
-                        projectReferences: null,//curProject.projectReferences,
-                        metadataReferences: metadataReferencesLst,
-                        analyzerReferences: null,//curProject.analyzerReferences,
-                        parseOptions: curProject.parseOptions,
-                        compilationOptions: curProject.compilationOptions);
+                            projectId,
+                            VersionStamp.Create(),
+                            curProject.AssemblyName,
+                            curProject.AssemblyName,
+                            curProject.Language,
+                            filePath: curProject.FilePath,
+                            outputFilePath: curProject.OutputFilePath,
+                            documents: docInfoLst,
+                            projectReferences: projectReferencesLst,
+                            metadataReferences: metadataReferencesLst,
+                            analyzerReferences: analyzerReferences,
+                            parseOptions: curProject.ParseOptions,
+                            compilationOptions: curProject.CompilationOptions);
 
                     var solution = adhocWorkspace.CurrentSolution.AddProject(projectInfo);
 
@@ -351,7 +367,7 @@ namespace Codelyzer.Analysis.Analyzer
             }
         }
 
-        public List<ProjectBuildResult> BuildUsingAdHocWorkspace(Workspace workspace)
+        public async Task<List<ProjectBuildResult>> BuildUsingAdHocWorkspaceAsync(Workspace workspace)
         {
             List<ProjectBuildResult> projectBuildResults = new List<ProjectBuildResult>();
 
@@ -363,7 +379,8 @@ namespace Codelyzer.Analysis.Analyzer
                 projectBuildResult.ProjectRootPath = Path.GetDirectoryName(project.FilePath);
                 projectBuildResult.ProjectGuid = project.Id.Id.ToString();
                 projectBuildResult.BuildErrors = new List<string>();
-                projectBuildResult.Compilation = CSharpCompilation.Create(null).AddReferences(project.MetadataReferences);
+                //project.GetCompilationAsync();
+                projectBuildResult.Compilation = await project.GetCompilationAsync();
                 projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult.Compilation, project, project.MetadataReferences);
                 projectBuildResult.ProjectType = projectBuildType;
 
