@@ -223,7 +223,8 @@ namespace Codelyzer.Analysis
 
         private RootUstNode AnalyzeFile(SourceFileBuildResult sourceFileBuildResult, string projectRootPath)
         {
-            CodeContext codeContext = new CodeContext(sourceFileBuildResult.PrePortSemanticModel,
+            CodeContext codeContext = new CodeContext(
+                sourceFileBuildResult.PrePortSemanticModel,
                 sourceFileBuildResult.SemanticModel,
                 sourceFileBuildResult.SyntaxTree,
                 projectRootPath,

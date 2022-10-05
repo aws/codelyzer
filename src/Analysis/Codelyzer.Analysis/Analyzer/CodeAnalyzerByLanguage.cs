@@ -351,14 +351,13 @@ namespace Codelyzer.Analysis.Analyzer
                             parseOptions: curProject.ParseOptions,
                             compilationOptions: curProject.CompilationOptions);
 
-                    var solution = adhocWorkspace.CurrentSolution.AddProject(projectInfo);
-
-                    if (!adhocWorkspace.TryApplyChanges(solution))
+                    var currentSolution = adhocWorkspace.CurrentSolution.AddProject(projectInfo);
+                    if (!adhocWorkspace.TryApplyChanges(currentSolution))
                     {
                         return null;
                     }
-                }
 
+                }
                 return adhocWorkspace;
             }
             catch (Exception ex)
@@ -373,24 +372,34 @@ namespace Codelyzer.Analysis.Analyzer
 
             foreach (Project project in workspace.CurrentSolution.Projects)
             {
-                ProjectBuildResult projectBuildResult = new ProjectBuildResult();
-                projectBuildResult.Project = project;
-                projectBuildResult.ProjectPath = project.FilePath;
-                projectBuildResult.ProjectRootPath = Path.GetDirectoryName(project.FilePath);
-                projectBuildResult.ProjectGuid = project.Id.Id.ToString();
-                projectBuildResult.BuildErrors = new List<string>();
-                //project.GetCompilationAsync();
-                projectBuildResult.Compilation = await project.GetCompilationAsync();
-                projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult.Compilation, project, project.MetadataReferences);
-                projectBuildResult.ProjectType = projectBuildType;
+                var currentCompilation = await project.GetCompilationAsync();
+                ProjectBuildResult projectBuildResult = new()
+                {
+                    Project = project,
+                    ProjectPath = project.FilePath,
+                    ProjectRootPath = Path.GetDirectoryName(project.FilePath),
+                    ProjectGuid = project.Id.Id.ToString(),
+                    BuildErrors = new List<string>(),
+                    ProjectType = projectBuildType,
+                    Compilation = currentCompilation,
+                };
+
+                projectBuildResult.ExternalReferences = GetExternalReferences(
+                    currentCompilation,
+                    project,
+                    project.MetadataReferences);
 
                 foreach (var document in project.Documents)
                 {
-                    SourceFileBuildResult sourceFileBuildResult = new SourceFileBuildResult();
-                    sourceFileBuildResult.SourceFileFullPath = document.FilePath;
-                    sourceFileBuildResult.SourceFilePath = document.Name;
-                    sourceFileBuildResult.SyntaxTree = document.GetSyntaxTreeAsync().Result;
-                    sourceFileBuildResult.SemanticModel = document.GetSemanticModelAsync().Result;
+                    var syntaxTree = await document.GetSyntaxTreeAsync();
+                    SourceFileBuildResult sourceFileBuildResult = new()
+                    {
+                        SourceFileFullPath = document.FilePath,
+                        SourceFilePath = document.Name,
+                        SyntaxTree = syntaxTree,
+                        SemanticModel = currentCompilation?.GetSemanticModel(syntaxTree),
+                    };
+
                     projectBuildResult.SourceFileBuildResults.Add(sourceFileBuildResult);
                 }
 

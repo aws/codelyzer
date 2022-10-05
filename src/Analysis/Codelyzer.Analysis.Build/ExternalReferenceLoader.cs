@@ -22,7 +22,12 @@ namespace Codelyzer.Analysis.Build
 
         private ExternalReferences _externalReferences;
 
-        public ExternalReferenceLoader(string projectDir, Compilation compilation, Project project, IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> packageReferences, ILogger logger)
+        public ExternalReferenceLoader(
+            string projectDir,
+            Compilation compilation,
+            Project project,
+            IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> packageReferences,
+            ILogger logger)
         {
             _externalReferences = new ExternalReferences();
 

@@ -495,7 +495,10 @@ namespace Codelyzer.Analysis.Build
 
             if (_analyzerConfiguration != null && _analyzerConfiguration.MetaDataSettings.ReferenceData)
             {
-                projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult?.Compilation, projectBuildResult?.Project, projectBuildResult?.Compilation?.References);
+                projectBuildResult.ExternalReferences = GetExternalReferences(
+                    projectBuildResult?.Compilation,
+                    projectBuildResult?.Project,
+                    projectBuildResult?.Compilation?.References);
             }
 
             return projectBuildResult;
@@ -661,7 +664,10 @@ namespace Codelyzer.Analysis.Build
             }
         }
 
-        private ExternalReferences GetExternalReferences(Compilation compilation, Project project, IEnumerable<MetadataReference> externalReferencesMetaData)
+        private ExternalReferences GetExternalReferences(
+            Compilation compilation,
+            Project project,
+            IEnumerable<MetadataReference> externalReferencesMetaData)
         {
             ExternalReferenceLoader externalReferenceLoader = new ExternalReferenceLoader(
                 Directory.GetParent(_projectPath).FullName,
