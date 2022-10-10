@@ -607,11 +607,17 @@ namespace Codelyzer.Analysis.Build
         {
             SetSyntaxCompilation(metadataReferences?.Values?.ToList());
 
+            if (Compilation == null)
+            {
+                Logger.LogError($"Error while building project {ProjectAnalyzer?.ProjectFile?.Path}");
+                return null;
+            }
+
             ProjectBuildResult projectBuildResult = new ProjectBuildResult
             {
                 BuildErrors = Errors,
                 ProjectPath = ProjectAnalyzer?.ProjectFile?.Path,
-                ProjectRootPath = Path.GetDirectoryName(ProjectAnalyzer.ProjectFile.Path),
+                ProjectRootPath = Path.GetDirectoryName(ProjectAnalyzer?.ProjectFile?.Path),
                 Compilation = Compilation,
                 IsSyntaxAnalysis = isSyntaxAnalysis,
                 ExternalReferences = new ExternalReferences()
@@ -629,7 +635,7 @@ namespace Codelyzer.Analysis.Build
                 projectBuildResult.ProjectGuid = ProjectAnalyzer.ProjectGuid.ToString();
                 projectBuildResult.ProjectType = ProjectAnalyzer.ProjectInSolution != null ? ProjectAnalyzer.ProjectInSolution.ProjectType.ToString() : string.Empty;
 
-                foreach (var syntaxTree in Compilation.SyntaxTrees)
+                foreach (var syntaxTree in Compilation?.SyntaxTrees)
                 {
                     var sourceFilePath = Path.GetRelativePath(projectBuildResult.ProjectRootPath, syntaxTree.FilePath);
                     var fileResult = new SourceFileBuildResult

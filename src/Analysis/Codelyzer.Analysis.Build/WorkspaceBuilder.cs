@@ -82,8 +82,11 @@ namespace Codelyzer.Analysis.Build
                                 projectBuildHandler.ProjectAnalyzer = project.ProjectAnalyzer;
                                 var projectReferences = references.Where(r => projectReferencePaths.Contains(r.Key)).ToDictionary(p => p.Key, p => p.Value);
                                 var result = projectBuildHandler.SyntaxOnlyBuild(projectReferences);
-                                references.Add(projectPath, result.Compilation.ToMetadataReference());
-                                yield return result;
+                                if (result != null)
+                                {
+                                    references.Add(projectPath, result.Compilation.ToMetadataReference());
+                                    yield return result;
+                                }
                             }
                         }
                     }
@@ -147,8 +150,11 @@ namespace Codelyzer.Analysis.Build
                             projectBuildHandler.ProjectAnalyzer = project.ProjectAnalyzer;
                             var projectReferences = references.Where(r => projectReferencePaths.Contains(r.Key)).ToDictionary(p=>p.Key, p=> p.Value);
                             var result = projectBuildHandler.SyntaxOnlyBuild(projectReferences);
-                            references.Add(projectPath, result.Compilation.ToMetadataReference());
-                            ProjectResults.Add(result);
+                            if (result != null)
+                            {
+                                references.Add(projectPath, result.Compilation.ToMetadataReference());
+                                ProjectResults.Add(result);
+                            }
                         }
                     }
                 }
