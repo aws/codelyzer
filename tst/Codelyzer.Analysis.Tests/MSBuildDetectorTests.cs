@@ -1,6 +1,6 @@
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -12,6 +12,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Assert = NUnit.Framework.Assert;
 using Codelyzer.Analysis.Build;
+using Moq;
+using System.Runtime.InteropServices;
 
 namespace Codelyzer.Analysis.Tests
 {
@@ -27,6 +29,8 @@ namespace Codelyzer.Analysis.Tests
         public string testMissingTargetsPath = "";
         
         MSBuildDetector msBuildDetector = new MSBuildDetector();
+        Mock<ILogger> mockedLogger = new();
+        WorkspaceBuilderHelper workspaceBuilderHelper;
 
         [OneTimeSetUp]
         public void Setup()
@@ -34,6 +38,8 @@ namespace Codelyzer.Analysis.Tests
             Setup(GetType());
             tempDir = GetTstPath(Path.Combine(Constants.TempProjectDirectories));
             SetupTestProject();
+            workspaceBuilderHelper  = new WorkspaceBuilderHelper(mockedLogger.Object, "",
+            new AnalyzerConfiguration(LanguageOptions.CSharp));
         }
 
         private void SetupTestProject() 
@@ -155,6 +161,54 @@ namespace Codelyzer.Analysis.Tests
         {
             string msbuildpath = msBuildDetector.GetFirstMatchingMsBuildFromPath(programFilesPath: Path.Combine(testMissingTargetsPath, Constants.programFiles), programFilesX86Path: Path.Combine(testMissingTargetsPath, Constants.programFilesx86));
             Assert.IsNull(msbuildpath);
+        }
+
+        [Test]
+        public void TestGetMSBuildPathOnWindows()
+        {
+            // test with VS2022 path
+            string actualMsBuildPath = Path.Combine(testvs2022Path, Constants.vs2022MSBuildPath);
+            string msbuildpath = workspaceBuilderHelper.GetMSBuildPathEnvironmentVariable(OSPlatform.Windows, 
+                programFilesPath: Path.Combine(testvs2022Path, Constants.programFiles), programFilesX86Path: Path.Combine(testvs2022Path, Constants.programFilesx86));
+            Assert.AreEqual(actualMsBuildPath, msbuildpath);
+        }
+
+        [Test]
+        public void TestMissingMSBuildOnWindows()
+        {
+            string errorMessage = "Codelyzer wasn't able to retrieve the MSBuild path. Visual Studio and MSBuild might not be installed.";
+            string msbuildpath = workspaceBuilderHelper.GetMSBuildPathEnvironmentVariable(OSPlatform.Windows, 
+                programFilesPath: Path.Combine(testMissingTargetsPath, Constants.programFiles), programFilesX86Path: Path.Combine(testMissingTargetsPath, Constants.programFilesx86));
+            mockedLogger.Verify(
+                mock => mock.Log(
+                    LogLevel.Error,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((o, t) => string.Equals(errorMessage, o.ToString(), StringComparison.InvariantCultureIgnoreCase)),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
+            Assert.IsNull(msbuildpath);
+        }
+
+        [Test]
+        public void TestGetMSBuildPathOnLinux()
+        {
+            string msbuildpath = workspaceBuilderHelper.GetMSBuildPathEnvironmentVariable(OSPlatform.Linux);
+            Assert.AreEqual(Codelyzer.Analysis.Common.Constants.MsBuildCommandName, msbuildpath);
+        }
+
+        [Test]
+        public void TestGetMSBuildPathOnOSX()
+        {
+            string msbuildpath = workspaceBuilderHelper.GetMSBuildPathEnvironmentVariable(OSPlatform.OSX);
+            Assert.AreEqual(Codelyzer.Analysis.Common.Constants.MsBuildCommandName, msbuildpath);
+        }
+
+        [Test]
+        public void TestGetMSBuildPathOnFreeBSD()
+        {
+            string msbuildpath = workspaceBuilderHelper.GetMSBuildPathEnvironmentVariable(OSPlatform.FreeBSD);
+            Assert.AreEqual(Codelyzer.Analysis.Common.Constants.MsBuildCommandName, msbuildpath);
         }
     }
 

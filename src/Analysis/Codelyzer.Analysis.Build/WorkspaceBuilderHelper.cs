@@ -560,31 +560,13 @@ namespace Codelyzer.Analysis.Build
             var os = DetermineOSPlatform();
             EnvironmentOptions options = new EnvironmentOptions();
 
-            if (os == OSPlatform.Linux || os == OSPlatform.OSX)
-            {
-                if (requiresNetFramework)
-                {
-                    options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, Constants.MsBuildCommandName);
-                }
-            }
-
             //We want to provide the MsBuild path only if it's a framework solution. Buildalyzer automatically builds core solutions using "dotnet"
             if (requiresNetFramework)
             {
-                try
+                var msbuildExe = GetMSBuildPathEnvironmentVariable(os, toolsVersion: toolsVersion);
+                if (!string.IsNullOrEmpty(msbuildExe))
                 {
-                    var msbuildExe = _analyzerConfiguration.BuildSettings.MSBuildPath;
-                    if (string.IsNullOrEmpty(msbuildExe))
-                    {
-                        msbuildExe = _msBuildDetector.GetFirstMatchingMsBuildFromPath(toolsVersion: toolsVersion);
-                    }
-                    if (!string.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
-                    else { throw new Exception(); }
-
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, "Build error: Codelyzer wasn't able to retrieve the MSBuild path");
+                    options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
                 }
                 _analyzerConfiguration.BuildSettings.BuildArguments.ForEach(argument =>
                 {
@@ -608,6 +590,25 @@ namespace Codelyzer.Analysis.Build
             return options;
         }
 
+        public string GetMSBuildPathEnvironmentVariable(OSPlatform os, string programFilesPath = null, string programFilesX86Path = null, string toolsVersion = null) 
+        {
+            if (os == OSPlatform.Windows) 
+            {
+                var msbuildExe = string.IsNullOrEmpty(_analyzerConfiguration.BuildSettings.MSBuildPath) ?
+                    _msBuildDetector.GetFirstMatchingMsBuildFromPath(programFilesPath: programFilesPath, programFilesX86Path: programFilesX86Path, toolsVersion: toolsVersion) : 
+                    _analyzerConfiguration.BuildSettings.MSBuildPath;
+                if (!string.IsNullOrEmpty(msbuildExe))
+                {
+                    return msbuildExe;
+                }
+                Logger.LogError("Codelyzer wasn't able to retrieve the MSBuild path. Visual Studio and MSBuild might not be installed.");
+                return null;
+            }
+            else
+            {   // osx, linux, freeBSD
+                return Constants.MsBuildCommandName;
+            }
+        }
 
         private OSPlatform DetermineOSPlatform()
         {
