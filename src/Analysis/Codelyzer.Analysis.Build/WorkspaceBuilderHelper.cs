@@ -57,9 +57,15 @@ namespace Codelyzer.Analysis.Build
             return WorkspacePath.EndsWith("sln");
         }
 
-        private bool IsProjectFile(ProjectInSolution project)
+        private bool IsSupportedProjectFile(ProjectInSolution project)
         {
-            return Constants.AcceptedProjectTypes.Contains(project.ProjectType);
+            var projectFileExtension = Path.GetExtension(project.AbsolutePath);
+
+            return
+                Constants.AcceptedProjectTypes.Contains(project.ProjectType) &&
+                // mirror BuildAnalyzer's support for project types
+                // https://github.com/daveaglick/Buildalyzer/blob/main/src/Buildalyzer.Workspaces/AnalyzerResultExtensions.cs#L297-L309
+                (projectFileExtension == ".csproj" || projectFileExtension == ".vbproj");
         }
 
         public async IAsyncEnumerable<ProjectAnalysisResult> BuildProjectIncremental()
@@ -73,7 +79,7 @@ namespace Codelyzer.Analysis.Build
                     foreach (var project in solutionFile.ProjectsInOrder)
                     {
                         string projectPath = project.AbsolutePath;
-                        if (IsProjectFile(project))
+                        if (IsSupportedProjectFile(project))
                         {
                             // if it is part of analyzer manager
                             concurrencySemaphore.Wait();
@@ -181,7 +187,9 @@ namespace Codelyzer.Analysis.Build
                 }
 
                 DictAnalysisResult[analyzerResult.ProjectGuid] = analyzerResult;
+                //note: AddToWorkspace will ignore the project if it's not C# or VB
                 analyzerResult.AddToWorkspace(_workspaceIncremental);
+
                 foreach (var projectReference in analyzerResult.ProjectReferences)
                 {
                     if (!queue.Contains(projectReference))
@@ -193,6 +201,10 @@ namespace Codelyzer.Analysis.Build
             }
 
             Project project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.FilePath.Equals(projectPath));
+
+            if (null == project)
+                throw new Exception($"Failed to Analyze Project [{projectPath}].  This could indicate the project is not supported by Roslyn.");
+
             Logger.LogDebug("Building complete for {0} - {1}", projectPath, DictAnalysisResult[project.Id.Id].Succeeded ? "Success" : "Fail");
             return new ProjectAnalysisResult()
             {
@@ -400,7 +412,7 @@ namespace Codelyzer.Analysis.Build
             {
                 Logger.LogDebug("Building the project : " + p.ProjectFile.Path);
 
-                if (IsProjectFile(p.ProjectInSolution))
+                if (IsSupportedProjectFile(p.ProjectInSolution))
                 {
                     var buildResult = BuildProject(p);
                     if (buildResult != null)

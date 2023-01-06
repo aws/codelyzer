@@ -1155,6 +1155,42 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         }
 
         [Test]
+        public async Task TestCSharpAndCPlusPlus()
+        {
+            string solutionPath = Directory.EnumerateFiles(downloadsDir, "CSharpAndCPlusPlus.sln", SearchOption.AllDirectories).FirstOrDefault();
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true
+                }
+            };
+
+            CodeAnalyzerByLanguage analyzerByLanguage = new CodeAnalyzerByLanguage(configuration, NullLogger.Instance);
+            var results = (await analyzerByLanguage.AnalyzeSolutionGenerator(solutionPath)).ToList();
+
+            Assert.AreEqual(results.Count, 1);
+        }
+
+        [Test]
         public async Task TestBuildOnlyFramework_Successfully()
         {
             var solutionPath = CopySolutionFolderToTemp("BuildableWebApi.sln");
