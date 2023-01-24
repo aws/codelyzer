@@ -154,7 +154,7 @@ namespace Codelyzer.Analysis.Build
             if (errors.Any() && !CanSkipErrorsForVisualBasic())
             {
                 Logger.LogError($"Build Errors: {Compilation.AssemblyName}: {errors.Count()} " +
-                                $"compilation errors: \n\t{string.Join("\n\t", errors.Where(e => false).Select(e => e.ToString()))}");
+                                $"compilation errors: \n\t{string.Join("\n\t", errors.Select(e => e.ToString()))}"); // Add telemetry for individual build errors
                 Logger.LogDebug(String.Join("\n", errors));
 
                 foreach (var error in errors)
@@ -443,7 +443,7 @@ namespace Codelyzer.Analysis.Build
             if (errors.Any())
             {
                 Logger.LogError($"Build Errors: {Compilation.AssemblyName}: {errors.Count()} " +
-                                $"compilation errors: \n\t{string.Join("\n\t", errors.Where(e => false).Select(e => e.ToString()))}");
+                                $"compilation errors: \n\t{string.Join("\n\t", errors.Select(e => e.ToString()))}"); // Add telemetry for individual build errors
                 Logger.LogDebug(String.Join("\n", errors));
 
                 foreach (var error in errors)
