@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 using Codelyzer.Analysis.Build;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.VisualBasic;
 using Microsoft.Extensions.Logging;
 
 namespace Codelyzer.Analysis.Analyzer
@@ -108,7 +111,8 @@ namespace Codelyzer.Analysis.Analyzer
             WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
 
             var projectBuildResults = await builder.Build();
-
+            var totalLinesOfCode = 0;
+            int linesOfCode;
             foreach (var projectBuildResult in projectBuildResults)
             {
                 var workspaceResult = await Task.Run(() => AnalyzeProject(projectBuildResult));
@@ -116,6 +120,18 @@ namespace Codelyzer.Analysis.Analyzer
                 workspaceResult.ProjectType = projectBuildResult.ProjectType;
                 workspaceResults.Add(workspaceResult);
 
+                // var tree = projectBuildResult.SourceFileBuildResults.First().SyntaxTree;
+                // var node = tree.GetRoot();
+                foreach (var sourceFile in projectBuildResult.SourceFileBuildResults)
+                {
+                    var node = sourceFile.SyntaxTree.GetRoot();
+                        var eolTrivia = node.DescendantTrivia()
+                            .Where(t => t.IsKind(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndOfLineTrivia) || 
+                                t.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.EndOfLineTrivia));
+                        linesOfCode = eolTrivia.Count();
+                    totalLinesOfCode += linesOfCode;
+                }
+                workspaceResult.LinesOfCode = totalLinesOfCode;
                 //Generate Output result
                 if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
                 {
