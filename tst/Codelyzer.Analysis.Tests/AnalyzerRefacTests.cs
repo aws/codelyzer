@@ -1991,7 +1991,6 @@ End Namespace");
                     GenerateJsonOutput = false,
                     OutputPath = @"/tmp/UnitTests"
                 },
-
                 MetaDataSettings =
                 {
                     LiteralExpressions = true,
@@ -2007,9 +2006,9 @@ End Namespace");
                 }
             };
             string solutionPath = CopySolutionFolderToTemp("CoreMVC.sln");
-            CodeAnalyzerByLanguage analyzerByLanguage = new CodeAnalyzerByLanguage(cli.Configuration, NullLogger.Instance);
+            var analyzerByLanguage = new CodeAnalyzerByLanguage(cli.Configuration, NullLogger.Instance);
             var results = await analyzerByLanguage.AnalyzeSolution(solutionPath);
-            Assert.AreEqual(184, results[0].ProjectResult.LinesOfCode);
+            Assert.AreEqual(184, results[0].ProjectResult.TotalLinesOfCode);
         }
 
         [Test]
@@ -2023,7 +2022,6 @@ End Namespace");
                     GenerateJsonOutput = false,
                     OutputPath = @"/tmp/UnitTests"
                 },
-
                 MetaDataSettings =
                 {
                     LiteralExpressions = true,
@@ -2039,9 +2037,9 @@ End Namespace");
                 }
             };
             string solutionPath = CopySolutionFolderToTemp("VBConsoleApp.sln");
-            CodeAnalyzerByLanguage analyzerByLanguage = new CodeAnalyzerByLanguage(cli.Configuration, NullLogger.Instance);
+            var analyzerByLanguage = new CodeAnalyzerByLanguage(cli.Configuration, NullLogger.Instance);
             var results = await analyzerByLanguage.AnalyzeSolution(solutionPath);
-            Assert.AreEqual(232, results[0].ProjectResult.LinesOfCode);
+            Assert.AreEqual(232, results[0].ProjectResult.TotalLinesOfCode);
         }
         #region private methods
         private void DeleteDir(string path, int retries = 0)

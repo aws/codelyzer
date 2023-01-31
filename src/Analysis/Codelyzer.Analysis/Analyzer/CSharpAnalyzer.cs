@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Codelyzer.Analysis.Analyzer
 {
@@ -27,16 +29,18 @@ namespace Codelyzer.Analysis.Analyzer
                 projectRootPath,
                 sourceFileBuildResult.SourceFilePath,
                 AnalyzerConfiguration,
-                Logger);
+            Logger);
 
             Logger.LogDebug("Analyzing: " + sourceFileBuildResult.SourceFileFullPath);
 
             using CSharpRoslynProcessor processor = new CSharpRoslynProcessor(codeContext);
 
-            var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
+            var result = (RootUstNode) processor.Visit(codeContext.SyntaxTree.GetRoot());
+
+            result.LinesOfCode = sourceFileBuildResult.SyntaxTree.GetRoot().DescendantTrivia()
+                .Where(t => t.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.EndOfLineTrivia)).Count();
+
             return result as RootUstNode;
         }
-
     }
-    
 }
