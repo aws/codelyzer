@@ -15,6 +15,9 @@ namespace Codelyzer.Analysis.Model
         [JsonProperty("file-full-path", Order = 12)]
         public string FileFullPath { get; set; }
 
+        [JsonProperty("lines-of-code", Order = 13)]
+        public int LinesOfCode { get; set; }
+
         [JsonProperty("references", Order = 99)]
         public UstList<Reference> References { get; set; }
         public RootUstNode() : base(IdConstants.RootIdName)
