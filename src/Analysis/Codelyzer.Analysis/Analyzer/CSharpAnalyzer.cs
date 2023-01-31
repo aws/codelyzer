@@ -29,7 +29,7 @@ namespace Codelyzer.Analysis.Analyzer
                 projectRootPath,
                 sourceFileBuildResult.SourceFilePath,
                 AnalyzerConfiguration,
-            Logger);
+                Logger);
 
             Logger.LogDebug("Analyzing: " + sourceFileBuildResult.SourceFileFullPath);
 
@@ -38,7 +38,7 @@ namespace Codelyzer.Analysis.Analyzer
             var result = (RootUstNode) processor.Visit(codeContext.SyntaxTree.GetRoot());
 
             result.LinesOfCode = sourceFileBuildResult.SyntaxTree.GetRoot().DescendantTrivia()
-                .Where(t => t.IsKind(Microsoft.CodeAnalysis.CSharp.SyntaxKind.EndOfLineTrivia)).Count();
+                .Where(t => t.IsKind(SyntaxKind.EndOfLineTrivia)).Count();
 
             return result as RootUstNode;
         }

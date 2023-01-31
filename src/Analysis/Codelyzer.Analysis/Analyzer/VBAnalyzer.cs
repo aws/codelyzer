@@ -36,7 +36,7 @@ namespace Codelyzer.Analysis.Analyzer
             var result = (RootUstNode) processor.Visit(codeContext.SyntaxTree.GetRoot());
 
             result.LinesOfCode = sourceFileBuildResult.SyntaxTree.GetRoot().DescendantTrivia()
-                .Where(t => t.IsKind(Microsoft.CodeAnalysis.VisualBasic.SyntaxKind.EndOfLineTrivia)).Count();
+                .Where(t => t.IsKind(SyntaxKind.EndOfLineTrivia)).Count();
 
             return result as RootUstNode;
         }

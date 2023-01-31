@@ -2008,7 +2008,7 @@ End Namespace");
             string solutionPath = CopySolutionFolderToTemp("CoreMVC.sln");
             var analyzerByLanguage = new CodeAnalyzerByLanguage(cli.Configuration, NullLogger.Instance);
             var results = await analyzerByLanguage.AnalyzeSolution(solutionPath);
-            Assert.AreEqual(184, results[0].ProjectResult.TotalLinesOfCode);
+            Assert.AreEqual(184, results[0].ProjectResult.LinesOfCode);
         }
 
         [Test]
@@ -2039,7 +2039,7 @@ End Namespace");
             string solutionPath = CopySolutionFolderToTemp("VBConsoleApp.sln");
             var analyzerByLanguage = new CodeAnalyzerByLanguage(cli.Configuration, NullLogger.Instance);
             var results = await analyzerByLanguage.AnalyzeSolution(solutionPath);
-            Assert.AreEqual(232, results[0].ProjectResult.TotalLinesOfCode);
+            Assert.AreEqual(232, results[0].ProjectResult.LinesOfCode);
         }
         #region private methods
         private void DeleteDir(string path, int retries = 0)

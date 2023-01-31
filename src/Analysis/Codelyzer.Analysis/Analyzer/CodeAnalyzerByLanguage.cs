@@ -165,11 +165,11 @@ namespace Codelyzer.Analysis.Analyzer
             }
             workspace.TargetFramework = projectResult.TargetFramework;
             workspace.TargetFrameworks = projectResult.TargetFrameworks;
-            workspace.TotalLinesOfCode = 0;
+            workspace.LinesOfCode = 0;
             foreach (var fileBuildResult in projectResult.SourceFileBuildResults)
             {
                 var fileAnalysis = languageAnalyzer.AnalyzeFile(fileBuildResult, workspace.ProjectRootPath);
-                workspace.TotalLinesOfCode += fileAnalysis.LinesOfCode;
+                workspace.LinesOfCode += fileAnalysis.LinesOfCode;
                 workspace.SourceFileResults.Add(fileAnalysis);
             }
 
