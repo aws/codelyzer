@@ -48,8 +48,8 @@ namespace Codelyzer.Analysis.Model
         [JsonProperty("project-type", Order = 14)]
         public string ProjectType { get; set; }
 
-        [JsonProperty("total-lines-of-code", Order = 15)]
-        public int TotalLinesOfCode { get; set; }
+        [JsonProperty("lines-of-code", Order = 15)]
+        public int LinesOfCode { get; set; }
 
         public ProjectWorkspace(string projectFilePath)
         {
