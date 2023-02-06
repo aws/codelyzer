@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Codelyzer.Analysis
 {
@@ -239,10 +240,12 @@ namespace Codelyzer.Analysis
             }
             workspace.TargetFramework = projectResult.TargetFramework;
             workspace.TargetFrameworks = projectResult.TargetFrameworks;
+            workspace.LinesOfCode = 0;
 
             foreach (var fileBuildResult in projectResult.SourceFileBuildResults)
             {
                 var fileAnalysis = AnalyzeFile(fileBuildResult, workspace.ProjectRootPath);
+                workspace.LinesOfCode += fileAnalysis.LinesOfCode;
                 workspace.SourceFileResults.Add(fileAnalysis);
             }
 
@@ -263,7 +266,11 @@ namespace Codelyzer.Analysis
 
             using CSharpRoslynProcessor processor = new CSharpRoslynProcessor(codeContext);
 
-            var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
+            var result = (RootUstNode) processor.Visit(codeContext.SyntaxTree.GetRoot());
+
+            result.LinesOfCode = sourceFileBuildResult.SyntaxTree.GetRoot().DescendantTrivia()
+                .Where(t => t.IsKind(SyntaxKind.EndOfLineTrivia)).Count();
+
             return result as RootUstNode;
         }
 

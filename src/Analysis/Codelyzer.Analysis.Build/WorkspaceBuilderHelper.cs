@@ -57,9 +57,15 @@ namespace Codelyzer.Analysis.Build
             return WorkspacePath.EndsWith("sln");
         }
 
-        private bool IsProjectFile(ProjectInSolution project)
+        private bool IsSupportedProjectFile(ProjectInSolution project)
         {
-            return Constants.AcceptedProjectTypes.Contains(project.ProjectType);
+            var projectFileExtension = Path.GetExtension(project.AbsolutePath);
+
+            return
+                Constants.AcceptedProjectTypes.Contains(project.ProjectType) &&
+                // mirror BuildAnalyzer's support for project types
+                // https://github.com/daveaglick/Buildalyzer/blob/main/src/Buildalyzer.Workspaces/AnalyzerResultExtensions.cs#L297-L309
+                (projectFileExtension == ".csproj" || projectFileExtension == ".vbproj");
         }
 
         public async IAsyncEnumerable<ProjectAnalysisResult> BuildProjectIncremental()
@@ -73,7 +79,7 @@ namespace Codelyzer.Analysis.Build
                     foreach (var project in solutionFile.ProjectsInOrder)
                     {
                         string projectPath = project.AbsolutePath;
-                        if (IsProjectFile(project))
+                        if (IsSupportedProjectFile(project))
                         {
                             // if it is part of analyzer manager
                             concurrencySemaphore.Wait();
@@ -181,7 +187,9 @@ namespace Codelyzer.Analysis.Build
                 }
 
                 DictAnalysisResult[analyzerResult.ProjectGuid] = analyzerResult;
+                //note: AddToWorkspace will ignore the project if it's not C# or VB
                 analyzerResult.AddToWorkspace(_workspaceIncremental);
+
                 foreach (var projectReference in analyzerResult.ProjectReferences)
                 {
                     if (!queue.Contains(projectReference))
@@ -193,6 +201,10 @@ namespace Codelyzer.Analysis.Build
             }
 
             Project project = _workspaceIncremental.CurrentSolution?.Projects.FirstOrDefault(x => x.FilePath.Equals(projectPath));
+
+            if (null == project)
+                throw new Exception($"Failed to Analyze Project [{projectPath}].  This could indicate the project is not supported by Roslyn.");
+
             Logger.LogDebug("Building complete for {0} - {1}", projectPath, DictAnalysisResult[project.Id.Id].Succeeded ? "Success" : "Fail");
             return new ProjectAnalysisResult()
             {
@@ -400,7 +412,7 @@ namespace Codelyzer.Analysis.Build
             {
                 Logger.LogDebug("Building the project : " + p.ProjectFile.Path);
 
-                if (IsProjectFile(p.ProjectInSolution))
+                if (IsSupportedProjectFile(p.ProjectInSolution))
                 {
                     var buildResult = BuildProject(p);
                     if (buildResult != null)
@@ -560,31 +572,13 @@ namespace Codelyzer.Analysis.Build
             var os = DetermineOSPlatform();
             EnvironmentOptions options = new EnvironmentOptions();
 
-            if (os == OSPlatform.Linux || os == OSPlatform.OSX)
-            {
-                if (requiresNetFramework)
-                {
-                    options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, Constants.MsBuildCommandName);
-                }
-            }
-
             //We want to provide the MsBuild path only if it's a framework solution. Buildalyzer automatically builds core solutions using "dotnet"
             if (requiresNetFramework)
             {
-                try
+                var msbuildExe = GetMSBuildPathEnvironmentVariable(os, toolsVersion: toolsVersion);
+                if (!string.IsNullOrEmpty(msbuildExe))
                 {
-                    var msbuildExe = _analyzerConfiguration.BuildSettings.MSBuildPath;
-                    if (string.IsNullOrEmpty(msbuildExe))
-                    {
-                        msbuildExe = _msBuildDetector.GetFirstMatchingMsBuildFromPath(toolsVersion: toolsVersion);
-                    }
-                    if (!string.IsNullOrEmpty(msbuildExe)) options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
-                    else { throw new Exception(); }
-
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, "Build error: Codelyzer wasn't able to retrieve the MSBuild path");
+                    options.EnvironmentVariables.Add(EnvironmentVariables.MSBUILD_EXE_PATH, msbuildExe);
                 }
                 _analyzerConfiguration.BuildSettings.BuildArguments.ForEach(argument =>
                 {
@@ -608,6 +602,25 @@ namespace Codelyzer.Analysis.Build
             return options;
         }
 
+        public string GetMSBuildPathEnvironmentVariable(OSPlatform os, string programFilesPath = null, string programFilesX86Path = null, string toolsVersion = null) 
+        {
+            if (os == OSPlatform.Windows) 
+            {
+                var msbuildExe = string.IsNullOrEmpty(_analyzerConfiguration.BuildSettings.MSBuildPath) ?
+                    _msBuildDetector.GetFirstMatchingMsBuildFromPath(programFilesPath: programFilesPath, programFilesX86Path: programFilesX86Path, toolsVersion: toolsVersion) : 
+                    _analyzerConfiguration.BuildSettings.MSBuildPath;
+                if (!string.IsNullOrEmpty(msbuildExe))
+                {
+                    return msbuildExe;
+                }
+                Logger.LogError("Codelyzer wasn't able to retrieve the MSBuild path. Visual Studio and MSBuild might not be installed.");
+                return null;
+            }
+            else
+            {   // osx, linux, freeBSD
+                return Constants.MsBuildCommandName;
+            }
+        }
 
         private OSPlatform DetermineOSPlatform()
         {

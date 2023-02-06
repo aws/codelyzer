@@ -1,4 +1,5 @@
-﻿using Codelyzer.Analysis.Common;
+﻿using Codelyzer.Analysis.Analyzer;
+using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
@@ -799,6 +800,42 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         }
 
         [Test]
+        public async Task TestCSharpAndCPlusPlus()
+        {
+            string solutionPath = Directory.EnumerateFiles(downloadsDir, "CSharpAndCPlusPlus.sln", SearchOption.AllDirectories).FirstOrDefault();
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true
+                }
+            };
+
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            var results = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
+
+            Assert.AreEqual(results.Count, 1);
+        }
+
+        [Test]
         public async Task TestBuildOnlyFramework_Successfully()
         {
             var solutionPath = CopySolutionFolderToTemp("BuildableWebApi.sln");
@@ -1042,6 +1079,75 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             });
         }
 
+        [Test]
+        public async Task TestLineOfCodeCSharp()
+        {
+            string solutionPath = CopySolutionFolderToTemp("CoreMVC.sln");
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true
+                }
+            };
+
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            var results = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
+            Assert.AreEqual(184, results[0].ProjectResult.LinesOfCode);
+        }
+
+        [Test]
+        public async Task TestLineOfCodeVB()
+        {
+            string solutionPath = CopySolutionFolderToTemp("VBConsoleApp.sln");
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = false,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true
+                }
+            };
+
+            CodeAnalyzer analyzer = CodeAnalyzerFactory.GetAnalyzer(configuration, NullLogger.Instance);
+            var results = (await analyzer.AnalyzeSolution(solutionPath)).ToList();
+            Assert.AreEqual(232, results[0].ProjectResult.LinesOfCode);
+        }
         #region private methods
         private void DeleteDir(string path, int retries = 0)
         {

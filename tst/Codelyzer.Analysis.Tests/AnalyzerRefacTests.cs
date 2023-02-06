@@ -1980,7 +1980,67 @@ End Namespace");
             Assert.IsTrue(results.Count == 0);
         }
 
+        [Test]
+        public async Task TestLineOfCodeCSharp()
+        {
+            AnalyzerCLI cli = new AnalyzerCLI();
+            cli.Configuration = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    LambdaMethods = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    LoadBuildData = true,
+                    ReturnStatements = true,
+                    InterfaceDeclarations = true
+                }
+            };
+            string solutionPath = CopySolutionFolderToTemp("CoreMVC.sln");
+            var analyzerByLanguage = new CodeAnalyzerByLanguage(cli.Configuration, NullLogger.Instance);
+            var results = await analyzerByLanguage.AnalyzeSolution(solutionPath);
+            Assert.AreEqual(184, results[0].ProjectResult.LinesOfCode);
+        }
 
+        [Test]
+        public async Task TestLineOfCodeVB()
+        {
+            AnalyzerCLI cli = new AnalyzerCLI();
+            cli.Configuration = new AnalyzerConfiguration(LanguageOptions.Vb)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    LambdaMethods = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    LoadBuildData = true,
+                    ReturnStatements = true,
+                    InterfaceDeclarations = true
+                }
+            };
+            string solutionPath = CopySolutionFolderToTemp("VBConsoleApp.sln");
+            var analyzerByLanguage = new CodeAnalyzerByLanguage(cli.Configuration, NullLogger.Instance);
+            var results = await analyzerByLanguage.AnalyzeSolution(solutionPath);
+            Assert.AreEqual(232, results[0].ProjectResult.LinesOfCode);
+        }
         #region private methods
         private void DeleteDir(string path, int retries = 0)
         {

@@ -4,6 +4,9 @@ using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.VisualBasic;
 using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging;
+using System.Linq;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.VisualBasic;
 
 namespace Codelyzer.Analysis.Analyzer
 {
@@ -30,7 +33,11 @@ namespace Codelyzer.Analysis.Analyzer
 
             using VisualBasicRoslynProcessor processor = new VisualBasicRoslynProcessor(codeContext);
 
-            var result = processor.Visit(codeContext.SyntaxTree.GetRoot());
+            var result = (RootUstNode) processor.Visit(codeContext.SyntaxTree.GetRoot());
+
+            result.LinesOfCode = sourceFileBuildResult.SyntaxTree.GetRoot().DescendantTrivia()
+                .Where(t => t.IsKind(SyntaxKind.EndOfLineTrivia)).Count();
+
             return result as RootUstNode;
         }
     }

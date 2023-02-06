@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Codelyzer.Analysis.Build;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
+using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 
 namespace Codelyzer.Analysis.Analyzer
@@ -106,9 +107,7 @@ namespace Codelyzer.Analysis.Analyzer
             var analyzerResults = new List<AnalyzerResult>();
 
             WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
-
             var projectBuildResults = await builder.Build();
-
             foreach (var projectBuildResult in projectBuildResults)
             {
                 var workspaceResult = await Task.Run(() => AnalyzeProject(projectBuildResult));
@@ -166,10 +165,11 @@ namespace Codelyzer.Analysis.Analyzer
             }
             workspace.TargetFramework = projectResult.TargetFramework;
             workspace.TargetFrameworks = projectResult.TargetFrameworks;
-
+            workspace.LinesOfCode = 0;
             foreach (var fileBuildResult in projectResult.SourceFileBuildResults)
             {
                 var fileAnalysis = languageAnalyzer.AnalyzeFile(fileBuildResult, workspace.ProjectRootPath);
+                workspace.LinesOfCode += fileAnalysis.LinesOfCode;
                 workspace.SourceFileResults.Add(fileAnalysis);
             }
 
