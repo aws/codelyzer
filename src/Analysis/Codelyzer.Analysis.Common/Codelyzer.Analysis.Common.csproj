@@ -1,15 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>netstandard2.0</TargetFramework>
         <IsTestProject>false</IsTestProject>
         <RootNamespace>Codelyzer.Analysis.Common</RootNamespace>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Build" Version="17.0.0" />
+      <PackageReference Include="Microsoft.VisualStudio.Setup.Configuration.Interop" Version="3.1.2196" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-		<PackageReference Include="Microsoft.VisualStudio.Setup.Configuration.Interop" Version="3.1.2196" />
+      <PackageReference Include="NuGet.Packaging" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>

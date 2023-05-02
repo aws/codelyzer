@@ -8,7 +8,7 @@ namespace Codelyzer.Analysis
         public string Language;
         public int ConcurrentThreads = Constants.DefaultConcurrentThreads;
         public bool AnalyzeFailedProjects = false; 
-        public static List<string> DefaultBuildArguments = new()
+        public static List<string> DefaultBuildArguments = new List<string>()
         {
             Constants.RestorePackagesConfigArgument,
             Constants.RestoreArgument

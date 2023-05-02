@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Codelyzer.Analysis.Build;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
+using Codelyzer.Analysis.Model.Build;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 
-namespace Codelyzer.Analysis.Analyzer
+namespace Codelyzer.Analysis.Analyzers
 {
     public abstract class LanguageAnalyzer
     {
@@ -27,32 +26,22 @@ namespace Codelyzer.Analysis.Analyzer
             Logger = logger;
         }
 
-        public async Task<AnalyzerResult> AnalyzeFile(string filePath, AnalyzerResult analyzerResult)
+        public async Task<AnalyzerResult> AnalyzeFile(
+            string filePath,
+            ProjectBuildResult incrementalBuildResult,
+            AnalyzerResult analyzerResult)
         {
-            if (!File.Exists(filePath))
-            {
-                throw new FileNotFoundException(filePath);
-            }
+            var newSourceFileBuildResult =
+                incrementalBuildResult.SourceFileBuildResults.FirstOrDefault(sourceFile =>
+                    sourceFile.SourceFileFullPath == filePath);
 
-            var projectBuildResult = analyzerResult.ProjectBuildResult;
-            var oldSourceFileResult = analyzerResult.ProjectResult.SourceFileResults.FirstOrDefault(sourceFile => sourceFile.FileFullPath == filePath);
-
-            analyzerResult.ProjectResult.SourceFileResults.Remove(oldSourceFileResult);
-
-            ProjectBuildHandler projectBuildHandler = new ProjectBuildHandler(Logger,
-                analyzerResult.ProjectBuildResult.Project,
-                analyzerResult.ProjectBuildResult.Compilation,
-                analyzerResult.ProjectBuildResult.PrePortCompilation,
-                AnalyzerConfiguration);
-
-            analyzerResult.ProjectBuildResult = await projectBuildHandler.IncrementalBuild(filePath, analyzerResult.ProjectBuildResult);
-            var newSourceFileBuildResult = projectBuildResult.SourceFileBuildResults.FirstOrDefault(sourceFile => sourceFile.SourceFileFullPath == filePath);
-
-            var fileAnalysis = AnalyzeFile(newSourceFileBuildResult, analyzerResult.ProjectResult.ProjectRootPath);
+            var fileAnalysis = AnalyzeFile(newSourceFileBuildResult,
+                analyzerResult.ProjectResult.ProjectRootPath);
             analyzerResult.ProjectResult.SourceFileResults.Add(fileAnalysis);
 
             return analyzerResult;
         }
+
         public  async Task<IDEProjectResult> AnalyzeFile(string projectPath, string filePath, List<string> frameworkMetaReferences, List<string> coreMetaReferences)
         {
             var fileInfo = new Dictionary<string, string>();

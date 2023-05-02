@@ -34,7 +34,6 @@ namespace Codelyzer.Analysis.VisualBasic
         /// </summary>
         /// <param name="node">The node to start the traversal from</param>
         /// <returns></returns>
-        [return: MaybeNull]
         public override UstNode Visit(SyntaxNode node)
         {
             if (node == null)
@@ -65,7 +64,6 @@ namespace Codelyzer.Analysis.VisualBasic
             return RootNode;
         }
 
-        [return: MaybeNull]
         public override UstNode DefaultVisit(SyntaxNode node)
         {
             return null;

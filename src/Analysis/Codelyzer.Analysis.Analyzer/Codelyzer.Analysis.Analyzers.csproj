@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+	<LangVersion>8.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Codelyzer.Analysis.Common\Codelyzer.Analysis.Common.csproj" />
+    <ProjectReference Include="..\Codelyzer.Analysis.CSharp\Codelyzer.Analysis.CSharp.csproj" />
+    <ProjectReference Include="..\Codelyzer.Analysis.Model\Codelyzer.Analysis.Model.csproj" />
+    <ProjectReference Include="..\Codelyzer.Analysis.VisualBasic\Codelyzer.Analysis.VisualBasic.csproj" />
+    <ProjectReference Include="..\Codelyzer.Analysis.Workspace\Codelyzer.Analysis.Workspace.csproj" />
+  </ItemGroup>
+
+</Project>

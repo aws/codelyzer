@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Codelyzer.Analysis.Model;
 
 namespace Codelyzer.Analysis.Common
 {
@@ -15,29 +16,20 @@ namespace Codelyzer.Analysis.Common
         {
             System.IO.File.WriteAllText(path, data);
         }
-        
+
         public static async Task<string> WriteFileAsync(string dir, string file, string content)
         {
-            using (StreamWriter outputFile = new StreamWriter(Path.Combine(dir, file)) )
+            using (StreamWriter outputFile = new StreamWriter(Path.Combine(dir, file)))
             {
                 await outputFile.WriteAsync(content);
             }
 
             return Path.Combine(dir, file);
         }
-        
+
         public static string ReadFile(string pathFile)
         {
             return File.ReadAllText(pathFile);
-        }
-        
-        public static string GetRelativePath(string filePath, string dirPath)
-        {
-            var dirPathSeparator = Path.EndsInDirectorySeparator(dirPath) ? dirPath : 
-                Path.Combine(dirPath, Path.DirectorySeparatorChar.ToString());
-            
-            var path = filePath.Replace(dirPathSeparator, "");
-            return path;
         }
 
         public static void DirectoryCopy(string sourceDirPath, string destDirPath, bool copySubDirs = true)
@@ -122,7 +114,7 @@ namespace Codelyzer.Analysis.Common
                         .Root
                         .Descendants()
                         .Where(x => x.Name?.LocalName == "ProjectReference")
-                        .Select(p => Path.GetFullPath(p.Attribute("Include").Value, Path.GetDirectoryName(projectFile)).ToLower())
+                        .Select(p => GetFullPath(p.Attribute("Include").Value, Path.GetDirectoryName(projectFile)).ToLower())
                         .Distinct()
                         .ToHashSet();
                     result.Add(projectFile.ToLower(), projectReferenceNodes);
@@ -135,5 +127,15 @@ namespace Codelyzer.Analysis.Common
 
             return result;
         }
+
+        private static string GetFullPath(string path, string basePath)
+        {
+            string currentDirectory = Environment.CurrentDirectory;
+            Environment.CurrentDirectory = basePath;
+            string fullPath = Path.GetFullPath(path);
+            Environment.CurrentDirectory = currentDirectory;
+            return fullPath;
+        }
     }
+
 }

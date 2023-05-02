@@ -1,10 +1,9 @@
-﻿using Codelyzer.Analysis.Model;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Codelyzer.Analysis
+namespace Codelyzer.Analysis.Model.CodeGraph
 {
     public class CodeGraph
     {
@@ -122,7 +121,7 @@ namespace Codelyzer.Analysis
         public CodeGraph(ILogger logger)
         {
             Logger = logger;
-        }         
+        }
         public void Initialize(List<AnalyzerResult> analyzerResults)
         {
             projectWorkspaces = new HashSet<ProjectWorkspace>();
@@ -132,7 +131,7 @@ namespace Codelyzer.Analysis
             PopulateGraphs(analyzerResults);
         }
         private void PopulateGraphs(List<AnalyzerResult> analyzerResults)
-        {   
+        {
             try
             {
                 AddNodes(analyzerResults);
@@ -199,7 +198,7 @@ namespace Codelyzer.Analysis
 
                     projectReferences?.ForEach(projectReference =>
                     {
-                        var targetNode = ProjectNodes.FirstOrDefault(p => p.Identifier.Equals(projectReference.AssemblyLocation, StringComparison.InvariantCultureIgnoreCase)); 
+                        var targetNode = ProjectNodes.FirstOrDefault(p => p.Identifier.Equals(projectReference.AssemblyLocation, StringComparison.InvariantCultureIgnoreCase));
                         var edge = new Edge() { EdgeType = EdgeType.ProjectReference, TargetNode = targetNode, SourceNode = sourceNode };
                         sourceNode.OutgoingEdges.Add(edge);
                         targetNode.IncomingEdges.Add(edge);
@@ -213,7 +212,7 @@ namespace Codelyzer.Analysis
         }
         private void RemoveExternalEdges()
         {
-            var uniqueNamespaces = Graph.Where(n => n.NodeType == NodeType.Namespace).Select(n=>n.Identifier).Distinct().ToHashSet();
+            var uniqueNamespaces = Graph.Where(n => n.NodeType == NodeType.Namespace).Select(n => n.Identifier).Distinct().ToHashSet();
 
             ustNodeEdgeCandidates.ToList().ForEach(nodeAndChildren =>
             {
@@ -308,7 +307,7 @@ namespace Codelyzer.Analysis
                                 currentNode = Graph.FirstOrDefault(n => n.Equals(currentNode));
                             }
                             var children = InitializeNodesHelper(child, currentNode);
-                            children.ToList().ForEach(child => currentNode.ChildNodes.Add(child));                            
+                            children.ToList().ForEach(c => currentNode.ChildNodes.Add(c));
                         }
                         else
                         {
@@ -482,9 +481,9 @@ namespace Codelyzer.Analysis
             }
             return ustNodeEdgeCandidates[parentNode];
         }
-        private bool IsNode(UstNode ustNode) => (ustNode is NamespaceDeclaration || ustNode is ClassDeclaration || ustNode is InterfaceDeclaration
-            || ustNode is StructDeclaration || ustNode is EnumDeclaration || ustNode is RecordDeclaration || ustNode is MethodDeclaration);
-        private bool IsEdgeConnection(UstNode ustNode) => (ustNode is DeclarationNode || ustNode is MemberAccess || ustNode is InvocationExpression);
+        private bool IsNode(UstNode ustNode) => ustNode is NamespaceDeclaration || ustNode is ClassDeclaration || ustNode is InterfaceDeclaration
+            || ustNode is StructDeclaration || ustNode is EnumDeclaration || ustNode is RecordDeclaration || ustNode is MethodDeclaration;
+        private bool IsEdgeConnection(UstNode ustNode) => ustNode is DeclarationNode || ustNode is MemberAccess || ustNode is InvocationExpression;
     }
 
     public class Node
@@ -524,10 +523,10 @@ namespace Codelyzer.Analysis
         public override bool Equals(object obj)
         {
             var node = obj as Node;
-            if(node != null)
+            if (node != null)
             {
-                return node.Identifier == this.Identifier
-                    && node.NodeType == this.NodeType;
+                return node.Identifier == Identifier
+                    && node.NodeType == NodeType;
             }
             return false;
         }
@@ -550,12 +549,12 @@ namespace Codelyzer.Analysis
         public override bool Equals(object obj)
         {
             var edge = obj as Edge;
-            if(edge != null)
+            if (edge != null)
             {
-                return edge.Identifier == this.Identifier
-                    && edge.EdgeType == this.EdgeType
-                    && edge.SourceNode == this.SourceNode
-                    && edge.TargetNode == this.TargetNode;
+                return edge.Identifier == Identifier
+                    && edge.EdgeType == EdgeType
+                    && edge.SourceNode == SourceNode
+                    && edge.TargetNode == TargetNode;
             }
             return false;
         }

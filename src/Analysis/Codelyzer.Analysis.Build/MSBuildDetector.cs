@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace Codelyzer.Analysis.Common
+namespace Codelyzer.Analysis.Build
 {
     /// <summary>
     /// Detects the MSBuild Path that best matches the solution

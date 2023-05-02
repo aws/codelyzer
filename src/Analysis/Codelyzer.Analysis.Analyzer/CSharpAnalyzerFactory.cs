@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Codelyzer.Analysis.Analyzer
+namespace Codelyzer.Analysis.Analyzers
 {
-    class CSharpAnalyzerFactory : LanguageAnalyzerFactory
+    public class CSharpAnalyzerFactory : LanguageAnalyzerFactory
     {
         protected readonly AnalyzerConfiguration _analyzerConfiguration;
         protected readonly ILogger _logger;

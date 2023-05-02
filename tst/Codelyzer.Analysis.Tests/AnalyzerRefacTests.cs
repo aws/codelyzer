@@ -1,6 +1,7 @@
 using Codelyzer.Analysis.Analyzer;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
+using Codelyzer.Analysis.Model.CodeGraph;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using System;
@@ -819,8 +820,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         }
     }
 }");
-            var analyzer = analyzerByLanguage.GetLanguageAnalyzerByFileType(".cs");
-            result = await analyzer.AnalyzeFile(accountController.FileFullPath, result);
+            result = await analyzerByLanguage.AnalyzeFile(accountController.FileFullPath, result);
             var references = result.ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList();
             var updatedSourcefile = result.ProjectResult.SourceFileResults.FirstOrDefault(s => s.FileFullPath.Contains("AccountController.cs"));
         }
@@ -1893,9 +1893,8 @@ Namespace PortingParadise
         End Class
     End Class
 End Namespace");
-
-            var analyzer = analyzerByLanguage.GetLanguageAnalyzerByFileType(".vb");
-            result = await analyzer.AnalyzeFile(signalRNode.FileFullPath, result);
+            
+            result = await analyzerByLanguage.AnalyzeFile(signalRNode.FileFullPath, result);
             var references = result.ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList();
             var updatedSourcefile = result.ProjectResult.SourceFileResults.FirstOrDefault(s => s.FileFullPath.Contains("SignalR.vb"));
             Assert.IsNotNull(updatedSourcefile);

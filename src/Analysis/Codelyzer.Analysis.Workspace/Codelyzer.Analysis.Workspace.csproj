@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+	<LangVersion>8.0</LangVersion>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="D:\workplace\codelyzer\src\Codelyzer\LICENSE" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Codelyzer.Analysis.CSharp\Codelyzer.Analysis.CSharp.csproj" />
+    <ProjectReference Include="..\Codelyzer.Analysis.VisualBasic\Codelyzer.Analysis.VisualBasic.csproj" />
+  </ItemGroup>
+
+</Project>

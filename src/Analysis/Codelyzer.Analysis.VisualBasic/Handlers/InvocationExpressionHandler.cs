@@ -46,7 +46,7 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
                     var identifier = "";
                     var semanticType = "";
 
-                    if (argumentSyntax is not OmittedArgumentSyntax)
+                    if (argumentSyntax.GetType() != typeof(OmittedArgumentSyntax))
                     {
                         identifier = argumentSyntax.GetExpression().ToString();
                         semanticType = SemanticHelper.GetSemanticType(argumentSyntax.GetExpression(), SemanticModel);

@@ -27,7 +27,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 ClassDeclaration.Reference.Version = GetAssemblyVersion(classSymbol);
                 ClassDeclaration.Reference.AssemblySymbol = classSymbol.ContainingAssembly;
 
-                ClassDeclaration.BaseList = new();
+                ClassDeclaration.BaseList = new System.Collections.Generic.List<string>();
                 if (classSymbol.BaseType != null)
                 {
                     var baseTypeSymbol = classSymbol.BaseType;

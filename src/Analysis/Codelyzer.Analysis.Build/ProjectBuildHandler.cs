@@ -1,5 +1,6 @@
 using Buildalyzer;
 using Codelyzer.Analysis.Model;
+using Codelyzer.Analysis.Model.Build;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Editing;
@@ -15,6 +16,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using Codelyzer.Analysis.Common;
 using Microsoft.CodeAnalysis.VisualBasic;
 using Constants = Codelyzer.Analysis.Common.Constants;
 using LanguageVersion = Microsoft.CodeAnalysis.CSharp.LanguageVersion;
@@ -243,9 +245,18 @@ namespace Codelyzer.Analysis.Build
 
             if (trees.Count != 0)
             {
-                Compilation = (vbOptions != null)?
-                        VisualBasicCompilation.Create(Project.AssemblyName,trees, meta, vbOptions):
-                        (options!= null)? CSharpCompilation.Create(Project.AssemblyName, trees, meta, options) : null;
+                if (vbOptions != null)
+                {
+                    Compilation = VisualBasicCompilation.Create(Project.AssemblyName, trees, meta, vbOptions);
+                }
+                else if (options != null)
+                {
+                    Compilation = CSharpCompilation.Create(Project.AssemblyName, trees, meta, options);
+                }
+                else
+                {
+                    Compilation = null;
+                }
             }
         }
         private void SetSyntaxCompilation(List<MetadataReference> metadataReferences)

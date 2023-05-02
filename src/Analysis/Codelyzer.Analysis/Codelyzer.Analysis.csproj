@@ -16,6 +16,8 @@
     </ItemGroup>
 
     <ItemGroup>
+      <!--<ProjectReference Include="..\Codelyzer.Analysis.Build\Codelyzer.Analysis.Build.csproj" />-->
+      <ProjectReference Include="..\..\Codelyzer.Analysis.Analyzer\Codelyzer.Analysis.Analyzers.csproj" />
       <ProjectReference Include="..\Codelyzer.Analysis.Build\Codelyzer.Analysis.Build.csproj" />
       <ProjectReference Include="..\Codelyzer.Analysis.CSharp\Codelyzer.Analysis.CSharp.csproj" />
       <ProjectReference Include="..\Codelyzer.Analysis.VisualBasic\Codelyzer.Analysis.VisualBasic.csproj" />

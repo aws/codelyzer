@@ -10,6 +10,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp;
+using Codelyzer.Analysis.Model.Build;
+using Codelyzer.Analysis.Model.CodeGraph;
 
 namespace Codelyzer.Analysis
 {

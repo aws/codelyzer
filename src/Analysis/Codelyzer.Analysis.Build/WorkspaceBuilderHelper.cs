@@ -632,10 +632,6 @@ namespace Codelyzer.Analysis.Build
             {
                 return OSPlatform.Linux;
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-            {
-                return OSPlatform.FreeBSD;
-            }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 return OSPlatform.OSX;
