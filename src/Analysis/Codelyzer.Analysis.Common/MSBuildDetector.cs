@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Setup.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -203,7 +204,7 @@ namespace Codelyzer.Analysis.Common
 
         private string GetMsBuildPathFromVSDirectory(DirectoryInfo vsDirectory, List<string> editions, string[] targets, string projectToolsVersion)
         {
-            double.TryParse(projectToolsVersion, out double projectMsbuildVersionNumber);
+            TryParseVersionString(projectToolsVersion, out double projectMsbuildVersionNumber);
 
             if (vsDirectory.Exists)
             {
@@ -212,18 +213,16 @@ namespace Codelyzer.Analysis.Common
                     .SelectMany(msBuildDir => msBuildDir.GetFiles("MSBuild.exe", SearchOption.AllDirectories))
                     .OrderByDescending(msbuild => FileVersionInfo.GetVersionInfo(msbuild.FullName).FileVersion)
                     .ThenBy(msbuild => editions.IndexOf(GetEditionType(msbuild.DirectoryName, editions)))
-                    .ThenBy(msbuild =>
+                    .ThenByDescending(msbuild =>
                     {
                         var folderName = GetVersionFolder(msbuild.FullName);
-                        if (folderName.ToLower() == "current") return -100;
-                        else
-                        {
-                            if (double.TryParse(folderName, out double result))
-                            {
-                                return -1 * result;
-                            }
-                            return -100;
-                        }
+                        // Prioritize any "current" version first
+                        if (folderName.Equals("current", StringComparison.OrdinalIgnoreCase))
+                            return double.MaxValue;
+                        // Prioritize in version order or last if the version number cannot be parsed
+                        return TryParseVersionString(folderName, out var folderVersion)
+                            ? folderVersion
+                            : double.MinValue;
                     })
                     .Where(msbuild =>
                     {
@@ -233,18 +232,15 @@ namespace Codelyzer.Analysis.Common
                     })
                     .ToList();
 
-
-
                 if (projectMsbuildVersionNumber > 0)
                 {
                     // If we have a tools version, use that to remove any versions of msbuild that are earlier than the project version
                     msBuildExePath = msBuildExePath?.Where(
                         msbuild =>
                         {
-                            var fileVersionArray = FileVersionInfo.GetVersionInfo(msbuild.FullName).FileVersion?.Split('.');
-                            var fileVersionString = fileVersionArray.Length > 1 ? String.Join(".", fileVersionArray[0], fileVersionArray[1]) : fileVersionArray[0];
-                            double.TryParse(fileVersionString, out double msBuildVersion);
-                            return msBuildVersion >= projectMsbuildVersionNumber;
+                            var fileVersion = FileVersionInfo.GetVersionInfo(msbuild.FullName).FileVersion;
+                            return TryParseVersionString(fileVersion, out var msBuildVersion) &&
+                                   msBuildVersion >= projectMsbuildVersionNumber;
                         }
                         )?.ToList();
                 }
@@ -260,18 +256,21 @@ namespace Codelyzer.Analysis.Common
                 List<FileInfo> msBuildExePath = vsDirectory
                     .GetFiles("MSBuild.exe", SearchOption.AllDirectories)
                     .OrderByDescending(msbuild => FileVersionInfo.GetVersionInfo(msbuild.FullName).FileVersion)
-                    .ThenBy(msbuild =>
+                    .ThenByDescending(msbuild =>
                     {
                         var folderName = GetVersionFolder(msbuild.FullName);
-                        if (folderName.ToLower() == "current") return 1;
-                        else return -Convert.ToDouble(folderName);
-
+                        // Prioritize any "current" version first
+                        if (folderName.Equals("current", StringComparison.OrdinalIgnoreCase))
+                            return double.MaxValue;
+                        // Prioritize in version order or last if the version number cannot be parsed
+                        return TryParseVersionString(folderName, out var msBuildVersion)
+                            ? msBuildVersion
+                            : double.MinValue;
                     })
                     .Where(msbuild =>
                     {
                         var targetsWithPath = GetTargetsWithPath(msbuild.DirectoryName, targets);
-                        if (targetsWithPath.TrueForAll(File.Exists)) return true;
-                        return false;
+                        return targetsWithPath.TrueForAll(File.Exists);
                     })
                     .ToList();
                 return msBuildExePath?.FirstOrDefault()?.FullName;
@@ -306,6 +305,34 @@ namespace Codelyzer.Analysis.Common
                 targetsWithPath.Add(Path.Combine(vsPath, target));
             }
             return targetsWithPath;
+        }
+
+        private static bool TryParseVersionString(string s, out double version)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                version = 0;
+                return false;
+            }
+
+            // Try parsing as a proper version string
+            if (Version.TryParse(s, out var parsedVersion))
+            {
+                // Convert "Major.Minor" to a double
+                if (parsedVersion.Minor > 0)
+                {
+                    var minor = (double)parsedVersion.Minor;
+                    version = parsedVersion.Major + minor / Math.Pow(10, 1 + Math.Floor(Math.Log10(minor)));
+                }
+                else
+                {
+                    version = parsedVersion.Major;
+                }
+                return true;
+            }
+
+            // Fallback: parse as double in case it's only a single integer
+            return double.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out version);
         }
     }
 }
