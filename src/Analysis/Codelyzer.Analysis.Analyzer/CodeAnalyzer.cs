@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Codelyzer.Analysis.Model.Build;
-using Codelyzer.Analysis.VsWorkspace;
+using Codelyzer.Analysis.Workspace;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 

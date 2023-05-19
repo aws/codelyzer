@@ -31,9 +31,9 @@ namespace Codelyzer.Analysis.Common
                 throw;
             }
         }
-        public List<PortableExecutableReference> LoadMetadataReferences
-            (XDocument projectFile,
-                out List<string> missingMetaReferences)
+        public List<PortableExecutableReference> LoadMetadataReferences(
+            XDocument projectFile,
+            out List<string> missingMetaReferences)
         {
             var references = new List<PortableExecutableReference>();
             missingMetaReferences = new List<string>();
@@ -80,7 +80,7 @@ namespace Codelyzer.Analysis.Common
                 .Split(Environment.NewLine.ToCharArray(), StringSplitOptions.RemoveEmptyEntries)?
                 .Where(s => !(s.Contains("<!-") || s.Contains("-->")))
                 .Select(s => s.Trim())
-                .ToList();
+                .ToList() ?? new List<string>();
 
             return fileReferences;
         }

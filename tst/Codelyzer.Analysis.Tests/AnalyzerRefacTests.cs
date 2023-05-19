@@ -48,22 +48,10 @@ namespace Codelyzer.Analysis.Tests
 
         private void DownloadTestProjects()
         {
-            DownloadFromGitHub(@"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/671a629cab0382ecd6dec4833b3868f96f89da50.zip", "ASPNET-WebAPI-Sample-671a629cab0382ecd6dec4833b3868f96f89da50");
-            DownloadFromGitHub(@"https://github.com/Duikmeester/MvcMusicStore/archive/e274968f2827c04cfefbe6493f0a784473f83f80.zip", "MvcMusicStore-e274968f2827c04cfefbe6493f0a784473f83f80");
-            DownloadFromGitHub(@"https://github.com/nopSolutions/nopCommerce/archive/73567858b3e3ef281d1433d7ac79295ebed47ee6.zip", "nopCommerce-73567858b3e3ef281d1433d7ac79295ebed47ee6");
-            DownloadFromGitHub(@"https://github.com/marknfawaz/TestProjects/zipball/master/", "TestProjects-latest");
-        }
-
-        private void DownloadFromGitHub(string link, string name)
-        {
-            using (var client = new HttpClient())
-            {
-                var content = client.GetByteArrayAsync(link).Result;
-                var fileName = Path.Combine(downloadsDir, string.Concat(name, @".zip"));
-                File.WriteAllBytes(fileName, content);
-                ZipFile.ExtractToDirectory(fileName, downloadsDir, true);
-                File.Delete(fileName);
-            }
+            DownloadFromGitHub(@"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/671a629cab0382ecd6dec4833b3868f96f89da50.zip", "ASPNET-WebAPI-Sample-671a629cab0382ecd6dec4833b3868f96f89da50", downloadsDir);
+            DownloadFromGitHub(@"https://github.com/Duikmeester/MvcMusicStore/archive/e274968f2827c04cfefbe6493f0a784473f83f80.zip", "MvcMusicStore-e274968f2827c04cfefbe6493f0a784473f83f80", downloadsDir);
+            DownloadFromGitHub(@"https://github.com/nopSolutions/nopCommerce/archive/73567858b3e3ef281d1433d7ac79295ebed47ee6.zip", "nopCommerce-73567858b3e3ef281d1433d7ac79295ebed47ee6", downloadsDir);
+            DownloadFromGitHub(@"https://github.com/marknfawaz/TestProjects/zipball/master/", "TestProjects-latest", downloadsDir);
         }
 
         [Test]
@@ -2041,24 +2029,6 @@ End Namespace");
             Assert.AreEqual(232, results[0].ProjectResult.LinesOfCode);
         }
         #region private methods
-        private void DeleteDir(string path, int retries = 0)
-        {
-            if (retries <= 10)
-            {
-                try
-                {
-                    if (Directory.Exists(path))
-                    {
-                        Directory.Delete(path, true);
-                    }
-                }
-                catch (Exception)
-                {
-                    Thread.Sleep(10000);
-                    DeleteDir(path, retries + 1);
-                }
-            }
-        }
 
         private static IEnumerable<TestCaseData> TestCliMetaDataSource
         {

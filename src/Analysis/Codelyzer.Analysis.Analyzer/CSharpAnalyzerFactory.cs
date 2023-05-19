@@ -9,17 +9,17 @@ namespace Codelyzer.Analysis.Analyzers
 {
     public class CSharpAnalyzerFactory : LanguageAnalyzerFactory
     {
-        protected readonly AnalyzerConfiguration _analyzerConfiguration;
-        protected readonly ILogger _logger;
+        protected readonly AnalyzerConfiguration AnalyzerConfiguration;
+        protected readonly ILogger Logger;
 
         public CSharpAnalyzerFactory(AnalyzerConfiguration analyzerConfiguration, ILogger logger)
         {
-            _analyzerConfiguration = analyzerConfiguration;
-            _logger = logger;
+            AnalyzerConfiguration = analyzerConfiguration;
+            Logger = logger;
         }
         public override LanguageAnalyzer GetLanguageAnalyzer()
         {
-            return new CSharpAnalyzer(_analyzerConfiguration, _logger);
+            return new CSharpAnalyzer(AnalyzerConfiguration, Logger);
         }
     }
 

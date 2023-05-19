@@ -10,9 +10,9 @@ using Codelyzer.Analysis.Common;
 using Microsoft.Build.Construction;
 using Codelyzer.Analysis.Model;
 
-namespace Codelyzer.Analysis.VsWorkspace
+namespace Codelyzer.Analysis.Workspace
 {
-    public class WorkspaceHelper
+    public class WorkspaceHelper : IWorkspaceHelper
     {
         public async Task<List<ProjectBuildResult>> GetProjectBuildResults(Solution solution)
         {
@@ -38,7 +38,7 @@ namespace Codelyzer.Analysis.VsWorkspace
             }
         }
 
-        public async Task<ProjectBuildResult> GetProjectBuildResult(Project project, Dictionary<string, ProjectInSolution> projectMap)
+        private async Task<ProjectBuildResult> GetProjectBuildResult(Project project, Dictionary<string, ProjectInSolution> projectMap)
         {
             var compilation = await project.GetCompilationAsync() ?? throw new Exception("Get compilation failed");
 
