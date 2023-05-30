@@ -28,6 +28,25 @@ namespace Codelyzer.Analysis.Analyzers
             var projectBuildResults = await new WorkspaceHelper(Logger).GetProjectBuildResults(solution);
             return await Analyze(projectBuildResults);
         }
+        
+        public async IAsyncEnumerable<AnalyzerResult> AnalyzeGeneratorAsync(Solution solution)
+        {
+            var projectBuildResultEnumerator = new WorkspaceHelper(Logger)
+                .GetProjectBuildResultsGeneratorAsync(solution)
+                .GetAsyncEnumerator();
+            try
+            {
+                while (await projectBuildResultEnumerator.MoveNextAsync().ConfigureAwait(false))
+                {
+                    var projectBuildResult = projectBuildResultEnumerator.Current;
+                    yield return await AnalyzeProjectBuildResult(projectBuildResult);
+                }
+            }
+            finally
+            {
+                await projectBuildResultEnumerator.DisposeAsync();
+            }
+        }
 
         public async Task<List<AnalyzerResult>> Analyze(IEnumerable<ProjectBuildResult> projectBuildResults)
         {

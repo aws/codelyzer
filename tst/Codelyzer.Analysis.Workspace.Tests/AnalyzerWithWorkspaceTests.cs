@@ -8,6 +8,7 @@ using Codelyzer.Analysis.Analyzer;
 using Microsoft.Extensions.Logging.Abstractions;
 using Codelyzer.Analysis.Model;
 using Microsoft.Build.Locator;
+using AnalyzerResult = Codelyzer.Analysis.Model.AnalyzerResult;
 
 namespace Codelyzer.Analysis.Workspace.Tests
 {
@@ -43,97 +44,121 @@ namespace Codelyzer.Analysis.Workspace.Tests
         }
 
         [Test]
-        public async Task TestOwinParadise()
+        [TestCase("OwinParadise.sln", "OwinExtraApi.cs")]
+        public async Task TestAnalyze(string solutionName, string fileName)
         {
-            string solutionPath = CopySolutionFolderToTemp("OwinParadise.sln", _downloadsDir, _tempDir);
-
-            FileAssert.Exists(solutionPath);
-
-            var configuration = new AnalyzerConfiguration(LanguageOptions.CSharp);
-            SetupDefaultAnalyzerConfiguration(configuration);
+            var (solutionPath, configuration, expectedResults) = CommonTestSetup(solutionName);
 
             var codeAnalyzerByLanguage = new CodeAnalyzerByLanguage(configuration, NullLogger.Instance);
-            var getCodeAnalyzerByLanguageResults = codeAnalyzerByLanguage.Analyze(solutionPath);
-
             var codeAnalyzer = new Analyzers.CodeAnalyzer(configuration, NullLogger.Instance);
             var solution = await GetWorkspaceSolution(solutionPath);
             var results = await codeAnalyzer.Analyze(solution);
+            var getCodeAnalyzerByLanguageResults = codeAnalyzerByLanguage.Analyze(solutionPath);
             var result = results.FirstOrDefault();
-            Assert.True(result != null);
+            Assert.IsNotNull(result);
             Assert.False(result.ProjectBuildResult.IsSyntaxAnalysis);
-            Assert.AreEqual(31, result.ProjectResult.ExternalReferences.NugetReferences.Count);
+            Assert.That(result.ProjectResult.ExternalReferences.NugetReferences,
+                Has.Count.EqualTo(expectedResults["NugetReferencesCount"]));
             
-            // todo fix this. there should be sdk references
-            //Assert.AreEqual(14, result.ProjectResult.ExternalReferences.SdkReferences.Count);
-            Assert.AreEqual(14, result.ProjectResult.SourceFiles.Count);
+            Assert.That(result.ProjectResult.SourceFiles, Has.Count.EqualTo(expectedResults["SourceFilesCount"]));
 
-            var owinExtraApi = result.ProjectResult.SourceFileResults.FirstOrDefault(
-                    f => f.FilePath.EndsWith("OwinExtraApi.cs"));
-            Assert.NotNull(owinExtraApi);
-
-            var blockStatements = owinExtraApi.AllBlockStatements();
-            var classDeclarations = owinExtraApi.AllClasses();
-            var expressionStatements = owinExtraApi.AllExpressions();
-            var invocationExpressions = owinExtraApi.AllInvocationExpressions();
-            var literalExpressions = owinExtraApi.AllLiterals();
-            var methodDeclarations = owinExtraApi.AllMethods();
-            var constructorDeclarations = owinExtraApi.AllConstructors();
-            var returnStatements = owinExtraApi.AllReturnStatements();
-            var annotations = owinExtraApi.AllAnnotations();
-            var namespaceDeclarations = owinExtraApi.AllNamespaces();
-            var objectCreationExpressions = owinExtraApi.AllObjectCreationExpressions();
-            var usingDirectives = owinExtraApi.AllUsingDirectives();
-            var arguments = owinExtraApi.AllArguments();
-            var memberAccess = owinExtraApi.AllMemberAccessExpressions();
-
-            Assert.AreEqual(2, blockStatements.Count);
-            Assert.AreEqual(1, classDeclarations.Count);
-            Assert.AreEqual(19, expressionStatements.Count);
-            Assert.AreEqual(14, invocationExpressions.Count);
-            Assert.AreEqual(5, literalExpressions.Count);
-            Assert.AreEqual(2, methodDeclarations.Count);
-            Assert.AreEqual(0, returnStatements.Count);
-            Assert.AreEqual(0, annotations.Count);
-            Assert.AreEqual(1, namespaceDeclarations.Count);
-            Assert.AreEqual(8, objectCreationExpressions.Count);
-            Assert.AreEqual(10, usingDirectives.Count);
-            Assert.AreEqual(14, arguments.Count);
-            Assert.AreEqual(6, memberAccess.Count);
+            var fileUstNode = result.ProjectResult.SourceFileResults.FirstOrDefault(
+                    f => f.FilePath.EndsWith(fileName));
+            Assert.NotNull(fileUstNode);
+            
+            var classDeclarations = fileUstNode.AllClasses();
+            var methodDeclarations = fileUstNode.AllMethods();
+            
+            VerifyFileUstNode(fileUstNode, expectedResults);
 
             var semanticMethodSignatures = methodDeclarations.Select(m => m.SemanticSignature);
-            Assert.True(semanticMethodSignatures.Any(methodSignature => string.Compare(
-                "public PortingParadise.OwinExtraApi.OwinAuthorization(IAuthorizationRequirement)",
+            Assert.That(semanticMethodSignatures.Any(methodSignature => string.Compare(
+                expectedResults["MethodSignature"].ToString(),
                 methodSignature,
-                StringComparison.InvariantCulture) == 0));
+                StringComparison.InvariantCulture) == 0), Is.True);
 
-            var houseControllerClass = classDeclarations.First(c => c.Identifier == "OwinExtraApi");
-            Assert.AreEqual("public", houseControllerClass.Modifiers);
+            var houseControllerClass = classDeclarations.First(c =>
+                c.Identifier == expectedResults["ClassDeclarationIdentifier"].ToString());
+            Assert.That(houseControllerClass.Modifiers, Is.EqualTo(expectedResults["ClassDeclarationModifier"]));
 
             var oldResults = await getCodeAnalyzerByLanguageResults;
-            var oldResult = results.FirstOrDefault();
-            Assert.IsNotNull(oldResult);
-
-            VerifyWorkspaceResults(oldResult, result, "OwinExtraApi.cs");
+            var oldResult = oldResults.FirstOrDefault();
+            Assert.That(oldResult, Is.Not.Null);
+            VerifyWorkspaceResults(oldResult, result, fileName);
 
             var languageAnalyzer = codeAnalyzerByLanguage.GetLanguageAnalyzerByFileType(".cs");
             var fileResult = languageAnalyzer.AnalyzeFile(
-                owinExtraApi.FilePath,
+                fileUstNode.FilePath,
                 results.First().ProjectBuildResult,
                 results.First());
-            Assert.IsNotNull(fileResult);
+            Assert.That(fileResult, Is.Not.Null);
         }
 
-        private bool VerifyWorkspaceResults(
+        [Test]
+        [TestCase("OwinParadise.sln", "OwinExtraApi.cs")]
+        public async Task TestAnalyzeGenerator(string solutionName, string fileName)
+        {
+            var (solutionPath, configuration, expectedResults) = CommonTestSetup(solutionName);
+            
+            var getSolutionTask = GetWorkspaceSolution(solutionPath);
+            
+            var codeAnalyzerByLanguage = new CodeAnalyzerByLanguage(configuration, NullLogger.Instance);
+            var codeAnalyzer = new Analyzers.CodeAnalyzer(configuration, NullLogger.Instance);
+            
+            var resultAsyncEnumerable = codeAnalyzer.AnalyzeGeneratorAsync(await getSolutionTask);
+            var results = new List<AnalyzerResult>();
+            var resultEnumerator = resultAsyncEnumerable.GetAsyncEnumerator();
+            while (await resultEnumerator.MoveNextAsync())
+            {
+                results.Add(resultEnumerator.Current);
+            }
+            var codeAnalyzerByLanguageResults = await codeAnalyzerByLanguage.Analyze(solutionPath);
+            VerifyWorkspaceResults(codeAnalyzerByLanguageResults.First(), results.First(), fileName);
+        }
+
+        private (string, AnalyzerConfiguration, Dictionary<string, object>) CommonTestSetup(string solutionName)
+        {
+            string solutionPath = CopySolutionFolderToTemp(solutionName, _downloadsDir, _tempDir);
+            FileAssert.Exists(solutionPath);
+            
+            var expectedResults = ExpectedResults.GetExpectedAnalyzerResults(solutionName);
+            var configuration = new AnalyzerConfiguration(LanguageOptions.CSharp);
+            SetupDefaultAnalyzerConfiguration(configuration);
+            
+            return (solutionPath, configuration, expectedResults);
+        }
+        
+        private void VerifyFileUstNode(RootUstNode fileUstNode, Dictionary<string, object> expectedResults)
+        {
+            Assert.That(fileUstNode.AllBlockStatements(), Has.Count.EqualTo(expectedResults["BlockStatementsCount"]));
+            Assert.That(fileUstNode.AllClasses(), Has.Count.EqualTo(expectedResults["ClassesCount"]));
+            Assert.That(fileUstNode.AllExpressions(), Has.Count.EqualTo(expectedResults["ExpressionsCount"]));
+            Assert.That(fileUstNode.AllInvocationExpressions(),
+                Has.Count.EqualTo(expectedResults["InvocationExpressionsCount"]));
+            Assert.That(fileUstNode.AllLiterals(), Has.Count.EqualTo(expectedResults["LiteralExpressionsCount"]));
+            Assert.That(fileUstNode.AllMethods(), Has.Count.EqualTo(expectedResults["MethodsCount"]));
+            Assert.That(fileUstNode.AllReturnStatements(), Has.Count.EqualTo(expectedResults["ReturnStatementsCount"]));
+            Assert.That(fileUstNode.AllAnnotations(), Has.Count.EqualTo(expectedResults["AnnotationsCount"]));
+            Assert.That(fileUstNode.AllNamespaces(), Has.Count.EqualTo(expectedResults["NamespacesCount"]));
+            Assert.That(fileUstNode.AllObjectCreationExpressions(),
+                Has.Count.EqualTo(expectedResults["ObjectCreationCount"]));
+            Assert.That(fileUstNode.AllUsingDirectives(), Has.Count.EqualTo(expectedResults["UsingDirectivesCount"]));
+            Assert.That(fileUstNode.AllArguments(), Has.Count.EqualTo(expectedResults["ArgumentsCount"]));
+            Assert.That(fileUstNode.AllMemberAccessExpressions(),
+                Has.Count.EqualTo(expectedResults["MemberAccessExpressionsCount"]));
+        }
+
+        private void VerifyWorkspaceResults(
             AnalyzerResult buildalyzerResult,
             AnalyzerResult workspaceResult,
             string fileName)
         {
-            Assert.AreEqual(buildalyzerResult.ProjectResult.ExternalReferences.NugetReferences.Count,
-                workspaceResult.ProjectResult.ExternalReferences.NugetReferences.Count);
-            Assert.AreEqual(buildalyzerResult.ProjectResult.ExternalReferences.SdkReferences.Count
-                , workspaceResult.ProjectResult.ExternalReferences.SdkReferences.Count);
-            Assert.AreEqual(buildalyzerResult.ProjectResult.SourceFiles.Count, 
-                workspaceResult.ProjectResult.SourceFiles.Count);
+            Assert.That(workspaceResult.ProjectResult.ExternalReferences.NugetReferences.Count,
+                Is.EqualTo(buildalyzerResult.ProjectResult.ExternalReferences.NugetReferences.Count));
+            Assert.That(workspaceResult.ProjectResult.ExternalReferences.SdkReferences.Count,
+                Is.EqualTo(buildalyzerResult.ProjectResult.ExternalReferences.SdkReferences.Count));
+            Assert.That(workspaceResult.ProjectResult.SourceFiles.Count,
+                Is.EqualTo(buildalyzerResult.ProjectResult.SourceFiles.Count));
 
             var buildalyzerSourceFileResult =
                 buildalyzerResult.ProjectResult.SourceFileResults.FirstOrDefault(f =>
@@ -141,29 +166,24 @@ namespace Codelyzer.Analysis.Workspace.Tests
             var workspaceSourceFileResult =
                 workspaceResult.ProjectResult.SourceFileResults.FirstOrDefault(f => 
                     f.FilePath.EndsWith(fileName));
-
-            Assert.NotNull(buildalyzerSourceFileResult);
-            Assert.NotNull(workspaceSourceFileResult);
-
-            Assert.AreEqual(buildalyzerSourceFileResult.AllBlockStatements(),
-                workspaceSourceFileResult.AllBlockStatements());
-            Assert.AreEqual(buildalyzerSourceFileResult.AllClasses(),
-                workspaceSourceFileResult.AllClasses());
-            Assert.AreEqual(buildalyzerSourceFileResult.AllExpressions(),
-                workspaceSourceFileResult.AllExpressions());
-            Assert.AreEqual(buildalyzerSourceFileResult.AllInvocationExpressions(),
-                workspaceSourceFileResult.AllInvocationExpressions());
-            Assert.AreEqual(buildalyzerSourceFileResult.AllLiterals(),
-                workspaceSourceFileResult.AllLiterals());
-            Assert.AreEqual(buildalyzerSourceFileResult.AllMethods(),
-                workspaceSourceFileResult.AllMethods());
-            Assert.AreEqual(buildalyzerSourceFileResult.AllObjectCreationExpressions(),
-                workspaceSourceFileResult.AllObjectCreationExpressions());
-            Assert.AreEqual(buildalyzerSourceFileResult.AllUsingDirectives(),
-                workspaceSourceFileResult.AllUsingDirectives());
-            Assert.AreEqual(buildalyzerSourceFileResult.AllMemberAccessExpressions(),
-                workspaceSourceFileResult.AllMemberAccessExpressions());
-            return true;
+            
+            Assert.That(buildalyzerSourceFileResult, Is.Not.Null);
+            Assert.That(workspaceSourceFileResult, Is.Not.Null);
+            Assert.That(workspaceSourceFileResult.AllBlockStatements(),
+                Is.EqualTo(buildalyzerSourceFileResult.AllBlockStatements()));
+            Assert.That(workspaceSourceFileResult.AllClasses(), Is.EqualTo(buildalyzerSourceFileResult.AllClasses()));
+            Assert.That(workspaceSourceFileResult.AllExpressions(),
+                Is.EqualTo(buildalyzerSourceFileResult.AllExpressions()));
+            Assert.That(workspaceSourceFileResult.AllInvocationExpressions(),
+                Is.EqualTo(buildalyzerSourceFileResult.AllInvocationExpressions()));
+            Assert.That(workspaceSourceFileResult.AllLiterals(), Is.EqualTo(buildalyzerSourceFileResult.AllLiterals()));
+            Assert.That(workspaceSourceFileResult.AllMethods(), Is.EqualTo(buildalyzerSourceFileResult.AllMethods()));
+            Assert.That(workspaceSourceFileResult.AllObjectCreationExpressions(),
+                Is.EqualTo(buildalyzerSourceFileResult.AllObjectCreationExpressions()));
+            Assert.That(workspaceSourceFileResult.AllUsingDirectives(),
+                Is.EqualTo(buildalyzerSourceFileResult.AllUsingDirectives()));
+            Assert.That(workspaceSourceFileResult.AllMemberAccessExpressions(),
+                Is.EqualTo(buildalyzerSourceFileResult.AllMemberAccessExpressions()));
         }
 
     }
