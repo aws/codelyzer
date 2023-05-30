@@ -9,16 +9,26 @@ using System.Threading.Tasks;
 using Codelyzer.Analysis.Common;
 using Microsoft.Build.Construction;
 using Codelyzer.Analysis.Model;
+using Microsoft.Extensions.Logging;
 
 namespace Codelyzer.Analysis.Workspace
 {
     public class WorkspaceHelper : IWorkspaceHelper
     {
+        private ILogger _logger;
+        private ProjectBuildHelper _projectBuildHelper;
+
+        public WorkspaceHelper(ILogger logger)
+        {
+            _logger = logger;
+            _projectBuildHelper = new ProjectBuildHelper(_logger);
+        }
+        
         public async Task<List<ProjectBuildResult>> GetProjectBuildResults(Solution solution)
         {
             var buildResults = new List<ProjectBuildResult>();
 
-            var projectMap = new ProjectBuildHelper().GetProjectInSolutionObjects(solution.FilePath);
+            var projectMap = _projectBuildHelper.GetProjectInSolutionObjects(solution.FilePath);
 
             foreach (var project in solution.Projects)
             {
@@ -30,7 +40,8 @@ namespace Codelyzer.Analysis.Workspace
 
         public async IAsyncEnumerable<ProjectBuildResult> GetProjectBuildResultsGeneratorAsync(Solution solution)
         {
-            var projectMap = new ProjectBuildHelper().GetProjectInSolutionObjects(solution.FilePath);
+            var projectMap = _projectBuildHelper
+                .GetProjectInSolutionObjects(solution.FilePath);
 
             foreach (var project in solution.Projects)
             {
@@ -44,7 +55,8 @@ namespace Codelyzer.Analysis.Workspace
 
             // await SetCompilation(); maybe we should refactor the fallback compilation? but with vs workspace, we shouldn't need this faillback
 
-            var (prePortCompilation, prePortMetaReferences, missingMetaReferences) = await GetPrePortCompilation(project);
+            var (prePortCompilation, prePortMetaReferences, missingMetaReferences) =
+                await _projectBuildHelper.GetPrePortCompilation(project);
             var projectBuildResult = new ProjectBuildResult
             {
                 BuildErrors = compilation.GetDiagnostics()
@@ -87,32 +99,11 @@ namespace Codelyzer.Analysis.Workspace
                 projectBuildResult.SourceFiles.Add(sourceFilePath);
             }
 
-            projectBuildResult.ExternalReferences = new ProjectBuildHelper().GetExternalReferences(
+            projectBuildResult.ExternalReferences = _projectBuildHelper.GetExternalReferences(
                 projectBuildResult?.Compilation,
                 projectBuildResult?.Project);
 
             return projectBuildResult ?? new ProjectBuildResult();
-        }
-
-        private static async Task<(Compilation?, List<string?>, List<string>)> GetPrePortCompilation(Project project )
-        {
-            var projectBuildHelper = new ProjectBuildHelper();
-            var projectFile = projectBuildHelper.LoadProjectFile(project.FilePath);
-            if (projectFile == null)
-            {
-                return (null, new List<string?>(), new List<string>());
-            }
-            var prePortReferences = projectBuildHelper.LoadMetadataReferences(
-                projectFile,
-                out var missingMetaReferences);
-            if (prePortReferences.Count > 0)
-            {
-                var prePortProject = project.WithMetadataReferences(prePortReferences);
-                var prePortMetaReferences = prePortReferences.Select(m => m.Display).ToList();
-                var prePortCompilation = await prePortProject.GetCompilationAsync();
-                return (prePortCompilation, prePortMetaReferences, missingMetaReferences);
-            }
-            return (null, new List<string?>(), new List<string>());
         }
     }
 }

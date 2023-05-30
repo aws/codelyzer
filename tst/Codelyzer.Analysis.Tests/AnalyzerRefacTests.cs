@@ -13,6 +13,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Castle.Components.DictionaryAdapter;
+using Microsoft.CodeAnalysis;
 using Assert = NUnit.Framework.Assert;
 
 namespace Codelyzer.Analysis.Tests
@@ -890,6 +892,14 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             var oneFileResult = await analyzer.AnalyzeFile(projectPath, filePath, null, references);
             var listOfFilesResult = await analyzer.AnalyzeFile(projectPath, new List<string> { filePath }, null, references);
             var fileInfoResult = await analyzer.AnalyzeFile(projectPath, fileInfo, null, references);
+
+            var fileInfoDictionary = new Dictionary<string, string>()
+            {
+                { filePath, fileContent }
+            };
+            var fileInfoResult2 = await analyzer.AnalyzeFile(projectPath, fileInfoDictionary,
+                new List<PortableExecutableReference>(), new List<PortableExecutableReference>());
+            Assert.AreEqual(fileInfoResult.SourceFileBuildResults.Count, fileInfoResult2.SourceFileBuildResults.Count);
             var oneFileWithContentResult = await analyzer.AnalyzeFile(projectPath, filePath, fileContent, null, references);
 
             var oneFileResultPre = await analyzer.AnalyzeFile(projectPath, filePath, references, null);

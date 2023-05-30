@@ -41,87 +41,14 @@ namespace Codelyzer.Analysis.Build
         private string _projectPath;
 
         private const string syntaxAnalysisError = "Build Errors: Encountered an unknown build issue. Falling back to syntax analysis";
-
-        private XDocument LoadProjectFile(string projectFilePath)
-        {
-            if (!File.Exists(projectFilePath))
-            {
-                return null;
-            }
-            try
-            {
-                return XDocument.Load(projectFilePath);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error loading project file {}", projectFilePath);
-                return null;
-            }
-
-        }
-        private List<PortableExecutableReference> LoadMetadataReferences(XDocument projectFile)
-        {
-            var references = new List<PortableExecutableReference>();
-
-            if (projectFile == null) {
-                return references;
-            }
-
-            var fileReferences = ExtractFileReferencesFromProject(projectFile);
-            fileReferences?.ForEach(fileRef =>
-            {
-                if(!File.Exists(fileRef)) {
-                    MissingMetaReferences.Add(fileRef);
-                    Logger.LogWarning("Assembly {} referenced does not exist.", fileRef);
-                    return;
-                }
-                try
-                {
-                    references.Add(MetadataReference.CreateFromFile(fileRef));
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, "Error while parsing metadata reference {}.", fileRef);
-                }
-
-            });
-
-            return references;
-        }
-
-        private List<string> ExtractFileReferencesFromProject(XDocument projectFileContents)
-        {
-            if (projectFileContents == null)
-            {
-                return null;
-            }
-
-            var portingNode = projectFileContents.Descendants()
-                .FirstOrDefault(d => 
-                    d.Name.LocalName == "ItemGroup"
-                    && d.FirstAttribute?.Name == "Label" 
-                    && d.FirstAttribute?.Value == "PortingInfo");
-
-            var fileReferences = portingNode?.FirstNode?.ToString()
-                .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)?
-                .Where(s => !(s.Contains("<!-") || s.Contains("-->")))
-                .Select(s => s.Trim())
-                .ToList();
-
-            return fileReferences;
-        }
-
+        
         private async Task<Compilation> SetPrePortCompilation()
         {
-            var preportReferences = LoadMetadataReferences(LoadProjectFile(Project.FilePath));
-            if (preportReferences.Count > 0)
-            {
-                var preportProject = Project.WithMetadataReferences(preportReferences);
-                PrePortMetaReferences = preportReferences.Select(m => m.Display).ToList();
-                return await preportProject.GetCompilationAsync();
-            }
-
-            return null;
+            var (prePortCompilation, preportReferences, missingReferences) =
+                await new ProjectBuildHelper(Logger).GetPrePortCompilation(Project);
+            MissingMetaReferences = missingReferences;
+            PrePortMetaReferences = preportReferences;
+            return prePortCompilation;
         }
         
         private bool CanSkipErrorsForVisualBasic()

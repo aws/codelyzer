@@ -5,6 +5,7 @@
         <IsTestProject>false</IsTestProject>
         <RootNamespace>Codelyzer.Analysis.Common</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>8</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>

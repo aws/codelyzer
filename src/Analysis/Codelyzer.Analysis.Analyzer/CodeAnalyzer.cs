@@ -25,7 +25,7 @@ namespace Codelyzer.Analysis.Analyzers
 
         public async Task<List<AnalyzerResult>> Analyze(Solution solution)
         {
-            var projectBuildResults = await new WorkspaceHelper().GetProjectBuildResults(solution);
+            var projectBuildResults = await new WorkspaceHelper(Logger).GetProjectBuildResults(solution);
             return await Analyze(projectBuildResults);
         }
 

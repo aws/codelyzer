@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.Build.Construction;
 using Codelyzer.Analysis.Model;
@@ -14,7 +14,40 @@ namespace Codelyzer.Analysis.Common
 {
     public class ProjectBuildHelper
     {
-        public XDocument LoadProjectFile(string projectFilePath)
+        private readonly ILogger _logger;
+
+        public ProjectBuildHelper(ILogger logger)
+        {
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Gets pre-port compilation, pre-port meta references, and missing references from given project
+        /// </summary>
+        /// <returns>(Pre-port Compilation, Pre-port meta references, MissingMetaReferences)</returns>
+        public async Task<(Compilation?, List<string>, List<string>)> GetPrePortCompilation(Project project)
+        {
+            var projectBuildHelper = new ProjectBuildHelper(_logger);
+            var projectFile = projectBuildHelper.LoadProjectFile(project.FilePath);
+            if (projectFile == null)
+            {
+                return (null, new List<string?>(), new List<string>());
+            }
+            var (prePortReferences, missingMetaReferences) = 
+                projectBuildHelper.LoadMetadataReferences(projectFile);
+            if (prePortReferences.Count > 0)
+            {
+                var prePortProject = project.WithMetadataReferences(prePortReferences);
+                var prePortMetaReferences = prePortReferences
+                    .Select(m => m.Display ?? "")
+                    .ToList();
+                var prePortCompilation = await prePortProject.GetCompilationAsync();
+                return (prePortCompilation, prePortMetaReferences, missingMetaReferences);
+            }
+            return (null, new List<string>(), missingMetaReferences);
+        }
+
+        private XDocument LoadProjectFile(string projectFilePath)
         {
             if (!File.Exists(projectFilePath))
             {
@@ -26,21 +59,20 @@ namespace Codelyzer.Analysis.Common
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
-                //todo: emit error metric
-                throw;
+                _logger.LogError(ex, "Error loading project file {}", projectFilePath);
+                return null;
             }
         }
-        public List<PortableExecutableReference> LoadMetadataReferences(
-            XDocument projectFile,
-            out List<string> missingMetaReferences)
+
+        public (List<PortableExecutableReference>, List<string>) LoadMetadataReferences(
+            XDocument projectFile)
         {
             var references = new List<PortableExecutableReference>();
-            missingMetaReferences = new List<string>();
+            var missingMetaReferences = new List<string>();
 
             if (projectFile == null)
             {
-                return references;
+                return (references, missingMetaReferences);
             }
 
             var fileReferences = ExtractFileReferencesFromProject(projectFile);
@@ -49,7 +81,7 @@ namespace Codelyzer.Analysis.Common
                 if (!File.Exists(fileRef))
                 {
                     missingMetaReferences.Add(fileRef);
-                    //Logger.LogWarning("Assembly {} referenced does not exist.", fileRef);
+                    _logger.LogWarning("Assembly {} referenced does not exist.", fileRef);
                 }
                 try
                 {
@@ -57,10 +89,10 @@ namespace Codelyzer.Analysis.Common
                 }
                 catch (Exception ex)
                 {
-                    //Logger.LogError(ex, "Error while parsing metadata reference {}.", fileRef);
+                    _logger.LogError(ex, "Error while parsing metadata reference {}.", fileRef);
                 }
             }
-            return references;
+            return (references, missingMetaReferences);
         }
 
         private List<string> ExtractFileReferencesFromProject(XDocument projectFileContents)
