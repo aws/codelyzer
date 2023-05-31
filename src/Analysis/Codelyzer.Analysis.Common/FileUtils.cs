@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Codelyzer.Analysis.Model;
+using Codelyzer.Analysis.Model.Extensions;
 
 namespace Codelyzer.Analysis.Common
 {

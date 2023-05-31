@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Codelyzer.Analysis.Model.Extensions;
 
 namespace Codelyzer.Analysis.Model.CodeGraph
 {

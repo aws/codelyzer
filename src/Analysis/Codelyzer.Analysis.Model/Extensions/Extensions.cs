@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Codelyzer.Analysis.Model
+namespace Codelyzer.Analysis.Model.Extensions
 {
     public static class EnumerableExtensions
     {

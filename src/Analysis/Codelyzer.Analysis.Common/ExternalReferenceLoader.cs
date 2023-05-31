@@ -1,4 +1,5 @@
 ﻿using Codelyzer.Analysis.Model;
+using Codelyzer.Analysis.Model.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using NuGet.Packaging;
