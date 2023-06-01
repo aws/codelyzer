@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Codelyzer.Analysis.Build;
 using Codelyzer.Analysis.Model;
-using Codelyzer.Analysis.Model.CodeGraph;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 

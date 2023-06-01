@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 using Codelyzer.Analysis.Analyzers;
 using Codelyzer.Analysis.Build;
 using Codelyzer.Analysis.Model;
-using Codelyzer.Analysis.Model.CodeGraph;
 using Microsoft.Extensions.Logging;
 
 namespace Codelyzer.Analysis.Analyzer

@@ -2,9 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Codelyzer.Analysis.Model.Extensions;
+using Codelyzer.Analysis.Model;
 
-namespace Codelyzer.Analysis.Model.CodeGraph
+namespace Codelyzer.Analysis
 {
     public class CodeGraph
     {

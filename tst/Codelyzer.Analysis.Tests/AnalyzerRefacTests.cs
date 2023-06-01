@@ -1,7 +1,6 @@
 using Codelyzer.Analysis.Analyzer;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
-using Codelyzer.Analysis.Model.CodeGraph;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using System;
