@@ -202,51 +202,58 @@ namespace Codelyzer.Analysis.Common
         }
 
 
-        private string GetMsBuildPathFromVSDirectory(DirectoryInfo vsDirectory, List<string> editions, string[] targets, string projectToolsVersion)
+        public static string GetMsBuildPathFromVSDirectory(DirectoryInfo vsDirectory, List<string> editions, string[] targets, string projectToolsVersion)
         {
-            TryParseVersionString(projectToolsVersion, out double projectMsbuildVersionNumber);
-
-            if (vsDirectory.Exists)
+            try
             {
-                List<FileInfo> msBuildExePath = vsDirectory
-                    .GetDirectories("MSBuild", SearchOption.AllDirectories)
-                    .SelectMany(msBuildDir => msBuildDir.GetFiles("MSBuild.exe", SearchOption.AllDirectories))
-                    .OrderByDescending(msbuild => FileVersionInfo.GetVersionInfo(msbuild.FullName).FileVersion)
-                    .ThenBy(msbuild => editions.IndexOf(GetEditionType(msbuild.DirectoryName, editions)))
-                    .ThenByDescending(msbuild =>
-                    {
-                        var folderName = GetVersionFolder(msbuild.FullName);
-                        // Prioritize any "current" version first
-                        if (folderName.Equals("current", StringComparison.OrdinalIgnoreCase))
-                            return double.MaxValue;
-                        // Prioritize in version order or last if the version number cannot be parsed
-                        return TryParseVersionString(folderName, out var folderVersion)
-                            ? folderVersion
-                            : double.MinValue;
-                    })
-                    .Where(msbuild =>
-                    {
-                        var targetsWithPath = GetTargetsWithPath(msbuild.DirectoryName, targets);
-                        if (targetsWithPath.TrueForAll(File.Exists)) return true;
-                        return false;
-                    })
-                    .ToList();
+                TryParseVersionString(projectToolsVersion, out double projectMsbuildVersionNumber);
 
-                if (projectMsbuildVersionNumber > 0)
+                if (vsDirectory.Exists)
                 {
-                    // If we have a tools version, use that to remove any versions of msbuild that are earlier than the project version
-                    msBuildExePath = msBuildExePath?.Where(
-                        msbuild =>
+                    List<FileInfo> msBuildExePath = vsDirectory
+                        .GetDirectories("MSBuild", SearchOption.AllDirectories)
+                        .SelectMany(msBuildDir => msBuildDir.GetFiles("MSBuild.exe", SearchOption.AllDirectories))
+                        .OrderByDescending(msbuild => FileVersionInfo.GetVersionInfo(msbuild.FullName).FileVersion)
+                        .ThenBy(msbuild => editions.IndexOf(GetEditionType(msbuild.DirectoryName, editions)))
+                        .ThenByDescending(msbuild =>
                         {
-                            var fileVersion = FileVersionInfo.GetVersionInfo(msbuild.FullName).FileVersion;
-                            return TryParseVersionString(fileVersion, out var msBuildVersion) &&
-                                   msBuildVersion >= projectMsbuildVersionNumber;
-                        }
-                        )?.ToList();
-                }
-                return msBuildExePath?.FirstOrDefault()?.FullName;
-            };
-            return null;
+                            var folderName = GetVersionFolder(msbuild.FullName);
+                            // Prioritize any "current" version first
+                            if (folderName.Equals("current", StringComparison.OrdinalIgnoreCase))
+                                return double.MaxValue;
+                            // Prioritize in version order or last if the version number cannot be parsed
+                            return TryParseVersionString(folderName, out var folderVersion)
+                                ? folderVersion
+                                : double.MinValue;
+                        })
+                        .Where(msbuild =>
+                        {
+                            var targetsWithPath = GetTargetsWithPath(msbuild.DirectoryName, targets);
+                            if (targetsWithPath.TrueForAll(File.Exists)) return true;
+                            return false;
+                        })
+                        .ToList();
+
+                    if (projectMsbuildVersionNumber > 0)
+                    {
+                        // If we have a tools version, use that to remove any versions of msbuild that are earlier than the project version
+                        msBuildExePath = msBuildExePath?.Where(
+                            msbuild =>
+                            {
+                                var fileVersion = FileVersionInfo.GetVersionInfo(msbuild.FullName).FileVersion;
+                                return TryParseVersionString(fileVersion, out var msBuildVersion) &&
+                                       msBuildVersion >= projectMsbuildVersionNumber;
+                            }
+                            )?.ToList();
+                    }
+                    return msBuildExePath?.FirstOrDefault()?.FullName;
+                };
+                return null;
+            }
+            catch(Exception ex)
+            {
+                return null;
+            }
         }
 
         private string GetMsBuildPathFromVSDirectoryBelow15(DirectoryInfo vsDirectory, List<string> editions, string[] targets)
@@ -278,7 +285,7 @@ namespace Codelyzer.Analysis.Common
             return "";
         }
 
-        private string GetEditionType(string vsPath, List<string> editions)
+        private static string GetEditionType(string vsPath, List<string> editions)
         {
             string[] elements = vsPath.Split(Path.DirectorySeparatorChar);
             foreach (var edition in editions)
@@ -291,13 +298,13 @@ namespace Codelyzer.Analysis.Common
             return "";
         }
 
-        private string GetVersionFolder(string vsPath)
+        private static string GetVersionFolder(string vsPath)
         {
             List<string> elements = vsPath.Split(Path.DirectorySeparatorChar).ToList();
             var folderIdx = elements.IndexOf("MSBuild");
             return elements[folderIdx + 1];
         }
-        private List<string> GetTargetsWithPath(string vsPath, string[] targets)
+        private static List<string> GetTargetsWithPath(string vsPath, string[] targets)
         {
             List<string> targetsWithPath = new List<string>();
             foreach (string target in targets)
