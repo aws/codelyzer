@@ -11,6 +11,7 @@ namespace Codelyzer.Analysis.Workspace.Tests
             return solutionName switch
             {
                 "OwinParadise.sln" => GetOwinParadiseResults(),
+                "CoreWebApi.sln" => GetCoreWebApiResults(),
                 _ => throw new Exception("Test results for solution name not found")
             };
         }
@@ -36,6 +37,30 @@ namespace Codelyzer.Analysis.Workspace.Tests
                 { "SourceFilesCount", 14 },
                 { "MethodSignature", "public PortingParadise.OwinExtraApi.OwinAuthorization(IAuthorizationRequirement)" },
                 { "ClassDeclarationIdentifier", "OwinExtraApi" },
+                { "ClassDeclarationModifier", "public"}
+            };
+        }
+        private static Dictionary<string, object> GetCoreWebApiResults()
+        {
+            return new Dictionary<string, object>()
+            {
+                { "BlockStatementsCount", 2 },
+                { "ClassesCount", 1 },
+                { "ExpressionsCount", 23 },
+                { "InvocationExpressionsCount", 8 },
+                { "LiteralExpressionsCount", 15 },
+                { "MethodsCount", 1 },
+                { "ReturnStatementsCount", 1 },
+                { "AnnotationsCount", 3 },
+                { "NamespacesCount", 1 },
+                { "ObjectCreationCount", 2 },
+                { "UsingDirectivesCount", 6 },
+                { "ArgumentsCount", 8 },
+                { "MemberAccessExpressionsCount", 8 },
+                { "NugetReferencesCount", 0 },
+                { "SourceFilesCount", 6 },
+                { "MethodSignature", "public CoreWebApi.Controllers.WeatherForecastController.Get()" },
+                { "ClassDeclarationIdentifier", "WeatherForecastController" },
                 { "ClassDeclarationModifier", "public"}
             };
         }
