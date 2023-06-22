@@ -36,8 +36,6 @@ namespace Codelyzer.Analysis.Model
         {
             if (string.IsNullOrEmpty(relativeTo)) throw new ArgumentNullException(nameof(relativeTo));
             if (string.IsNullOrEmpty(path)) throw new ArgumentNullException(nameof(path));
-            Debug.Assert(comparisonType == StringComparison.Ordinal ||
-                         comparisonType == StringComparison.OrdinalIgnoreCase);
 
             relativeTo = Path.GetFullPath(relativeTo);
             path = Path.GetFullPath(path);
@@ -132,8 +130,8 @@ namespace Codelyzer.Analysis.Model
     /// <summary>Contains internal path helpers that are shared between many projects.</summary>
     internal static class PathInternalNetCore
     {
-        internal const char DirectorySeparatorChar = '\\';
-        internal const char AltDirectorySeparatorChar = '/';
+        internal static char DirectorySeparatorChar = Path.DirectorySeparatorChar;
+        internal static char AltDirectorySeparatorChar = Path.AltDirectorySeparatorChar;
         internal const char VolumeSeparatorChar = ':';
         internal const char PathSeparator = ';';
 

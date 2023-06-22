@@ -34,7 +34,7 @@ namespace Codelyzer.Analysis.Analyzers
                 result.LinesOfCode = sourceFileBuildResult.SyntaxTree.GetRoot()
                     .DescendantTrivia().Count(t => t.IsKind(SyntaxKind.EndOfLineTrivia));
 
-                return result;
+                return result as RootUstNode;
             }
         }
     }
