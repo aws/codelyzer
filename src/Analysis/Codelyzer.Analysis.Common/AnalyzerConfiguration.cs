@@ -46,31 +46,11 @@ namespace Codelyzer.Analysis
 
     public class BuildSettings
     {
-        public BuildSettings(VisualStudioVersion? visualStudioVersion = null)
+        public BuildSettings(VisualStudioVersion? visualStudioVersion = null, string msBuildPath = "")
         {
             BuildArguments = AnalyzerConfiguration.DefaultBuildArguments;
             VisualStudioVersion = visualStudioVersion;
-            if (visualStudioVersion!= null && VisualStudioVersion.HasValue)
-            {
-                List<string> editions = new List<string> { "Enterprise", "Professional", "Community", "BuildTools" };
-                var targets = new string[] { "Microsoft.CSharp.targets", "Microsoft.CSharp.CurrentVersion.targets", "Microsoft.Common.targets" };
-                var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-                string programFilesX86 = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86);
-                DirectoryInfo vsDirectory = null;
-                switch (VisualStudioVersion.Value) {
-                    case Analysis.VisualStudioVersion.VS2022:
-                        vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
-                        break;
-                    case Analysis.VisualStudioVersion.VS2019:
-                        vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "Microsoft Visual Studio"));
-                        
-                        break;
-                }
-                if (vsDirectory != null)
-                {
-                    MSBuildPath = MSBuildDetector.GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets, null);
-                }
-            }
+            MSBuildPath = msBuildPath;
         }
         public string MSBuildPath;
         public List<string> BuildArguments;

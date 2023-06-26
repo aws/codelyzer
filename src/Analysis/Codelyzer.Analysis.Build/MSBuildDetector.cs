@@ -201,6 +201,36 @@ namespace Codelyzer.Analysis.Build
             return result;
         }
 
+        /// <summary>
+        /// Returns MSBuild Path based on visual studio version given
+        /// </summary>
+        /// <param name="visualStudioVersion">VS2019 or VS2022</param>
+        /// <returns>MSBuild path from visual studio version or blank if not found</returns>
+        public static string GetMsBuildPathFromVisualStudioVersion(VisualStudioVersion visualStudioVersion)
+        {
+            List<string> editions = new List<string> { "Enterprise", "Professional", "Community", "BuildTools" };
+            var targets = new string[]
+            {
+                "Microsoft.CSharp.targets", "Microsoft.CSharp.CurrentVersion.targets", "Microsoft.Common.targets"
+            };
+            var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            string programFilesX86 = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86);
+            DirectoryInfo vsDirectory = null;
+            switch (visualStudioVersion)
+            {
+                case VisualStudioVersion.VS2022:
+                    vsDirectory = new DirectoryInfo(Path.Combine(programFiles, "Microsoft Visual Studio"));
+                    break;
+                case VisualStudioVersion.VS2019:
+                    vsDirectory = new DirectoryInfo(Path.Combine(programFilesX86, "Microsoft Visual Studio"));
+
+                    break;
+            }
+
+            return vsDirectory != null ? 
+                GetMsBuildPathFromVSDirectory(vsDirectory, editions, targets, null) : 
+                "";
+        }
 
         public static string GetMsBuildPathFromVSDirectory(DirectoryInfo vsDirectory, List<string> editions, string[] targets, string projectToolsVersion)
         {
