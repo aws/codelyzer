@@ -1501,7 +1501,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         [Test]
         public async Task TestModernizeGraph()
         {
-            string solutionPath = CopySolutionFolderToTemp("Modernize.Web.sln");
+            string solutionPath = CopySolutionFolderToTemp("Modernize.Web.sln");            
             FileAssert.Exists(solutionPath);
 
             AnalyzerConfiguration configurationWithoutBuild = new AnalyzerConfiguration(LanguageOptions.CSharp)
@@ -1620,6 +1620,153 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             ValidateStructEdges(resultWithBuild.CodeGraph.StructNodes);
             ValidateEnumEdges(resultWithBuild.CodeGraph.EnumNodes);
             ValidateRecordEdges(resultWithBuild.CodeGraph.RecordNodes);
+        }
+
+
+        [Test]
+        public async Task TestModernizeParallelizeGraph()
+        {
+            string solutionPath = CopySolutionFolderToTemp("Modernize.Web.sln");            
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configurationParallel = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                ConcurrentThreads = 1,
+                BuildSettings = {
+                SyntaxOnly = true
+                },
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true,
+                    GenerateBinFiles = true,
+                    LoadBuildData = true
+                }
+            };
+            AnalyzerConfiguration configurationNoParallel = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                ConcurrentThreads = 1,
+                BuildSettings = {
+                SyntaxOnly = true
+                },
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true,
+                    GenerateBinFiles = true,
+                    LoadBuildData = true
+                }
+            };
+
+
+            CodeAnalyzerByLanguage analyzerParallel = new CodeAnalyzerByLanguage(configurationParallel, NullLogger.Instance);
+            CodeAnalyzerByLanguage analyzerNoParallel = new CodeAnalyzerByLanguage(configurationNoParallel, NullLogger.Instance);
+
+            var analyzerResultsParallel = await analyzerParallel.AnalyzeSolution(solutionPath);
+            var allGraphs = new List<CodeGraph>();
+            analyzerResultsParallel.ForEach(analyzerResult => {
+                var graph = new CodeGraph(NullLogger.Instance);
+                graph.Initialize(new List<AnalyzerResult> { analyzerResult });
+                allGraphs.Add(graph);
+            });
+
+            var originalGraph = allGraphs[0];
+            for(int i=1; i<allGraphs.Count; i++)
+            {
+                originalGraph.MergeGraph(allGraphs[i]);
+            }
+
+            var resultParallel = new SolutionAnalyzerResult()
+            {
+                CodeGraph = originalGraph,
+                AnalyzerResults = analyzerResultsParallel
+            };
+
+            var resultNoParallel = await analyzerNoParallel.AnalyzeSolutionWithGraph(solutionPath);
+
+            var projectGraphParallel = resultParallel.CodeGraph.ProjectNodes;
+            var projectGraphNoParallel = resultNoParallel.CodeGraph.ProjectNodes;
+            var classGraphParallel = resultParallel.CodeGraph?.ClassNodes;
+            var classGraphNoParallel = resultNoParallel.CodeGraph?.ClassNodes;
+
+            // There are 5 projects in the solution
+            Assert.AreEqual(5, projectGraphParallel.Count);
+            Assert.AreEqual(5, projectGraphNoParallel.Count);
+
+            //The Facade project has 3 Edges
+            Assert.AreEqual(3, projectGraphParallel.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Facade")).OutgoingEdges.Count);
+            Assert.AreEqual(3, projectGraphNoParallel.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Facade")).OutgoingEdges.Count);
+
+            // The Mvc project has 3 Edges
+            Assert.AreEqual(3, projectGraphParallel.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Mvc")).OutgoingEdges.Count);
+
+            // When project is prebuilt, connections are merged with dependent projects
+            var mvcDependencies = projectGraphNoParallel.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Mvc")).Edges.Count;
+            Assert.True(mvcDependencies == 3 || mvcDependencies == 4);
+
+            // The Models project has 0 Edges
+            Assert.AreEqual(0, projectGraphParallel.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).OutgoingEdges.Count);
+            Assert.AreEqual(0, projectGraphNoParallel.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).OutgoingEdges.Count);
+
+            // There are 27 classes in the solution
+            Assert.AreEqual(27, classGraphParallel.Count);
+            Assert.AreEqual(27, classGraphNoParallel.Count);
+
+            Assert.AreEqual(4, resultParallel.CodeGraph?.InterfaceNodes.Count);
+            Assert.AreEqual(4, resultNoParallel.CodeGraph?.InterfaceNodes.Count);
+
+            Assert.AreEqual(1, resultParallel.CodeGraph?.StructNodes.Count);
+            Assert.AreEqual(1, resultNoParallel.CodeGraph?.StructNodes.Count);
+
+            Assert.AreEqual(1, resultParallel.CodeGraph?.EnumNodes.Count);
+            Assert.AreEqual(1, resultNoParallel.CodeGraph?.EnumNodes.Count);
+
+            Assert.AreEqual(1, resultParallel.CodeGraph?.RecordNodes.Count);
+            Assert.AreEqual(1, resultNoParallel.CodeGraph?.RecordNodes.Count);
+
+            ValidateClassEdges(resultParallel.CodeGraph.ClassNodes);
+            ValidateInterfaceEdges(resultParallel.CodeGraph.InterfaceNodes);
+            ValidateMethodEdges(resultParallel.CodeGraph.MethodNodes);
+            ValidateStructEdges(resultParallel.CodeGraph.StructNodes);
+            ValidateEnumEdges(resultParallel.CodeGraph.EnumNodes);
+            ValidateRecordEdges(resultParallel.CodeGraph.RecordNodes);
+
+            ValidateClassEdges(resultNoParallel.CodeGraph.ClassNodes);
+            ValidateInterfaceEdges(resultNoParallel.CodeGraph.InterfaceNodes);
+            ValidateMethodEdges(resultNoParallel.CodeGraph.MethodNodes);
+            ValidateStructEdges(resultNoParallel.CodeGraph.StructNodes);
+            ValidateEnumEdges(resultNoParallel.CodeGraph.EnumNodes);
+            ValidateRecordEdges(resultNoParallel.CodeGraph.RecordNodes);
         }
 
         private void ValidateClassEdges(HashSet<Node> nodes)
