@@ -1,5 +1,6 @@
 ﻿using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging;
+using NuGet.Packaging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -131,6 +132,28 @@ namespace Codelyzer.Analysis
             Graph = new HashSet<Node>();
             PopulateGraphs(analyzerResults);
         }
+        public void MergeGraph(CodeGraph targetGraph)
+        {
+            //Clear previous variable to re-initiate:
+            _projectNodes=null;
+            _namespaceNodes=null;
+            _classNodes=null;
+            _interfaceNodes=null;
+            _structNodes=null;
+            _enumNodes=null;
+            _recordNodes=null;
+            _methodNodes=null;
+            projectWorkspaces.AddRange(targetGraph.projectWorkspaces);
+            Graph.AddRange(targetGraph.Graph);
+            // Merge the edge candidates
+            ustNodeEdgeCandidates.AddRange(targetGraph.ustNodeEdgeCandidates);
+
+            // Remove edges that are external to the projects
+            RemoveExternalEdges();
+
+            AddEdges();
+        }
+
         private void PopulateGraphs(List<AnalyzerResult> analyzerResults)
         {   
             try
@@ -199,10 +222,16 @@ namespace Codelyzer.Analysis
 
                     projectReferences?.ForEach(projectReference =>
                     {
-                        var targetNode = ProjectNodes.FirstOrDefault(p => p.Identifier.Equals(projectReference.AssemblyLocation, StringComparison.InvariantCultureIgnoreCase)); 
-                        var edge = new Edge() { EdgeType = EdgeType.ProjectReference, TargetNode = targetNode, SourceNode = sourceNode };
-                        sourceNode.OutgoingEdges.Add(edge);
-                        targetNode.IncomingEdges.Add(edge);
+                        var targetNode = ProjectNodes.FirstOrDefault(p => p.Identifier.Equals(projectReference.AssemblyLocation, StringComparison.InvariantCultureIgnoreCase));
+                        if (targetNode != null)
+                        {
+                            var edge = new Edge() { EdgeType = EdgeType.ProjectReference, TargetNode = targetNode, SourceNode = sourceNode };
+                            if (!sourceNode.OutgoingEdges.Contains(edge))
+                            {
+                                sourceNode.OutgoingEdges.Add(edge);
+                                targetNode.IncomingEdges.Add(edge);
+                            }
+                        }
                     });
                 }
                 catch (Exception ex)
@@ -394,81 +423,96 @@ namespace Codelyzer.Analysis
 
             edgeCandidates.ForEach(edgeCandidate =>
             {
+                //If edge is already added, we dont need to proceed
+                var existingEdge = sourceNode.OutgoingEdges.FirstOrDefault(e => e.TargetNode.Identifier == edgeCandidate.FullIdentifier);
+
                 if (edgeCandidate is DeclarationNode)
                 {
-                    var targetNode = TypeNodes.FirstOrDefault(c => c.Identifier == edgeCandidate.FullIdentifier);
-                    if (targetNode?.Equals(sourceNode) == false)
+                    if (existingEdge?.EdgeType != EdgeType.Declaration)
                     {
-                        var edge = new Edge()
+                        var targetNode = TypeNodes.FirstOrDefault(c => c.Identifier == edgeCandidate.FullIdentifier);
+                        if (targetNode?.Equals(sourceNode) == false)
                         {
-                            EdgeType = EdgeType.Declaration,
-                            TargetNode = targetNode,
-                            SourceNode = sourceNode
-                        };
-                        sourceNode.OutgoingEdges.Add(edge);
-                        targetNode.IncomingEdges.Add(edge);
+                            var edge = new Edge()
+                            {
+                                EdgeType = EdgeType.Declaration,
+                                TargetNode = targetNode,
+                                SourceNode = sourceNode
+                            };
+                            sourceNode.OutgoingEdges.Add(edge);
+                            targetNode.IncomingEdges.Add(edge);
+                        }
                     }
                 }
                 else if (edgeCandidate is MemberAccess memberAccess)
                 {
-                    var targetNode = TypeNodes.FirstOrDefault(c => c.Identifier == memberAccess.SemanticFullClassTypeName);
-
-                    //Skip methods in same class
-                    if (targetNode?.Equals(sourceNode) == false)
+                    if (existingEdge?.EdgeType != EdgeType.MemberAccess)
                     {
-                        var edge = new Edge()
+                        var targetNode = TypeNodes.FirstOrDefault(c => c.Identifier == memberAccess.SemanticFullClassTypeName);
+
+                        //Skip methods in same class
+                        if (targetNode?.Equals(sourceNode) == false)
                         {
-                            EdgeType = EdgeType.MemberAccess,
-                            TargetNode = targetNode,
-                            Identifier = memberAccess.Identifier,
-                            SourceNode = sourceNode
-                        };
-                        sourceNode.OutgoingEdges.Add(edge);
-                        targetNode.IncomingEdges.Add(edge);
+                            var edge = new Edge()
+                            {
+                                EdgeType = EdgeType.MemberAccess,
+                                TargetNode = targetNode,
+                                Identifier = memberAccess.Identifier,
+                                SourceNode = sourceNode
+                            };
+                            sourceNode.OutgoingEdges.Add(edge);
+                            targetNode.IncomingEdges.Add(edge);
+                        }
                     }
                 }
                 else if (edgeCandidate is InvocationExpression invocation)
                 {
                     if (invocation is ObjectCreationExpression objectCreationExpression)
                     {
-                        // Find any constructors with the same signature
-                        var targetNode = MethodNodes.FirstOrDefault(n => n.Identifier == edgeCandidate.FullIdentifier);
-
-                        // No constructors found, find the class type
-                        if (targetNode is null)
+                        if (existingEdge?.EdgeType != EdgeType.ObjectCreation)
                         {
-                            targetNode = TypeNodes.FirstOrDefault(n => n.Identifier == objectCreationExpression.SemanticFullClassTypeName);
-                        }
+                            // Find any constructors with the same signature
+                            var targetNode = MethodNodes.FirstOrDefault(n => n.Identifier == edgeCandidate.FullIdentifier);
 
-                        //Skip methods in same class
-                        if (targetNode?.Equals(sourceNode) == false)
-                        {
-                            var edge = new Edge()
+                            // No constructors found, find the class type
+                            if (targetNode is null)
                             {
-                                EdgeType = EdgeType.ObjectCreation,
-                                TargetNode = targetNode,
-                                Identifier = invocation.MethodName,
-                                SourceNode = sourceNode
-                            };
-                            sourceNode.OutgoingEdges.Add(edge);
-                            targetNode.IncomingEdges.Add(edge);
+                                targetNode = TypeNodes.FirstOrDefault(n => n.Identifier == objectCreationExpression.SemanticFullClassTypeName);
+                            }
+
+                            //Skip methods in same class
+                            if (targetNode?.Equals(sourceNode) == false)
+                            {
+                                var edge = new Edge()
+                                {
+                                    EdgeType = EdgeType.ObjectCreation,
+                                    TargetNode = targetNode,
+                                    Identifier = invocation.MethodName,
+                                    SourceNode = sourceNode
+                                };
+                                sourceNode.OutgoingEdges.Add(edge);
+                                targetNode.IncomingEdges.Add(edge);
+                            }
                         }
                     }
                     else
                     {
-                        var targetNode = MethodNodes.FirstOrDefault(n => n.Identifier == edgeCandidate.FullIdentifier);
-                        //Skip methods in same class
-                        if (targetNode?.Equals(sourceNode) == false)
+                        if (existingEdge?.EdgeType != EdgeType.Invocation)
                         {
-                            var edge = new Edge()
+                            var targetNode = MethodNodes.FirstOrDefault(n => n.Identifier == edgeCandidate.FullIdentifier);
+                            //Skip methods in same class
+                            if (targetNode?.Equals(sourceNode) == false)
                             {
-                                EdgeType = EdgeType.Invocation,
-                                TargetNode = targetNode,
-                                Identifier = invocation.MethodName,
-                                SourceNode = sourceNode
-                            };
-                            sourceNode.OutgoingEdges.Add(edge);
-                            targetNode.IncomingEdges.Add(edge);
+                                var edge = new Edge()
+                                {
+                                    EdgeType = EdgeType.Invocation,
+                                    TargetNode = targetNode,
+                                    Identifier = invocation.MethodName,
+                                    SourceNode = sourceNode
+                                };
+                                sourceNode.OutgoingEdges.Add(edge);
+                                targetNode.IncomingEdges.Add(edge);
+                            }
                         }
                     }
                 }
