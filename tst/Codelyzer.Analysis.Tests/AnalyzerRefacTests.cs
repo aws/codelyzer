@@ -1701,10 +1701,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             });
 
             var originalGraph = allGraphs[0];
-            for(int i=1; i<allGraphs.Count; i++)
-            {
-                originalGraph.MergeGraph(allGraphs[i]);
-            }
+            originalGraph.MergeGraphs(allGraphs);
+
 
             var resultParallel = new SolutionAnalyzerResult()
             {
