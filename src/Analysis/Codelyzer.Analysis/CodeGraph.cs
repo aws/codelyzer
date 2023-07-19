@@ -123,16 +123,16 @@ namespace Codelyzer.Analysis
         public CodeGraph(ILogger logger)
         {
             Logger = logger;
-        }         
-        public void Initialize(List<AnalyzerResult> analyzerResults)
-        {
             projectWorkspaces = new HashSet<ProjectWorkspace>();
             ustNodeEdgeCandidates = new Dictionary<Node, List<UstNode>>();
             filteredUstNodeEdgeCandidates = new Dictionary<Node, List<UstNode>>();
             Graph = new HashSet<Node>();
+        }         
+        public void Initialize(List<AnalyzerResult> analyzerResults)
+        {
             PopulateGraphs(analyzerResults);
         }
-        public void MergeGraph(CodeGraph targetGraph)
+        public void MergeGraphs(List<CodeGraph> codeGraphs)
         {
             //Clear previous variable to re-initiate:
             _projectNodes=null;
@@ -143,10 +143,23 @@ namespace Codelyzer.Analysis
             _enumNodes=null;
             _recordNodes=null;
             _methodNodes=null;
-            projectWorkspaces.AddRange(targetGraph.projectWorkspaces);
-            Graph.AddRange(targetGraph.Graph);
-            // Merge the edge candidates
-            ustNodeEdgeCandidates.AddRange(targetGraph.ustNodeEdgeCandidates);
+
+            foreach (CodeGraph codeGraph in codeGraphs)
+            {
+                projectWorkspaces.AddRange(codeGraph.projectWorkspaces);
+                Graph.AddRange(codeGraph.Graph);
+                foreach (var kvp in codeGraph.ustNodeEdgeCandidates)
+                {
+                    if (ustNodeEdgeCandidates.ContainsKey(kvp.Key))
+                    {
+                        ustNodeEdgeCandidates[kvp.Key].AddRange(kvp.Value);
+                    }
+                    else
+                    {
+                        ustNodeEdgeCandidates.Add(kvp.Key, kvp.Value);
+                    }
+                }
+            }
 
             // Remove edges that are external to the projects
             RemoveExternalEdges();
