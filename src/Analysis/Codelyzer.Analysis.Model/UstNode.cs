@@ -20,10 +20,10 @@ namespace Codelyzer.Analysis.Model
         [JsonProperty("location", Order = 3)]
         public TextSpan TextSpan { get; set; }
 
-        [JsonIgnore]
+        [JsonProperty("parent-node", Order = 4)]
         public UstNode Parent { get; set; }
 
-        [JsonIgnore]
+        [JsonProperty("full-identifier", Order = 5)]
         public string FullIdentifier { get; set; }
 
         [JsonProperty("children", Order = 100)]
