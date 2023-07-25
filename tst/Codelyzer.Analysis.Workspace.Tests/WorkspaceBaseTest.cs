@@ -8,10 +8,11 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Build.Locator;
 
-namespace Codelyzer.Analysis.Tests
+namespace Codelyzer.Analysis.Workspace.Tests
 {
-    public class AwsBaseTest
+    public class WorkspaceBaseTest
     {
         private System.Type systemType;
         private string tstPath;
@@ -48,10 +49,6 @@ namespace Codelyzer.Analysis.Tests
         {
             return Path.Combine(tstPath, path);
         }
-        public string GetSrcPath(string path)
-        {
-            return Path.Combine(srcPath, path);
-        }
 
         protected void DownloadFromGitHub(string link, string name, string downloadsDir)
         {
@@ -69,47 +66,35 @@ namespace Codelyzer.Analysis.Tests
         {
             if (retries <= 10)
             {
-                try
+                if (Directory.Exists(path))
                 {
-                    if (Directory.Exists(path))
-                    {
-                        Directory.Delete(path, true);
-                    }
-                }
-                catch (Exception)
-                {
-                    Thread.Sleep(10000);
-                    DeleteDir(path, retries + 1);
+                    Directory.Delete(path, true);
                 }
             }
         }
 
         protected string CopySolutionFolderToTemp(string solutionName, string downloadsDir, string tempDir)
         {
-            string solutionPath = Directory.EnumerateFiles(downloadsDir, solutionName, SearchOption.AllDirectories)
-                .FirstOrDefault();
+            string solutionPath = Directory.EnumerateFiles(downloadsDir, 
+                    solutionName,
+                    SearchOption.AllDirectories)
+                .FirstOrDefault() ?? string.Empty;
             string solutionDir = Directory.GetParent(solutionPath).FullName;
             var newTempDir = Path.Combine(tempDir, Guid.NewGuid().ToString());
             FileUtils.DirectoryCopy(solutionDir, newTempDir);
 
-            solutionPath = Directory.EnumerateFiles(newTempDir, solutionName, SearchOption.AllDirectories)
-                .FirstOrDefault();
+            solutionPath = Directory.EnumerateFiles(newTempDir,
+                solutionName,
+                    SearchOption.AllDirectories)
+                .FirstOrDefault() ?? string.Empty;
             return solutionPath;
         }
 
         protected async Task<Solution> GetWorkspaceSolution(string solutionPath)
         {
-            try
-            {
-                var workspace = MSBuildWorkspace.Create();
-                var solution = await workspace.OpenSolutionAsync(solutionPath);
-                return solution;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return null;
-            }
+            var workspace = MSBuildWorkspace.Create();
+            var solution = await workspace.OpenSolutionAsync(solutionPath);
+            return solution;
         }
 
         protected void SetupDefaultAnalyzerConfiguration(AnalyzerConfiguration configuration)
@@ -129,6 +114,18 @@ namespace Codelyzer.Analysis.Tests
             configuration.MetaDataSettings.InvocationArguments = true;
             configuration.MetaDataSettings.ElementAccess = true;
             configuration.MetaDataSettings.MemberAccess = true;
+        }
+
+        protected void SetupMsBuildLocator()
+        {
+            try
+            {
+                MSBuildLocator.RegisterDefaults();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
         }
     }
 }

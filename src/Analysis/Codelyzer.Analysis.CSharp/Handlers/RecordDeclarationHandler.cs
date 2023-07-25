@@ -27,7 +27,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 RecordDeclaration.Reference.Version = GetAssemblyVersion(recordSymbol);
                 RecordDeclaration.Reference.AssemblySymbol = recordSymbol.ContainingAssembly;
 
-                RecordDeclaration.BaseList = new();
+                RecordDeclaration.BaseList = new System.Collections.Generic.List<string>();
                 if (recordSymbol.BaseType != null)
                 {
                     var baseTypeSymbol = recordSymbol.BaseType;

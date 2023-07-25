@@ -10,6 +10,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Codelyzer.Analysis.VisualBasic;
 using Microsoft.CodeAnalysis.VisualBasic;
+using Codelyzer.Analysis.Model.Build;
 
 namespace Codelyzer.Analysis
 {

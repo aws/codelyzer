@@ -25,7 +25,7 @@ namespace Codelyzer.Analysis.CSharp.Handlers
                 StructDeclaration.Reference.AssemblySymbol = structSymbol.ContainingAssembly;
                 StructDeclaration.FullIdentifier = structSymbol.OriginalDefinition.ToString();
 
-                StructDeclaration.BaseList = new();
+                StructDeclaration.BaseList = new System.Collections.Generic.List<string>();
                 if (structSymbol.BaseType != null)
                 {
                     var baseTypeSymbol = structSymbol.BaseType;

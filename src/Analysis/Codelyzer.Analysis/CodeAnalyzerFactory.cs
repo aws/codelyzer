@@ -14,6 +14,7 @@ namespace Codelyzer.Analysis
         /// <param name="configuration">Configuration of the analyzer</param>
         /// <param name="logger">Logger object</param>
         /// <returns></returns>
+        [Obsolete("Using the CodeAnalyzerFactory is deprecated, use the CodeAnalyzerByLanguage class instead")]
         public static CodeAnalyzer GetAnalyzer(AnalyzerConfiguration configuration, ILogger logger, string projectFile = "")
         {
             if (configuration.Language == LanguageOptions.Vb ||projectFile.EndsWith(".vbproj",

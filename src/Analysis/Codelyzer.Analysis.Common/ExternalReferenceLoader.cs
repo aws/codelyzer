@@ -1,4 +1,5 @@
 ﻿using Codelyzer.Analysis.Model;
+using Codelyzer.Analysis.Model.Extensions;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
 using NuGet.Packaging;
@@ -8,9 +9,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using Constants = Codelyzer.Analysis.Common.Constants;
 
-namespace Codelyzer.Analysis.Build
+namespace Codelyzer.Analysis.Common
+
 {
     public class ExternalReferenceLoader
     {
@@ -49,7 +50,7 @@ namespace Codelyzer.Analysis.Build
             {
                 var projectReferencesIds = _project.ProjectReferences != null ? _project.ProjectReferences.Select(pr => pr.ProjectId).ToList() : null;
                 var projectReferences = projectReferencesIds != null ? _project.Solution.Projects.Where(p => projectReferencesIds.Contains(p.Id)) : null;
-                projectReferenceNames = projectReferences != null ? projectReferences.Select(p => p.Name).ToHashSet<string>() : null;
+                projectReferenceNames = projectReferences != null ? projectReferences.Select(p => p.Name).ToHashSet() : null;
 
                 _externalReferences.ProjectReferences.AddRange(projectReferences.Select(p => new ExternalReference()
                 {
@@ -65,10 +66,11 @@ namespace Codelyzer.Analysis.Build
         {
             _packageReferences?.ToList().ForEach(packageReference =>
             {
+                bool getVersionSuccess = packageReference.Value.TryGetValue(Constants.Version, out var version);
                 var reference = new ExternalReference()
                 {
                     Identity = packageReference.Key,
-                    Version = packageReference.Value.GetValueOrDefault(Constants.Version)
+                    Version = getVersionSuccess ? version : "",
                 };
                 if (!_externalReferences.NugetReferences.Contains(reference))
                 {
@@ -86,17 +88,19 @@ namespace Codelyzer.Analysis.Build
             {
                 try
                 {
-                    using var fileStream = new FileStream(packageConfig, FileMode.Open);
-                    var configReader = new PackagesConfigReader(fileStream);
-                    var packages = configReader.GetPackages(true);
+                    using (var fileStream = new FileStream(packageConfig, FileMode.Open))
+                    {
+                        var configReader = new PackagesConfigReader(fileStream);
+                        var packages = configReader.GetPackages(true);
 
-                    packages?.ToList().ForEach(package => {
-                        var reference = new ExternalReference() { Identity = package.PackageIdentity.Id, Version = package.PackageIdentity.Version.OriginalVersion };
-                        if (!_externalReferences.NugetReferences.Contains(reference))
-                        {
-                            _externalReferences.NugetReferences.Add(reference);
-                        }
-                    });
+                        packages?.ToList().ForEach(package => {
+                            var reference = new ExternalReference() { Identity = package.PackageIdentity.Id, Version = package.PackageIdentity.Version.OriginalVersion };
+                            if (!_externalReferences.NugetReferences.Contains(reference))
+                            {
+                                _externalReferences.NugetReferences.Add(reference);
+                            }
+                        });
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -160,7 +164,7 @@ namespace Codelyzer.Analysis.Build
                                 nugetRef.Version = externalReference.Version;
                             }
                         }
-                        else if (filePath.Contains(Common.Constants.PackagesDirectoryIdentifier, System.StringComparison.CurrentCultureIgnoreCase))
+                        else if (filePath.IndexOf(Common.Constants.PackagesDirectoryIdentifier, System.StringComparison.CurrentCultureIgnoreCase) >= 0)
                         {
                             _externalReferences.NugetDependencies.Add(externalReference);
                         }

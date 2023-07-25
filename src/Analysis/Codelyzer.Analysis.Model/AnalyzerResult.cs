@@ -1,8 +1,7 @@
-using Codelyzer.Analysis.Build;
-using Codelyzer.Analysis.Model;
+using Codelyzer.Analysis.Model.Build;
 using System;
 
-namespace Codelyzer.Analysis
+namespace Codelyzer.Analysis.Model
 {
     /// <summary>
     /// The result of a Project Analysis

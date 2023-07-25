@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using Codelyzer.Analysis.Common;
+using Codelyzer.Analysis.Model;
 using NUnit.Framework;
 
 namespace Codelyzer.Analysis.Tests
@@ -164,6 +166,78 @@ namespace Codelyzer.Analysis.Tests
             Assert.IsNotNull(results);
             Assert.IsTrue(results.FirstOrDefault() == projectPath);
             Assert.IsTrue(File.Exists(projectPath));
+        }
+
+        [Test]
+        public void TestGetRelativePath()
+        {
+            // FileUtils.GetRelativePath is needed because .NET Standard 2.0 does not have Path.GetRelativePath.
+            // Testing against actual method for correctness check.
+
+            const string testFileName = "testRelativePathFile.txt";
+            Directory.CreateDirectory(SourceDirPath);
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), SourceDirPath, testFileName);
+            File.Create(filePath).Dispose();
+
+            var actual = PathNetCore.GetRelativePath(Directory.GetCurrentDirectory(), filePath);
+            var expected = Path.GetRelativePath(Directory.GetCurrentDirectory(), filePath);
+            Assert.AreEqual(expected, actual);
+
+            var actual2 = PathNetCore.GetRelativePath("Q:\\", filePath);
+            var expected2 = Path.GetRelativePath("Q:\\", filePath);
+
+            Assert.AreEqual(expected2, actual2);
+        }
+
+        [Test]
+        [TestCase(@"C:\", @"C:\", @".")]
+        [TestCase(@"C:\a", @"C:\a\", @".")]
+        [TestCase(@"C:\A", @"C:\a\", @".")]
+        [TestCase(@"C:\a\", @"C:\a", @".")]
+        [TestCase(@"C:\", @"C:\b", @"b")]
+        [TestCase(@"C:\a", @"C:\b", @"..\b")]
+        [TestCase(@"C:\a", @"C:\b\", @"..\b\")]
+        [TestCase(@"C:\a\b", @"C:\a", @"..")]
+        [TestCase(@"C:\a\b", @"C:\a\", @"..")]
+        [TestCase(@"C:\a\b\", @"C:\a", @"..")]
+        [TestCase(@"C:\a\b\", @"C:\a\", @"..")]
+        [TestCase(@"C:\a\b\c", @"C:\a\b", @"..")]
+        [TestCase(@"C:\a\b\c", @"C:\a\b\", @"..")]
+        [TestCase(@"C:\a\b\c", @"C:\a", @"..\..")]
+        [TestCase(@"C:\a\b\c", @"C:\a\", @"..\..")]
+        [TestCase(@"C:\a\b\c\", @"C:\a\b", @"..")]
+        [TestCase(@"C:\a\b\c\", @"C:\a\b\", @"..")]
+        [TestCase(@"C:\a\b\c\", @"C:\a", @"..\..")]
+        [TestCase(@"C:\a\b\c\", @"C:\a\", @"..\..")]
+        [TestCase(@"C:\a\", @"C:\b", @"..\b")]
+        [TestCase(@"C:\a", @"C:\a\b", @"b")]
+        [TestCase(@"C:\a", @"C:\A\b", @"b")]
+        [TestCase(@"C:\a", @"C:\b\c", @"..\b\c")]
+        [TestCase(@"C:\a\", @"C:\a\b", @"b")]
+        [TestCase(@"C:\", @"D:\", @"D:\")]
+        [TestCase(@"C:\", @"D:\b", @"D:\b")]
+        [TestCase(@"C:\", @"D:\b\", @"D:\b\")]
+        [TestCase(@"C:\a", @"D:\b", @"D:\b")]
+        [TestCase(@"C:\a\", @"D:\b", @"D:\b")]
+        [TestCase(@"C:\ab", @"C:\a", @"..\a")]
+        [TestCase(@"C:\a", @"C:\ab", @"..\ab")]
+        [TestCase(@"C:\", @"\\LOCALHOST\Share\b", @"\\LOCALHOST\Share\b")]
+        [TestCase(@"\\LOCALHOST\Share\a", @"\\LOCALHOST\Share\b", @"..\b")]
+        //[PlatformSpecific(TestPlatforms.Windows)]  // Tests Windows-specific paths
+        public static void GetRelativePath_Windows(string relativeTo, string path, string expected)
+        {
+            string result = PathNetCore.GetRelativePath(relativeTo, path);
+            Assert.AreEqual(Path.GetRelativePath(relativeTo, path), result);
+
+            // Check that we get the equivalent path when the result is combined with the sources
+            Assert.IsTrue(
+                Path.GetFullPath(path)
+                    .TrimEnd(Path.DirectorySeparatorChar)
+                    .Equals(
+                        Path.GetFullPath(Path.Combine(Path.GetFullPath(relativeTo),
+                                result))
+                            .TrimEnd(Path.DirectorySeparatorChar),
+                        StringComparison.OrdinalIgnoreCase));
         }
     }
 }

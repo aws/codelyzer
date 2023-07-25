@@ -819,8 +819,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         }
     }
 }");
-            var analyzer = analyzerByLanguage.GetLanguageAnalyzerByFileType(".cs");
-            result = await analyzer.AnalyzeFile(accountController.FileFullPath, result);
+            result = await analyzerByLanguage.AnalyzeFile(accountController.FileFullPath, result);
             var references = result.ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList();
             var updatedSourcefile = result.ProjectResult.SourceFileResults.FirstOrDefault(s => s.FileFullPath.Contains("AccountController.cs"));
         }
@@ -1929,9 +1928,8 @@ Namespace PortingParadise
         End Class
     End Class
 End Namespace");
-
-            var analyzer = analyzerByLanguage.GetLanguageAnalyzerByFileType(".vb");
-            result = await analyzer.AnalyzeFile(signalRNode.FileFullPath, result);
+            
+            result = await analyzerByLanguage.AnalyzeFile(signalRNode.FileFullPath, result);
             var references = result.ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList();
             var updatedSourcefile = result.ProjectResult.SourceFileResults.FirstOrDefault(s => s.FileFullPath.Contains("SignalR.vb"));
             Assert.IsNotNull(updatedSourcefile);
@@ -1976,24 +1974,6 @@ End Namespace");
 
 
         #region private methods
-        private void DeleteDir(string path, int retries = 0)
-        {
-            if (retries <= 10)
-            {
-                try
-                {
-                    if (Directory.Exists(path))
-                    {
-                        Directory.Delete(path, true);
-                    }
-                }
-                catch (Exception)
-                {
-                    Thread.Sleep(10000);
-                    DeleteDir(path, retries + 1);
-                }
-            }
-        }
 
         private static IEnumerable<TestCaseData> TestCliMetaDataSource
         {

@@ -1149,24 +1149,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(232, results[0].ProjectResult.LinesOfCode);
         }
         #region private methods
-        private void DeleteDir(string path, int retries = 0)
-        {
-            if(retries <= 10)
-            {
-                try
-                {
-                    if (Directory.Exists(path))
-                    {
-                        Directory.Delete(path, true);
-                    }
-                }
-                catch (Exception)
-                {
-                    Thread.Sleep(10000);
-                    DeleteDir(path, retries + 1);
-                }
-            }
-        }
 
         private static IEnumerable<TestCaseData> TestCliMetaDataSource
         {

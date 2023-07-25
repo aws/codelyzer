@@ -1,4 +1,3 @@
-using Buildalyzer;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Logging;
@@ -8,8 +7,10 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.VisualBasic;
+using Codelyzer.Analysis.Model.Build;
+using Codelyzer.Analysis.Model;
 
-namespace Codelyzer.Analysis.Build
+namespace Codelyzer.Analysis.Common
 {
     public class FileBuildHandler : IDisposable
     {
@@ -62,7 +63,7 @@ namespace Codelyzer.Analysis.Build
                 }
                 _fileInfo.Keys.ToList().ForEach(file =>
                 {
-                    var sourceFilePath = Path.GetRelativePath(_projectPath, file);
+                    var sourceFilePath = PathNetCore.GetRelativePath(_projectPath, file);
                     var fileTree = trees.FirstOrDefault(t => t.FilePath == file);
 
                     if (fileTree != null)
