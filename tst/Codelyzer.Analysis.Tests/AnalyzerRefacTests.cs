@@ -1700,7 +1700,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             var originalGraph = allGraphs[0];
             originalGraph.MergeGraphs(allGraphs);
 
-
             var resultParallel = new SolutionAnalyzerResult()
             {
                 CodeGraph = originalGraph,
