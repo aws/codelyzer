@@ -4,6 +4,7 @@ using Codelyzer.Analysis.Model;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -1595,17 +1596,17 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                 }
             };
 
-            
+
             CodeAnalyzerByLanguage analyzerWithoutBuild = new CodeAnalyzerByLanguage(configurationWithoutBuild, NullLogger.Instance);
             CodeAnalyzerByLanguage analyzerWithBuild = new CodeAnalyzerByLanguage(configurationWithBuild, NullLogger.Instance);
 
             var resultWithoutBuild = await analyzerWithoutBuild.AnalyzeSolutionGeneratorWithGraph(solutionPath);
             var resultWithBuild = await analyzerWithBuild.AnalyzeSolutionGeneratorWithGraph(solutionPath);
 
-            var projectGraphWithoutBuild = resultWithoutBuild.CodeGraph.ProjectNodes;
-            var projectGraphWithBuild = resultWithBuild.CodeGraph.ProjectNodes;
-            var classGraphWithoutBuild = resultWithoutBuild.CodeGraph?.ClassNodes;
-            var classGraphWithBuild = resultWithBuild.CodeGraph?.ClassNodes;
+            var projectGraphWithoutBuild = resultWithoutBuild.CodeGraph.ProjectNodes.Keys;
+            var projectGraphWithBuild = resultWithBuild.CodeGraph.ProjectNodes.Keys;
+            var classGraphWithoutBuild = resultWithoutBuild.CodeGraph?.ClassNodes.Keys;
+            var classGraphWithBuild = resultWithBuild.CodeGraph?.ClassNodes.Keys;
 
             // There are 5 projects in the solution
             Assert.AreEqual(5, projectGraphWithoutBuild.Count);
@@ -1657,8 +1658,9 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             ValidateRecordEdges(resultWithBuild.CodeGraph.RecordNodes);
         }
 
-        private void ValidateClassEdges(HashSet<Node> nodes)
+        private void ValidateClassEdges(ConcurrentDictionary<Node, string> nodesDictionary)
         {
+            var nodes = nodesDictionary.Keys.ToHashSet();
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Common.Constants")).AllOutgoingEdges.Count);
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Customer")).AllOutgoingEdges.Count);
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Product")).AllOutgoingEdges.Count);
@@ -1688,27 +1690,32 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Data.ModernizeWebMvcContext")).AllOutgoingEdges.Count);
             Assert.AreEqual(8, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.UtilityClass")).AllOutgoingEdges.Count);
         }
-        private void ValidateInterfaceEdges(HashSet<Node> nodes)
+        private void ValidateInterfaceEdges(ConcurrentDictionary<Node, string> nodesDictionary)
         {
+            var nodes = nodesDictionary.Keys.ToHashSet();
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.IObjectType")).AllOutgoingEdges.Count);
             Assert.AreEqual(5, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.ICustomerFacade")).AllOutgoingEdges.Count);
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.IProductFacade")).AllOutgoingEdges.Count);
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.IPurchaseFacade")).AllOutgoingEdges.Count);
         }
-        private void ValidateStructEdges(HashSet<Node> nodes)
+        private void ValidateStructEdges(ConcurrentDictionary<Node, string> nodesDictionary)
         {
+            var nodes = nodesDictionary.Keys.ToHashSet();
             Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesStruct")).AllIncomingEdges.Count);
         }
-        private void ValidateEnumEdges(HashSet<Node> nodes)
+        private void ValidateEnumEdges(ConcurrentDictionary<Node, string> nodesDictionary)
         {
+            var nodes = nodesDictionary.Keys.ToHashSet();
             Assert.AreEqual(2, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesEnum")).AllIncomingEdges.Count);
         }
-        private void ValidateRecordEdges(HashSet<Node> nodes)
+        private void ValidateRecordEdges(ConcurrentDictionary<Node, string> nodesDictionary)
         {
+            var nodes = nodesDictionary.Keys.ToHashSet();
             Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesRecord")).AllIncomingEdges.Count);
         }
-        private void ValidateMethodEdges(HashSet<Node> nodes)
+        private void ValidateMethodEdges(ConcurrentDictionary<Node, string> nodesDictionary)
         {
+            var nodes = nodesDictionary.Keys.ToHashSet();
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Data.SqlProvider.GetSampleData()")).AllOutgoingEdges.Count);
             Assert.AreEqual(1, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Data.SqlProvider.GetProducts()")).AllOutgoingEdges.Count);
             Assert.AreEqual(2, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Data.SqlProvider.GetProduct()")).AllOutgoingEdges.Count);
@@ -1805,6 +1812,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.StartsWith("Modernize.Web.Mvc.UtilityClass.MethodInvokingRecordMethod()")).AllOutgoingEdges.Count);
             Assert.AreEqual(1, nodes.FirstOrDefault(c => c.Identifier.StartsWith("Modernize.Web.Mvc.UtilityClass.MethodReferencingEnumAsParameter()")).AllOutgoingEdges.Count);
         }
+
+
 
         [Test]
         public async Task VBLibraryClassAnalyze()
