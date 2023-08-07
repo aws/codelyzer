@@ -58,7 +58,7 @@ namespace Codelyzer.Analysis.Workspace.Tests
                 { "ArgumentsCount", 8 },
                 { "MemberAccessExpressionsCount", 8 },
                 { "NugetReferencesCount", 0 },
-                { "SourceFilesCount", 6 },
+                { "SourceFilesCount", 4 },
                 { "MethodSignature", "public CoreWebApi.Controllers.WeatherForecastController.Get()" },
                 { "ClassDeclarationIdentifier", "WeatherForecastController" },
                 { "ClassDeclarationModifier", "public"}
