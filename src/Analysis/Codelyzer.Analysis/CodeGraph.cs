@@ -167,6 +167,7 @@ namespace Codelyzer.Analysis
                     }
                     else
                     {
+                        // Merge the nodes
                         var existingKey = Graph.FirstOrDefault(g1 => g1.Key.Equals(g.Key));
                         g.Key.ChildNodes?.ToList().ForEach(childNode =>
                         {
@@ -180,7 +181,6 @@ namespace Codelyzer.Analysis
                         {
                             existingKey.Key.OutgoingEdges.Add(outgoingEdge);
                         });
-                        // Merge the nodes?
                     }
                 }
                 foreach (var kvp in codeGraph.ustNodeEdgeCandidates)
@@ -311,7 +311,6 @@ namespace Codelyzer.Analysis
         private void RemoveExternalEdges()
         {
             var uniqueNamespaces = Graph.Where(n => n.Key.NodeType == NodeType.Namespace).Select(n => n.Key.Identifier).Distinct().ToHashSet();
-            //ustNodeEdgeCandidates.ToList().ForEach( nodeAndChildren => {
             Parallel.ForEach(ustNodeEdgeCandidates, nodeAndChildren => {
                 try
                 {
@@ -426,39 +425,6 @@ namespace Codelyzer.Analysis
         }
         private void CreateClassHierarchyEdges(Node sourceNode, List<string> baseTypes, string baseTypeOriginalDefinition)
         {
-            //var baseTypes = new List<string>();
-            //var baseTypeOriginalDefinition = string.Empty;
-
-            //if (sourceNode.UstNode is ClassDeclaration classDeclaration)
-            //{
-            //    // Check base types list for interfaces
-            //    baseTypes = classDeclaration.BaseList;
-            //    baseTypeOriginalDefinition = classDeclaration.BaseTypeOriginalDefinition;
-            //}
-            //else if (sourceNode.UstNode is InterfaceDeclaration interfaceDeclaration)
-            //{
-            //    // Check base types list for interfaces
-            //    baseTypes = interfaceDeclaration.BaseList;
-            //    baseTypeOriginalDefinition = interfaceDeclaration.BaseTypeOriginalDefinition;
-            //}
-            //else if (sourceNode.UstNode is StructDeclaration structDeclaration)
-            //{
-            //    // Check base types list for interfaces
-            //    baseTypes = structDeclaration.BaseList;
-            //    baseTypeOriginalDefinition = structDeclaration.BaseTypeOriginalDefinition;
-            //}
-            //else if (sourceNode.UstNode is RecordDeclaration recordDeclaration)
-            //{
-            //    // Check base types list for interfaces
-            //    baseTypes = recordDeclaration.BaseList;
-            //    baseTypeOriginalDefinition = recordDeclaration.BaseTypeOriginalDefinition;
-            //}
-            //else
-            //{
-            //    // If it's neither, no need to continue
-            //    return;
-            //}
-
             if (!string.IsNullOrEmpty(baseTypeOriginalDefinition) && baseTypeOriginalDefinition != "object")
             {
                 baseTypes.Add(baseTypeOriginalDefinition);
@@ -467,7 +433,7 @@ namespace Codelyzer.Analysis
             {
                 //If edge is already added, we dont need to proceed
                 var existingEdge = sourceNode.OutgoingEdges.FirstOrDefault(e => e.TargetNode.Identifier == baseType);
-                //if (existingEdge == null)
+                if (existingEdge == null)
                 {
                     var targetNode = TypeNodes.Keys.FirstOrDefault(n => n.Identifier == baseType);
                     if (targetNode != null)
@@ -487,7 +453,6 @@ namespace Codelyzer.Analysis
         private void CreateEdges(Node sourceNode)
         {
             var edgeCandidates = filteredUstNodeEdgeCandidates[sourceNode].ToList();
-            //edgeCandidates.ForEach(edgeCandidate => { 
             Parallel.ForEach(edgeCandidates, edgeCandidate => {
                 //If edge is already added, we dont need to proceed
                 var existingEdge = sourceNode.OutgoingEdges.FirstOrDefault(e => e.TargetNode.Identifier == edgeCandidate.FullIdentifier);
