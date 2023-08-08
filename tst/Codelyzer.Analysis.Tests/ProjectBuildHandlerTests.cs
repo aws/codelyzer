@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml.Linq;
 using Codelyzer.Analysis.Build;
+using Codelyzer.Analysis.Common;
 using NUnit.Framework;
 using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 
 namespace Codelyzer.Analysis.Tests
@@ -58,12 +60,12 @@ namespace Codelyzer.Analysis.Tests
         {
             using var stringReader = new StringReader(projectFileContent);
             var projectFileDoc = XDocument.Load(stringReader);
-            var projectBuildHandlerInstance = new ProjectBuildHandler(null);
+            var projectBuildHelperInstance = new ProjectBuildHelper(NullLogger.Instance);
             var extractFileReferencesFromProjectMethod =
-                TestUtils.GetPrivateMethod(projectBuildHandlerInstance.GetType(), "ExtractFileReferencesFromProject");
+                TestUtils.GetPrivateMethod(projectBuildHelperInstance.GetType(), "ExtractFileReferencesFromProject");
 
             // Invoke method and read contents of method output
-            var fileReferences = (List<string>)extractFileReferencesFromProjectMethod.Invoke(projectBuildHandlerInstance, new object[] { projectFileDoc });
+            var fileReferences = (List<string>)extractFileReferencesFromProjectMethod.Invoke(projectBuildHelperInstance, new object[] { projectFileDoc });
             var expectedFileReferences = new List<string>
             {
                 @"C:\\RandomFile.dll",
@@ -81,12 +83,12 @@ namespace Codelyzer.Analysis.Tests
                 "ProjectFileWithNonExistingMetaReferences.xml"
                 ));
             File.WriteAllText(testProjectFilePath, projectFileContent);
-            var projectBuildHandlerInstance = new ProjectBuildHandler(null);
+            var projectBuildHelperInstance = new ProjectBuildHelper(null);
             var loadProjectFileMethod =
-                TestUtils.GetPrivateMethod(projectBuildHandlerInstance.GetType(), "LoadProjectFile");
+                TestUtils.GetPrivateMethod(projectBuildHelperInstance.GetType(), "LoadProjectFile");
 
             // Invoke method and read contents of method output
-            var projectFile = (XDocument)loadProjectFileMethod.Invoke(projectBuildHandlerInstance, new object[] { testProjectFilePath });
+            var projectFile = (XDocument)loadProjectFileMethod.Invoke(projectBuildHelperInstance, new object[] { testProjectFilePath });
 
             Assert.AreEqual(projectFileContent, projectFile.ToString());
         }
@@ -95,12 +97,12 @@ namespace Codelyzer.Analysis.Tests
         [Test]
         public void LoadProjectFile_Returns_Null_On_Invalid_ProjectFilePath()
         {
-            var projectBuildHandlerInstance = new ProjectBuildHandler(null);
+            var projectBuildHelperInstance = new ProjectBuildHelper(null);
             var loadProjectFileMethod =
-                TestUtils.GetPrivateMethod(projectBuildHandlerInstance.GetType(), "LoadProjectFile");
+                TestUtils.GetPrivateMethod(projectBuildHelperInstance.GetType(), "LoadProjectFile");
 
             // Invoke method and read contents of method output
-            var projectFile = (XDocument)loadProjectFileMethod.Invoke(projectBuildHandlerInstance, new object[] { @"C:\\Invalid\\ProjectFilePath.csproj" });
+            var projectFile = (XDocument)loadProjectFileMethod.Invoke(projectBuildHelperInstance, new object[] { @"C:\\Invalid\\ProjectFilePath.csproj" });
             
             Assert.AreEqual(null, projectFile);
         }
@@ -114,12 +116,12 @@ namespace Codelyzer.Analysis.Tests
             File.WriteAllText(testProjectFilePath, "Invalid Project File Content!!!");
 
             var mockedLogger = new Mock<ILogger>();
-            var projectBuildHandlerInstance = new ProjectBuildHandler(mockedLogger.Object, null, new List<string>());
+            var projectBuildHelperInstance = new ProjectBuildHelper(mockedLogger.Object);
             var loadProjectFileMethod =
-                TestUtils.GetPrivateMethod(projectBuildHandlerInstance.GetType(), "LoadProjectFile");
+                TestUtils.GetPrivateMethod(projectBuildHelperInstance.GetType(), "LoadProjectFile");
 
             // Invoke method and read contents of method output
-            var projectFile = (XDocument)loadProjectFileMethod.Invoke(projectBuildHandlerInstance, new object[] { testProjectFilePath });
+            var projectFile = (XDocument)loadProjectFileMethod.Invoke(projectBuildHelperInstance, new object[] { testProjectFilePath });
 
             Assert.AreEqual(null, projectFile);
         }
@@ -127,15 +129,10 @@ namespace Codelyzer.Analysis.Tests
         [Test]
         public void LoadMetadataReferences_Returns_Empty_On_Invalid_ProjectFile()
         {
-            var projectBuildHandlerInstance = new ProjectBuildHandler(null);
-            var loadMetadataReferencesMethod =
-                TestUtils.GetPrivateMethod(projectBuildHandlerInstance.GetType(), "LoadMetadataReferences");
-
-            // Invoke method and read contents of method output
-            var metadataReferences = (List<PortableExecutableReference>)loadMetadataReferencesMethod.Invoke(projectBuildHandlerInstance, new object[] { null });
+            var projectBuildHelperInstance = new ProjectBuildHelper(null);
+            var (metadataReferences, _) = projectBuildHelperInstance.LoadMetadataReferences(null);
             var expectedMetadataReferences = new List<PortableExecutableReference>();
-
-            CollectionAssert.AreEquivalent(expectedMetadataReferences, metadataReferences);
+            CollectionAssert.AreEquivalent(expectedMetadataReferences, (List<PortableExecutableReference>)metadataReferences);
         }
 
         [Test]
@@ -144,18 +141,14 @@ namespace Codelyzer.Analysis.Tests
             var projectFileDoc = XDocument.Load(new StringReader(projectFileContent));
 
             var mockedLogger = new Mock<ILogger>();
-            var projectBuildHandlerInstance = new ProjectBuildHandler(mockedLogger.Object, null, new List<string>());
-            var loadMetadataReferencesMethod =
-                TestUtils.GetPrivateMethod(projectBuildHandlerInstance.GetType(), "LoadMetadataReferences");
-
+            var projectBuildHelperInstance = new ProjectBuildHelper(mockedLogger.Object);
+            
             // Invoke method and read contents of method output
-            var metadataReferences = (List<PortableExecutableReference>)loadMetadataReferencesMethod.Invoke(projectBuildHandlerInstance, new object[] { projectFileDoc });
+            var (metadataReferences, missingMetaReferences) = projectBuildHelperInstance.LoadMetadataReferences(projectFileDoc);
             var expectedMetadataReferences = new List<PortableExecutableReference>();
             CollectionAssert.AreEquivalent(expectedMetadataReferences, metadataReferences);
 
             // Validate MissingMetaReferences
-            var prop = TestUtils.GetPrivateProperty(projectBuildHandlerInstance.GetType(), "MissingMetaReferences");
-            List<string> missingMetaReferences = (List<string>)prop.GetValue(projectBuildHandlerInstance);
             List<string> expectedMissingMetaReferences = new List<string> { @"C:\\RandomFile.dll", @"C:\\this\\is\\some\\path\\to\\Some.dll" };
             CollectionAssert.AreEquivalent(expectedMissingMetaReferences, missingMetaReferences);
         }
@@ -192,17 +185,14 @@ namespace Codelyzer.Analysis.Tests
             var projectFileDoc = XDocument.Load(new StringReader(projectFileContent));
 
             var mockedLogger = new Mock<ILogger>();
-            var projectBuildHandlerInstance = new ProjectBuildHandler(mockedLogger.Object, null, new List<string>());
-            var loadMetadataReferencesMethod =
-                TestUtils.GetPrivateMethod(projectBuildHandlerInstance.GetType(), "LoadMetadataReferences");
+            var projectBuildHelperInstance = new ProjectBuildHelper(mockedLogger.Object);
 
             // Invoke method and read contents of method output
-            var metadataReferences = (List<PortableExecutableReference>)loadMetadataReferencesMethod.Invoke(projectBuildHandlerInstance, new object[] { projectFileDoc });
+            var (metadataReferences, missingMetaReferences) =
+                projectBuildHelperInstance.LoadMetadataReferences(projectFileDoc);
             Assert.AreEqual(1, metadataReferences.Count);
 
             // Validate MissingMetaReferences
-            var prop = TestUtils.GetPrivateProperty(projectBuildHandlerInstance.GetType(), "MissingMetaReferences");
-            List<string> missingMetaReferences = (List<string>)prop.GetValue(projectBuildHandlerInstance);
             List<string> expectedMissingMetaReferences = new List<string> { @"C:\\RandomFile.dll" };
             CollectionAssert.AreEquivalent(expectedMissingMetaReferences, missingMetaReferences);
         }

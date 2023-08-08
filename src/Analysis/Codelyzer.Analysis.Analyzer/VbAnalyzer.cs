@@ -1,18 +1,17 @@
-﻿
-using Codelyzer.Analysis.Build;
+﻿using System.Linq;
 using Codelyzer.Analysis.Common;
-using Codelyzer.Analysis.VisualBasic;
 using Codelyzer.Analysis.Model;
-using Microsoft.Extensions.Logging;
-using System.Linq;
+using Codelyzer.Analysis.Model.Build;
+using Codelyzer.Analysis.VisualBasic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.VisualBasic;
+using Microsoft.Extensions.Logging;
 
-namespace Codelyzer.Analysis.Analyzer
+namespace Codelyzer.Analysis.Analyzers
 {
-    class VBAnalyzer : LanguageAnalyzer
+    class VbAnalyzer : LanguageAnalyzer
     {
-        public VBAnalyzer(AnalyzerConfiguration configuration, ILogger logger)
+        public VbAnalyzer(AnalyzerConfiguration configuration, ILogger logger)
             : base(configuration, logger)
         {
         }
@@ -21,7 +20,7 @@ namespace Codelyzer.Analysis.Analyzer
 
         public override RootUstNode AnalyzeFile(SourceFileBuildResult sourceFileBuildResult, string projectRootPath)
         {
-            CodeContext codeContext = new CodeContext(sourceFileBuildResult.PrePortSemanticModel,
+            var codeContext = new CodeContext(sourceFileBuildResult.PrePortSemanticModel,
                 sourceFileBuildResult.SemanticModel,
                 sourceFileBuildResult.SyntaxTree,
                 projectRootPath,
@@ -31,14 +30,16 @@ namespace Codelyzer.Analysis.Analyzer
 
             Logger.LogDebug("Analyzing: " + sourceFileBuildResult.SourceFileFullPath);
 
-            using VisualBasicRoslynProcessor processor = new VisualBasicRoslynProcessor(codeContext);
+            using (var processor = new VisualBasicRoslynProcessor(codeContext))
+            {
+                var result = (RootUstNode)processor.Visit(codeContext.SyntaxTree.GetRoot());
 
-            var result = (RootUstNode) processor.Visit(codeContext.SyntaxTree.GetRoot());
+                result.LinesOfCode = sourceFileBuildResult.SyntaxTree.GetRoot()
+                    .DescendantTrivia().Count(t => t.IsKind(SyntaxKind.EndOfLineTrivia));
+                
+                return result;
+            }
 
-            result.LinesOfCode = sourceFileBuildResult.SyntaxTree.GetRoot().DescendantTrivia()
-                .Where(t => t.IsKind(SyntaxKind.EndOfLineTrivia)).Count();
-
-            return result as RootUstNode;
         }
     }
 }

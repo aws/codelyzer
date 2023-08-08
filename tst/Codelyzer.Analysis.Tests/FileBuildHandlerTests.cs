@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Codelyzer.Analysis.Build;
+using Codelyzer.Analysis.Common;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.VisualBasic;
 using Microsoft.Extensions.Logging.Abstractions;

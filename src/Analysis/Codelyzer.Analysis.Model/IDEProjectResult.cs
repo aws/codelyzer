@@ -1,4 +1,5 @@
 ﻿using Codelyzer.Analysis.Model;
+using Codelyzer.Analysis.Model.Build;
 using System;
 using System.Collections.Generic;
 using System.Text;

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Codelyzer.Analysis.Build
+namespace Codelyzer.Analysis.Model.Build
 {
     public class ProjectBuildResult : IDisposable
     {
@@ -42,7 +42,7 @@ namespace Codelyzer.Analysis.Build
 
         internal void AddSourceFile(string filePath)
         {
-            var wsPath = Path.GetRelativePath(ProjectRootPath, filePath);
+            var wsPath = PathNetCore.GetRelativePath(ProjectRootPath, filePath);
             SourceFiles.Add(wsPath);
         }
 

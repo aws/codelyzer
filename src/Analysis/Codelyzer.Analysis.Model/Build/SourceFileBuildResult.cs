@@ -1,10 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Editing;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Codelyzer.Analysis.Build
+namespace Codelyzer.Analysis.Model.Build
 {
     public class SourceFileBuildResult
     {

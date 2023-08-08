@@ -12,7 +12,10 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Castle.Components.DictionaryAdapter;
+using Microsoft.CodeAnalysis;
 using Assert = NUnit.Framework.Assert;
+using System.Collections.Concurrent;
 
 namespace Codelyzer.Analysis.Tests
 {
@@ -47,22 +50,10 @@ namespace Codelyzer.Analysis.Tests
 
         private void DownloadTestProjects()
         {
-            DownloadFromGitHub(@"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/671a629cab0382ecd6dec4833b3868f96f89da50.zip", "ASPNET-WebAPI-Sample-671a629cab0382ecd6dec4833b3868f96f89da50");
-            DownloadFromGitHub(@"https://github.com/Duikmeester/MvcMusicStore/archive/e274968f2827c04cfefbe6493f0a784473f83f80.zip", "MvcMusicStore-e274968f2827c04cfefbe6493f0a784473f83f80");
-            DownloadFromGitHub(@"https://github.com/nopSolutions/nopCommerce/archive/73567858b3e3ef281d1433d7ac79295ebed47ee6.zip", "nopCommerce-73567858b3e3ef281d1433d7ac79295ebed47ee6");
-            DownloadFromGitHub(@"https://github.com/marknfawaz/TestProjects/zipball/master/", "TestProjects-latest");
-        }
-
-        private void DownloadFromGitHub(string link, string name)
-        {
-            using (var client = new HttpClient())
-            {
-                var content = client.GetByteArrayAsync(link).Result;
-                var fileName = Path.Combine(downloadsDir, string.Concat(name, @".zip"));
-                File.WriteAllBytes(fileName, content);
-                ZipFile.ExtractToDirectory(fileName, downloadsDir, true);
-                File.Delete(fileName);
-            }
+            DownloadFromGitHub(@"https://github.com/FabianGosebrink/ASPNET-WebAPI-Sample/archive/671a629cab0382ecd6dec4833b3868f96f89da50.zip", "ASPNET-WebAPI-Sample-671a629cab0382ecd6dec4833b3868f96f89da50", downloadsDir);
+            DownloadFromGitHub(@"https://github.com/Duikmeester/MvcMusicStore/archive/e274968f2827c04cfefbe6493f0a784473f83f80.zip", "MvcMusicStore-e274968f2827c04cfefbe6493f0a784473f83f80", downloadsDir);
+            DownloadFromGitHub(@"https://github.com/nopSolutions/nopCommerce/archive/73567858b3e3ef281d1433d7ac79295ebed47ee6.zip", "nopCommerce-73567858b3e3ef281d1433d7ac79295ebed47ee6", downloadsDir);
+            DownloadFromGitHub(@"https://github.com/marknfawaz/TestProjects/zipball/master/", "TestProjects-latest", downloadsDir);
         }
 
         [Test]
@@ -819,8 +810,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         }
     }
 }");
-            var analyzer = analyzerByLanguage.GetLanguageAnalyzerByFileType(".cs");
-            result = await analyzer.AnalyzeFile(accountController.FileFullPath, result);
+            result = await analyzerByLanguage.AnalyzeFile(accountController.FileFullPath, result);
             var references = result.ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList();
             var updatedSourcefile = result.ProjectResult.SourceFileResults.FirstOrDefault(s => s.FileFullPath.Contains("AccountController.cs"));
         }
@@ -902,6 +892,14 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             var oneFileResult = await analyzer.AnalyzeFile(projectPath, filePath, null, references);
             var listOfFilesResult = await analyzer.AnalyzeFile(projectPath, new List<string> { filePath }, null, references);
             var fileInfoResult = await analyzer.AnalyzeFile(projectPath, fileInfo, null, references);
+
+            var fileInfoDictionary = new Dictionary<string, string>()
+            {
+                { filePath, fileContent }
+            };
+            var fileInfoResult2 = await analyzer.AnalyzeFile(projectPath, fileInfoDictionary,
+                new List<PortableExecutableReference>(), new List<PortableExecutableReference>());
+            Assert.AreEqual(fileInfoResult.SourceFileBuildResults.Count, fileInfoResult2.SourceFileBuildResults.Count);
             var oneFileWithContentResult = await analyzer.AnalyzeFile(projectPath, filePath, fileContent, null, references);
 
             var oneFileResultPre = await analyzer.AnalyzeFile(projectPath, filePath, references, null);
@@ -1501,7 +1499,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         [Test]
         public async Task TestModernizeGraph()
         {
-            string solutionPath = CopySolutionFolderToTemp("Modernize.Web.sln");            
+            string solutionPath = CopySolutionFolderToTemp("Modernize.Web.sln");
             FileAssert.Exists(solutionPath);
 
             AnalyzerConfiguration configurationWithoutBuild = new AnalyzerConfiguration(LanguageOptions.CSharp)
@@ -1560,17 +1558,17 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                 }
             };
 
-            
+
             CodeAnalyzerByLanguage analyzerWithoutBuild = new CodeAnalyzerByLanguage(configurationWithoutBuild, NullLogger.Instance);
             CodeAnalyzerByLanguage analyzerWithBuild = new CodeAnalyzerByLanguage(configurationWithBuild, NullLogger.Instance);
 
             var resultWithoutBuild = await analyzerWithoutBuild.AnalyzeSolutionWithGraph(solutionPath);
             var resultWithBuild = await analyzerWithBuild.AnalyzeSolutionWithGraph(solutionPath);
 
-            var projectGraphWithoutBuild = resultWithoutBuild.CodeGraph.ProjectNodes;
-            var projectGraphWithBuild = resultWithBuild.CodeGraph.ProjectNodes;
-            var classGraphWithoutBuild = resultWithoutBuild.CodeGraph?.ClassNodes;
-            var classGraphWithBuild = resultWithBuild.CodeGraph?.ClassNodes;
+            var projectGraphWithoutBuild = resultWithoutBuild.CodeGraph.ProjectNodes.Keys;
+            var projectGraphWithBuild = resultWithBuild.CodeGraph.ProjectNodes.Keys;
+            var classGraphWithoutBuild = resultWithoutBuild.CodeGraph?.ClassNodes.Keys;
+            var classGraphWithBuild = resultWithBuild.CodeGraph?.ClassNodes.Keys;
 
             // There are 5 projects in the solution
             Assert.AreEqual(5, projectGraphWithoutBuild.Count);
@@ -1626,7 +1624,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         [Test]
         public async Task TestModernizeParallelizeGraph()
         {
-            string solutionPath = CopySolutionFolderToTemp("Modernize.Web.sln");            
+            string solutionPath = CopySolutionFolderToTemp("Modernize.Web.sln");
             FileAssert.Exists(solutionPath);
 
             AnalyzerConfiguration configurationParallel = new AnalyzerConfiguration(LanguageOptions.CSharp)
@@ -1711,10 +1709,10 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
 
             var resultNoParallel = await analyzerNoParallel.AnalyzeSolutionWithGraph(solutionPath);
 
-            var projectGraphParallel = resultParallel.CodeGraph.ProjectNodes;
-            var projectGraphNoParallel = resultNoParallel.CodeGraph.ProjectNodes;
-            var classGraphParallel = resultParallel.CodeGraph?.ClassNodes;
-            var classGraphNoParallel = resultNoParallel.CodeGraph?.ClassNodes;
+            var projectGraphParallel = resultParallel.CodeGraph.ProjectNodes.Keys;
+            var projectGraphNoParallel = resultNoParallel.CodeGraph.ProjectNodes.Keys;
+            var classGraphParallel = resultParallel.CodeGraph?.ClassNodes.Keys;
+            var classGraphNoParallel = resultNoParallel.CodeGraph?.ClassNodes.Keys;
 
             // There are 5 projects in the solution
             Assert.AreEqual(5, projectGraphParallel.Count);
@@ -1766,8 +1764,9 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             ValidateRecordEdges(resultNoParallel.CodeGraph.RecordNodes);
         }
 
-        private void ValidateClassEdges(HashSet<Node> nodes)
+        private void ValidateClassEdges(ConcurrentDictionary<Node, string> nodesDictionary)
         {
+            var nodes = nodesDictionary.Keys.ToHashSet();
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Common.Constants")).AllOutgoingEdges.Count);
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Customer")).AllOutgoingEdges.Count);
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Product")).AllOutgoingEdges.Count);
@@ -1797,27 +1796,32 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.Data.ModernizeWebMvcContext")).AllOutgoingEdges.Count);
             Assert.AreEqual(8, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Mvc.UtilityClass")).AllOutgoingEdges.Count);
         }
-        private void ValidateInterfaceEdges(HashSet<Node> nodes)
+        private void ValidateInterfaceEdges(ConcurrentDictionary<Node, string> nodesDictionary)
         {
+            var nodes = nodesDictionary.Keys.ToHashSet();
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.Generics.IObjectType")).AllOutgoingEdges.Count);
             Assert.AreEqual(5, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.ICustomerFacade")).AllOutgoingEdges.Count);
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.IProductFacade")).AllOutgoingEdges.Count);
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Facade.IPurchaseFacade")).AllOutgoingEdges.Count);
         }
-        private void ValidateStructEdges(HashSet<Node> nodes)
+        private void ValidateStructEdges(ConcurrentDictionary<Node, string> nodesDictionary)
         {
+            var nodes = nodesDictionary.Keys.ToHashSet();
             Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesStruct")).AllIncomingEdges.Count);
         }
-        private void ValidateEnumEdges(HashSet<Node> nodes)
+        private void ValidateEnumEdges(ConcurrentDictionary<Node, string> nodesDictionary)
         {
+            var nodes = nodesDictionary.Keys.ToHashSet();
             Assert.AreEqual(2, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesEnum")).AllIncomingEdges.Count);
         }
-        private void ValidateRecordEdges(HashSet<Node> nodes)
+        private void ValidateRecordEdges(ConcurrentDictionary<Node, string> nodesDictionary)
         {
+            var nodes = nodesDictionary.Keys.ToHashSet();
             Assert.AreEqual(3, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Models.ValuesRecord")).AllIncomingEdges.Count);
         }
-        private void ValidateMethodEdges(HashSet<Node> nodes)
+        private void ValidateMethodEdges(ConcurrentDictionary<Node, string> nodesDictionary)
         {
+            var nodes = nodesDictionary.Keys.ToHashSet();
             Assert.AreEqual(0, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Data.SqlProvider.GetSampleData()")).AllOutgoingEdges.Count);
             Assert.AreEqual(1, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Data.SqlProvider.GetProducts()")).AllOutgoingEdges.Count);
             Assert.AreEqual(2, nodes.FirstOrDefault(c => c.Identifier.Equals("Modernize.Web.Data.SqlProvider.GetProduct()")).AllOutgoingEdges.Count);
@@ -2037,9 +2041,8 @@ Namespace PortingParadise
         End Class
     End Class
 End Namespace");
-
-            var analyzer = analyzerByLanguage.GetLanguageAnalyzerByFileType(".vb");
-            result = await analyzer.AnalyzeFile(signalRNode.FileFullPath, result);
+            
+            result = await analyzerByLanguage.AnalyzeFile(signalRNode.FileFullPath, result);
             var references = result.ProjectBuildResult.Project.MetadataReferences.Select(m => m.Display).ToList();
             var updatedSourcefile = result.ProjectResult.SourceFileResults.FirstOrDefault(s => s.FileFullPath.Contains("SignalR.vb"));
             Assert.IsNotNull(updatedSourcefile);
@@ -2186,24 +2189,6 @@ End Namespace");
             Assert.AreEqual(232, results[0].ProjectResult.LinesOfCode);
         }
         #region private methods
-        private void DeleteDir(string path, int retries = 0)
-        {
-            if (retries <= 10)
-            {
-                try
-                {
-                    if (Directory.Exists(path))
-                    {
-                        Directory.Delete(path, true);
-                    }
-                }
-                catch (Exception)
-                {
-                    Thread.Sleep(10000);
-                    DeleteDir(path, retries + 1);
-                }
-            }
-        }
 
         private static IEnumerable<TestCaseData> TestCliMetaDataSource
         {
