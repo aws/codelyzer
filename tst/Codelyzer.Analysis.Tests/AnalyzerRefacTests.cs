@@ -204,12 +204,15 @@ namespace Codelyzer.Analysis.Tests
         }
         private string CopySolutionFolderToTemp(string solutionName)
         {
+            TestContext.WriteLine($"[CUSTOM-OUTPUT]{solutionName} downloads dir: {downloadsDir}");
             string solutionPath = Directory.EnumerateFiles(downloadsDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
             string solutionDir = Directory.GetParent(solutionPath).FullName;
             var newTempDir = Path.Combine(tempDir, Guid.NewGuid().ToString());
             FileUtils.DirectoryCopy(solutionDir, newTempDir);
 
             solutionPath = Directory.EnumerateFiles(newTempDir, solutionName, SearchOption.AllDirectories).FirstOrDefault();
+
+            TestContext.WriteLine($"[CUSTOM-OUTPUT]{solutionPath}");
             return solutionPath;
         }
 
