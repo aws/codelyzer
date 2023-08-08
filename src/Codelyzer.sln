@@ -23,8 +23,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Codelyzer.Analysis.Workspac
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Codelyzer.Analysis.Analyzers", "Analysis\Codelyzer.Analysis.Analyzer\Codelyzer.Analysis.Analyzers.csproj", "{5028A8B3-641D-4210-9FB8-D4C3589D5D82}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Codelyzer.Analysis.Workspace.Tests", "..\tst\Codelyzer.Analysis.Workspace.Tests\Codelyzer.Analysis.Workspace.Tests.csproj", "{E4FEA3EC-9F89-466B-A31C-A0E9E914DC14}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,10 +69,6 @@ Global
 		{5028A8B3-641D-4210-9FB8-D4C3589D5D82}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5028A8B3-641D-4210-9FB8-D4C3589D5D82}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5028A8B3-641D-4210-9FB8-D4C3589D5D82}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E4FEA3EC-9F89-466B-A31C-A0E9E914DC14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E4FEA3EC-9F89-466B-A31C-A0E9E914DC14}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E4FEA3EC-9F89-466B-A31C-A0E9E914DC14}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E4FEA3EC-9F89-466B-A31C-A0E9E914DC14}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
