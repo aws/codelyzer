@@ -1,5 +1,8 @@
 ﻿using Codelyzer.Analysis.Model;
+using Microsoft.Build.Logging.StructuredLogger;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -8,6 +11,59 @@ using System.Threading.Tasks;
 
 namespace Codelyzer.Analysis
 {
+    public class ProjectInfo
+    {
+        public ProjectInfo() { }
+        public string Name { get; set; }
+        public string Identifier { get; set; }
+        public List<string> References { get; set; }
+    }
+    public class CodeGraphSerialized
+    {
+        public HashSet<Node> Graph { get; set; }
+        public CodeGraphSerialized()
+        {
+
+        }
+        public CodeGraphSerialized(CodeGraph codeGraph)
+        {
+            Graph = codeGraph.Graph.Keys.ToHashSet();
+            foreach (var item in Graph)
+            {
+                item.IEdges = new List<Edge>(item.IncomingEdges);
+                item.OEdges = new List<Edge>(item.OutgoingEdges);
+                item.IncomingEdges = new ConcurrentBag<Edge>();
+                item.OutgoingEdges = new ConcurrentBag<Edge>();
+                if (codeGraph.ustNodeEdgeCandidates.ContainsKey(item))
+                {
+                    item.EdgeCandidates.AddRange(codeGraph.ustNodeEdgeCandidates[item]);
+                }
+            }
+        }
+
+        public CodeGraph Deserialize()
+        {
+            var graph = new CodeGraph(NullLogger.Instance);
+            graph.Graph = new ConcurrentDictionary<Node, string>(Graph.ToDictionary(d => d, v => v.Identifier));
+            foreach(var item in Graph)
+            {
+                item.IncomingEdges = new ConcurrentBag<Edge>(item.IEdges);
+                item.OutgoingEdges = new ConcurrentBag<Edge>(item.OEdges);
+                if (!graph.ustNodeEdgeCandidates.ContainsKey(item))
+                {
+                    graph.ustNodeEdgeCandidates.TryAdd(item, new ConcurrentBag<UstNode>(item.EdgeCandidates));
+                }
+                else
+                {
+                    item.EdgeCandidates.ForEach(edge =>
+                    {
+                        graph.ustNodeEdgeCandidates[item].Add(edge);
+                    });
+                }
+            }
+            return graph;
+        }
+    }
     public class CodeGraph
     {
         ConcurrentDictionary<Node, string> _projectNodes;
@@ -20,8 +76,11 @@ namespace Codelyzer.Analysis
         ConcurrentDictionary<Node, string> _recordNodes;
         ConcurrentDictionary<Node, string> _methodNodes;
 
+        [JsonIgnore]
         protected readonly ILogger Logger;
+        [JsonIgnore]
         public ConcurrentDictionary<Node, string> Graph { get; set; }
+        [JsonIgnore]
         public ConcurrentDictionary<Node, string> ProjectNodes
         {
             get
@@ -33,6 +92,7 @@ namespace Codelyzer.Analysis
                 return _projectNodes;
             }
         }
+        [JsonIgnore]
         public ConcurrentDictionary<Node, string> NamespaceNodes
         {
             get
@@ -44,6 +104,7 @@ namespace Codelyzer.Analysis
                 return _namespaceNodes;
             }
         }
+        [JsonIgnore]
         public ConcurrentDictionary<Node, string> ClassNodes
         {
             get
@@ -55,6 +116,7 @@ namespace Codelyzer.Analysis
                 return _classNodes;
             }
         }
+        [JsonIgnore]
         public ConcurrentDictionary<Node, string> InterfaceNodes
         {
             get
@@ -66,6 +128,7 @@ namespace Codelyzer.Analysis
                 return _interfaceNodes;
             }
         }
+        [JsonIgnore]
         public ConcurrentDictionary<Node, string> TypeNodes
         {
             get
@@ -78,6 +141,7 @@ namespace Codelyzer.Analysis
                 return _typeNodes;
             }
         }
+        [JsonIgnore]
         public ConcurrentDictionary<Node, string> StructNodes
         {
             get
@@ -89,6 +153,7 @@ namespace Codelyzer.Analysis
                 return _structNodes;
             }
         }
+        [JsonIgnore]
         public ConcurrentDictionary<Node, string> EnumNodes
         {
             get
@@ -100,6 +165,7 @@ namespace Codelyzer.Analysis
                 return _enumNodes;
             }
         }
+        [JsonIgnore]
         public ConcurrentDictionary<Node, string> RecordNodes
         {
             get
@@ -111,6 +177,7 @@ namespace Codelyzer.Analysis
                 return _recordNodes;
             }
         }
+        [JsonIgnore]
         public ConcurrentDictionary<Node, string> MethodNodes
         {
             get
@@ -122,15 +189,17 @@ namespace Codelyzer.Analysis
                 return _methodNodes;
             }
         }
-        ConcurrentDictionary<ProjectWorkspace, string> projectWorkspaces;
+        ConcurrentBag<ProjectInfo> projectWorkspaces;
+        [JsonIgnore]
         // Edges can have duplicates
         public ConcurrentDictionary<Node, ConcurrentBag<UstNode>> ustNodeEdgeCandidates;
+        [JsonIgnore]
         public ConcurrentDictionary<Node, ConcurrentBag<UstNode>> filteredUstNodeEdgeCandidates;
 
         public CodeGraph(ILogger logger)
         {
             Logger = logger;
-            projectWorkspaces = new ConcurrentDictionary<ProjectWorkspace, string>();
+            projectWorkspaces = new ConcurrentBag<ProjectInfo>();
             ustNodeEdgeCandidates = new ConcurrentDictionary<Node, ConcurrentBag<UstNode>>();
             filteredUstNodeEdgeCandidates = new ConcurrentDictionary<Node, ConcurrentBag<UstNode>>();
             Graph = new ConcurrentDictionary<Node, string>();
@@ -152,11 +221,12 @@ namespace Codelyzer.Analysis
             _methodNodes = null;
             _typeNodes = null;
 
+            var concurrentGraphs = new ConcurrentBag<CodeGraph>(codeGraphs);
             Parallel.ForEach(codeGraphs, codeGraph =>
             {
                 foreach (var projectWorkspace in codeGraph.projectWorkspaces)
                 {
-                    projectWorkspaces.TryAdd(projectWorkspace.Key, projectWorkspace.Value);
+                    projectWorkspaces.Add(projectWorkspace);
                 }
                 foreach (var g in codeGraph.Graph)
                 {
@@ -171,7 +241,7 @@ namespace Codelyzer.Analysis
                         var existingKey = Graph.FirstOrDefault(g1 => g1.Key.Equals(g.Key));
                         g.Key.ChildNodes?.ToList().ForEach(childNode =>
                         {
-                            existingKey.Key.ChildNodes.TryAdd(childNode.Key, childNode.Value);
+                            existingKey.Key.ChildNodes.Add(childNode);
                         });
                         g.Key.IncomingEdges?.ToList().ForEach(incomingEdge =>
                         {
@@ -233,7 +303,12 @@ namespace Codelyzer.Analysis
                     };
 
                     Graph.TryAdd(projectNode, projectNode.Identifier);
-                    projectWorkspaces.TryAdd(analyzerResult.ProjectResult, string.Empty);
+                    projectWorkspaces.Add(new ProjectInfo()
+                    {
+                        Name = analyzerResult.ProjectResult.ProjectName,
+                        Identifier = analyzerResult.ProjectResult.ProjectFilePath,
+                        References = analyzerResult.ProjectResult.ExternalReferences.ProjectReferences.Select(r => r.AssemblyLocation).ToList()
+                    });
 
                     // Add Relevant Children from source files
                     analyzerResult.ProjectResult.SourceFileResults.ForEach(sourceFileResult =>
@@ -241,9 +316,9 @@ namespace Codelyzer.Analysis
                         var children = InitializeNodesHelper(sourceFileResult, projectNode);
                         foreach (var child in children)
                         {
-                            if (!projectNode.ChildNodes.ContainsKey(child))
+                            if (!projectNode.ChildNodes.Contains(child))
                             {
-                                projectNode.ChildNodes.TryAdd(child, child.Identifier);
+                                projectNode.ChildNodes.Add(child);
                             }
                         }
                     });
@@ -285,12 +360,13 @@ namespace Codelyzer.Analysis
             {
                 try
                 {
-                    var projectReferences = projectResult.Key?.ExternalReferences?.ProjectReferences;
-                    var sourceNode = ProjectNodes.FirstOrDefault(p => p.Key.Identifier.Equals(projectResult.Key.ProjectFilePath, StringComparison.InvariantCultureIgnoreCase)).Key;
+                    var projectReferences = projectResult.References;
+                    var sourceNode = ProjectNodes.FirstOrDefault(p => p.Key.Identifier.Equals(projectResult.Identifier, StringComparison.InvariantCultureIgnoreCase)).Key;
 
                     projectReferences?.ForEach(projectReference =>
                     {
-                        var targetNode = ProjectNodes.FirstOrDefault(p => p.Key.Identifier.Equals(projectReference.AssemblyLocation, StringComparison.InvariantCultureIgnoreCase)).Key;
+                        var targetNode = ProjectNodes.FirstOrDefault(p => p.Key.Identifier.Equals(projectReference, StringComparison.InvariantCultureIgnoreCase)).Key;
+                                                
                         if (targetNode != null)
                         {
                             var edge = new Edge() { EdgeType = EdgeType.ProjectReference, TargetNode = targetNode, SourceNode = sourceNode };
@@ -304,7 +380,7 @@ namespace Codelyzer.Analysis
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, $"Error while adding project edges for {projectResult.Key.ProjectFilePath}");
+                    Logger.LogError(ex, $"Error while adding project edges for {projectResult.Identifier}");
                 }
             });
         }
@@ -402,7 +478,7 @@ namespace Codelyzer.Analysis
                                 currentNode = Graph.Keys.FirstOrDefault(n => n.Equals(currentNode));
                             }
                             var children = InitializeNodesHelper(child, currentNode);
-                            children.ToList().ForEach(child => currentNode.ChildNodes.TryAdd(child, child.Identifier));
+                            children.ToList().ForEach(child => currentNode.ChildNodes.Add(child));
                         }
                         else
                         {
@@ -566,16 +642,21 @@ namespace Codelyzer.Analysis
     {
         public Node()
         {
-            Properties = new ConcurrentDictionary<string, object>();
+            Properties = new Dictionary<string, object>();
             OutgoingEdges = new ConcurrentBag<Edge>();
             IncomingEdges = new ConcurrentBag<Edge>();
-            ChildNodes = new ConcurrentDictionary<Node, string>();
+            ChildNodes = new HashSet<Node>();
+            EdgeCandidates = new List<UstNode>();
         }
         public Node ParentNode { get; set; }
-        public ConcurrentDictionary<Node, string> ChildNodes { get; set; }
+        public HashSet<Node> ChildNodes { get; set; }
         public string Name { get; set; }
         public string Identifier { get; set; }
         public NodeType NodeType { get; set; }
+        public List<Edge> IEdges { get; set; }
+        public List<Edge> OEdges { get; set; }
+
+        [JsonIgnore]
         public ConcurrentBag<Edge> Edges
         {
             get
@@ -583,6 +664,7 @@ namespace Codelyzer.Analysis
                 return new ConcurrentBag<Edge>(IncomingEdges.Union(OutgoingEdges));
             }
         }
+        [JsonIgnore]
         public ConcurrentBag<Edge> AllEdges
         {
             get
@@ -590,12 +672,17 @@ namespace Codelyzer.Analysis
                 return new ConcurrentBag<Edge>(AllIncomingEdges.Union(AllOutgoingEdges));
             }
         }
+        [JsonIgnore]
         public ConcurrentBag<Edge> OutgoingEdges { get; set; }
+        [JsonIgnore]
         public ConcurrentBag<Edge> IncomingEdges { get; set; }
-        public ConcurrentBag<Edge> AllOutgoingEdges { get => new ConcurrentBag<Edge>(OutgoingEdges.Union(ChildNodes.SelectMany(c => c.Key.AllOutgoingEdges))); }
-        public ConcurrentBag<Edge> AllIncomingEdges { get => new ConcurrentBag<Edge>(IncomingEdges.Union(ChildNodes.SelectMany(c => c.Key.AllIncomingEdges))); }
+        [JsonIgnore]
+        public ConcurrentBag<Edge> AllOutgoingEdges { get => new ConcurrentBag<Edge>(OutgoingEdges.Union(ChildNodes.SelectMany(c => c.AllOutgoingEdges))); }
+        [JsonIgnore]
+        public ConcurrentBag<Edge> AllIncomingEdges { get => new ConcurrentBag<Edge>(IncomingEdges.Union(ChildNodes.SelectMany(c => c.AllIncomingEdges))); }
         public UstNode UstNode { get; set; }
-        public ConcurrentDictionary<string, object> Properties { get; set; }
+        public Dictionary<string, object> Properties { get; set; }
+        public List<UstNode> EdgeCandidates { get;set; }
         public override bool Equals(object obj)
         {
             var node = obj as Node;
