@@ -336,6 +336,7 @@ namespace Codelyzer.Analysis
                             // Keep going until there are no more children
                             childNodes = childNodes.Union(InitializeNodesHelper(child, parentNode)).ToHashSet();
                         }
+                        currentNode.UstNode.Children.Clear();
                     }
                     catch (Exception ex)
                     {
