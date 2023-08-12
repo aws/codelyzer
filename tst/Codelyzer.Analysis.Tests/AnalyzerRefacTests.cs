@@ -1766,15 +1766,15 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             
             var analyzerResultsParallel = await analyzerParallel.AnalyzeSolution(solutionPath);
 
-            var originalGraph = new CodeGraph(NullLogger.Instance);
-            originalGraph.GenerateCompactGraph(analyzerResultsParallel);
+            var originalGraph = new CompactGraph(NullLogger.Instance);
+            originalGraph.Initialize(analyzerResultsParallel);
 
             var outputFileaname = Path.Combine(@"C:\output\", "graph-serialize.json");
             var graphSerializer = new GraphSerializer();
             using var stream = new FileStream(outputFileaname, FileMode.Create);
             //using var stream = new FileStream(Path.Combine(Directory.GetCurrentDirectory(), outputFileaname), FileMode.Create);
-            originalGraph.CompactGraph.CreateSerializedForm();
-            graphSerializer.Serialize(originalGraph.CompactGraph, stream);
+            originalGraph.CreateSerializedForm();
+            graphSerializer.Serialize(originalGraph, stream);
             stream.Flush();
             stream.Close();
 
@@ -1783,7 +1783,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             deserialized.CreateDeserializedForm();
 
             // There are 5 projects in the solution
-            Assert.AreEqual(5, deserialized.ConcurrentNodes.Keys.Count(k => k.NodeType == NodeType.Project));
+            Assert.AreEqual(5, deserialized.Graph.Keys.Count(k => k.NodeType == NodeType.Project));
 
             //The Facade project has 3 Edges
             Assert.AreEqual(3, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("Modernize.Web.Facade.csproj")));
@@ -1795,19 +1795,19 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(0, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("Modernize.Web.Models.csproj")));
 
             //// There are 27 classes in the solution
-            Assert.AreEqual(27, deserialized.ConcurrentNodes.Keys.Count(n=>n.NodeType == NodeType.Class));
+            Assert.AreEqual(27, deserialized.Graph.Keys.Count(n=>n.NodeType == NodeType.Class));
 
             //Assert.AreEqual(4, resultParallel.CodeGraph?.InterfaceNodes.Count);
-            Assert.AreEqual(4, deserialized.ConcurrentNodes.Keys.Count(n => n.NodeType == NodeType.Interface));
+            Assert.AreEqual(4, deserialized.Graph.Keys.Count(n => n.NodeType == NodeType.Interface));
 
             //Assert.AreEqual(1, resultParallel.CodeGraph?.StructNodes.Count);
-            Assert.AreEqual(1, deserialized.ConcurrentNodes.Keys.Count(n => n.NodeType == NodeType.Struct));
+            Assert.AreEqual(1, deserialized.Graph.Keys.Count(n => n.NodeType == NodeType.Struct));
 
             //Assert.AreEqual(1, resultParallel.CodeGraph?.EnumNodes.Count);
-            Assert.AreEqual(1, deserialized.ConcurrentNodes.Keys.Count(n => n.NodeType == NodeType.Enum));
+            Assert.AreEqual(1, deserialized.Graph.Keys.Count(n => n.NodeType == NodeType.Enum));
 
             //Assert.AreEqual(1, resultParallel.CodeGraph?.RecordNodes.Count);
-            Assert.AreEqual(1, deserialized.ConcurrentNodes.Keys.Count(n => n.NodeType == NodeType.Record));
+            Assert.AreEqual(1, deserialized.Graph.Keys.Count(n => n.NodeType == NodeType.Record));
 
             //ValidateClassEdges(resultParallel.CodeGraph.ClassNodes);
             //ValidateInterfaceEdges(resultParallel.CodeGraph.InterfaceNodes);
