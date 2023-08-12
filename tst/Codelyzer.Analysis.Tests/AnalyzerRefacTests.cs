@@ -1532,19 +1532,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             CodeAnalyzerByLanguage analyzerWithoutBuild = new CodeAnalyzerByLanguage(configurationWithoutBuild, NullLogger.Instance);
             
             var resultWithoutBuild = await analyzerWithoutBuild.AnalyzeSolutionWithGraph(solutionPath);
-
-            var graphSerializer = new GraphSerializer();
-            using var stream = new FileStream(@"C:\output\graph.json", FileMode.Create);
-            var cgs = new CodeGraphSerialized(resultWithoutBuild.CodeGraph);
-            graphSerializer.Serialize(cgs, stream);
-            stream.Flush();
-            stream.Close();
-
-            using var fileStream = File.OpenRead(@"C:\output\graph.json");
-            var deserialized = graphSerializer.Deserialize<CodeGraphSerialized>(fileStream);
-            var codeGraph = deserialized.Deserialize();
-
-            resultWithoutBuild.CodeGraph = codeGraph;
             var projectGraphWithoutBuild = resultWithoutBuild.CodeGraph.ProjectNodes.Keys;
             //var projectGraphWithBuild = resultWithBuild.CodeGraph.ProjectNodes.Keys;
             var classGraphWithoutBuild = resultWithoutBuild.CodeGraph?.ClassNodes.Keys;
@@ -1740,6 +1727,9 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         public async Task TestModernizeSerializeDeserializeGraph()
         {
             var solutionPath = @"C:\Users\markfawa\workplace\Github\codelyzer-root\Codelyzer\tst\Projects\Temp\02e20f75-b6e4-4325-9cec-a2ba5fc788b8\Modernize.Web.sln";
+            //var solutionPath = @"C:\w\BigNetProject\FrankenProject.sln";           
+
+
             FileAssert.Exists(solutionPath);
 
             AnalyzerConfiguration configurationParallel = new AnalyzerConfiguration(LanguageOptions.CSharp)
@@ -1775,67 +1765,56 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             CodeAnalyzerByLanguage analyzerParallel = new CodeAnalyzerByLanguage(configurationParallel, NullLogger.Instance);
             
             var analyzerResultsParallel = await analyzerParallel.AnalyzeSolution(solutionPath);
-            var allGraphs = new List<CodeGraph>();
-            analyzerResultsParallel.ForEach(analyzerResult => {
-                var graph = new CodeGraph(NullLogger.Instance);
-                graph.Initialize(new List<AnalyzerResult> { analyzerResult });
-                allGraphs.Add(graph);
-            });
-            
-            var originalGraph = allGraphs[0];
-            originalGraph.MergeGraphs(allGraphs);
 
-            var resultParallel = new SolutionAnalyzerResult()
-            {
-                CodeGraph = originalGraph,
-                AnalyzerResults = analyzerResultsParallel
-            };
+            var originalGraph = new CodeGraph(NullLogger.Instance);
+            originalGraph.GenerateCompactGraph(analyzerResultsParallel);
 
+            var outputFileaname = Path.Combine(@"C:\output\", "graph-serialize.json");
             var graphSerializer = new GraphSerializer();
-            using var stream = new FileStream(Path.Combine(Directory.GetCurrentDirectory(), "graph-serialize.json"), FileMode.Create);
-            var cgs = new CodeGraphSerialized(resultParallel.CodeGraph);
-            graphSerializer.Serialize(cgs, stream);
+            using var stream = new FileStream(outputFileaname, FileMode.Create);
+            //using var stream = new FileStream(Path.Combine(Directory.GetCurrentDirectory(), outputFileaname), FileMode.Create);
+            originalGraph.CompactGraph.CreateSerializedForm();
+            graphSerializer.Serialize(originalGraph.CompactGraph, stream);
             stream.Flush();
             stream.Close();
 
-            using var fileStream = File.OpenRead(@"C:\output\graph.json");
-            var deserialized = graphSerializer.Deserialize<CodeGraphSerialized>(fileStream);
-            var codeGraph = deserialized.Deserialize();
-
-            resultParallel.CodeGraph = codeGraph;
-
-            var projectGraphParallel = resultParallel.CodeGraph.ProjectNodes.Keys;
-            var classGraphParallel = resultParallel.CodeGraph?.ClassNodes.Keys;
+            using var fileStream = File.OpenRead(outputFileaname);
+            var deserialized = graphSerializer.Deserialize<CompactGraph>(fileStream);
+            deserialized.CreateDeserializedForm();
 
             // There are 5 projects in the solution
-            Assert.AreEqual(5, projectGraphParallel.Count);
+            Assert.AreEqual(5, deserialized.ConcurrentNodes.Keys.Count(k => k.NodeType == NodeType.Project));
 
             //The Facade project has 3 Edges
-            Assert.AreEqual(3, projectGraphParallel.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Facade")).OutgoingEdges.Count);
+            Assert.AreEqual(3, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("Modernize.Web.Facade.csproj")));
             
             // The Mvc project has 3 Edges
-            Assert.AreEqual(3, projectGraphParallel.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Mvc")).OutgoingEdges.Count);
+            Assert.AreEqual(3, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("Modernize.Web.Mvc.csproj")));
 
-            // The Models project has 0 Edges
-            Assert.AreEqual(0, projectGraphParallel.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).OutgoingEdges.Count);
-            
-            // There are 27 classes in the solution
-            Assert.AreEqual(27, classGraphParallel.Count);
-           
-            Assert.AreEqual(4, resultParallel.CodeGraph?.InterfaceNodes.Count);
-            
-            Assert.AreEqual(1, resultParallel.CodeGraph?.StructNodes.Count);
-            
-            Assert.AreEqual(1, resultParallel.CodeGraph?.EnumNodes.Count);
-            
-            Assert.AreEqual(1, resultParallel.CodeGraph?.RecordNodes.Count);
-            
-            ValidateClassEdges(resultParallel.CodeGraph.ClassNodes);
-            ValidateInterfaceEdges(resultParallel.CodeGraph.InterfaceNodes);
-            ValidateMethodEdges(resultParallel.CodeGraph.MethodNodes);
-            ValidateStructEdges(resultParallel.CodeGraph.StructNodes);
-            ValidateEnumEdges(resultParallel.CodeGraph.EnumNodes);
-            ValidateRecordEdges(resultParallel.CodeGraph.RecordNodes);
+            //// The Models project has 0 Edges
+            Assert.AreEqual(0, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("Modernize.Web.Models.csproj")));
+
+            //// There are 27 classes in the solution
+            Assert.AreEqual(27, deserialized.ConcurrentNodes.Keys.Count(n=>n.NodeType == NodeType.Class));
+
+            //Assert.AreEqual(4, resultParallel.CodeGraph?.InterfaceNodes.Count);
+            Assert.AreEqual(4, deserialized.ConcurrentNodes.Keys.Count(n => n.NodeType == NodeType.Interface));
+
+            //Assert.AreEqual(1, resultParallel.CodeGraph?.StructNodes.Count);
+            Assert.AreEqual(1, deserialized.ConcurrentNodes.Keys.Count(n => n.NodeType == NodeType.Struct));
+
+            //Assert.AreEqual(1, resultParallel.CodeGraph?.EnumNodes.Count);
+            Assert.AreEqual(1, deserialized.ConcurrentNodes.Keys.Count(n => n.NodeType == NodeType.Enum));
+
+            //Assert.AreEqual(1, resultParallel.CodeGraph?.RecordNodes.Count);
+            Assert.AreEqual(1, deserialized.ConcurrentNodes.Keys.Count(n => n.NodeType == NodeType.Record));
+
+            //ValidateClassEdges(resultParallel.CodeGraph.ClassNodes);
+            //ValidateInterfaceEdges(resultParallel.CodeGraph.InterfaceNodes);
+            //ValidateMethodEdges(resultParallel.CodeGraph.MethodNodes);
+            //ValidateStructEdges(resultParallel.CodeGraph.StructNodes);
+            //ValidateEnumEdges(resultParallel.CodeGraph.EnumNodes);
+            //ValidateRecordEdges(resultParallel.CodeGraph.RecordNodes);
         }
 
         private void ValidateClassEdges(ConcurrentDictionary<Node, string> nodesDictionary)

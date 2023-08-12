@@ -1,7 +1,6 @@
 ﻿using Codelyzer.Analysis.Model;
 using Microsoft.Build.Logging.StructuredLogger;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
@@ -18,50 +17,32 @@ namespace Codelyzer.Analysis
         public string Identifier { get; set; }
         public List<string> References { get; set; }
     }
-    public class CodeGraphSerialized
+    public class CompactGraph
     {
-        public HashSet<Node> Graph { get; set; }
-        public CodeGraphSerialized()
+        public CompactGraph()
         {
-
+            ConcurrentNodes = new ConcurrentDictionary<Node, string>();
+            ConcurrentEdges = new ConcurrentBag<Edge>();
         }
-        public CodeGraphSerialized(CodeGraph codeGraph)
+        public HashSet<Node> Nodes { get; set; }
+        public List<Edge> Edges { get; set; }
+        public ConcurrentDictionary<Node, string> ConcurrentNodes { get; set; }
+        public ConcurrentBag<Edge> ConcurrentEdges { get; set; }
+
+        public void CreateSerializedForm()
         {
-            Graph = codeGraph.Graph.Keys.ToHashSet();
-            foreach (var item in Graph)
-            {
-                item.IEdges = new List<Edge>(item.IncomingEdges);
-                item.OEdges = new List<Edge>(item.OutgoingEdges);
-                item.IncomingEdges = new ConcurrentBag<Edge>();
-                item.OutgoingEdges = new ConcurrentBag<Edge>();
-                if (codeGraph.ustNodeEdgeCandidates.ContainsKey(item))
-                {
-                    item.EdgeCandidates.AddRange(codeGraph.ustNodeEdgeCandidates[item]);
-                }
-            }
+            Nodes = ConcurrentNodes.Keys.ToHashSet();
+            Edges = ConcurrentEdges.ToList();
+            ConcurrentNodes = null;
+            ConcurrentEdges = null;
         }
 
-        public CodeGraph Deserialize()
+        public void CreateDeserializedForm()
         {
-            var graph = new CodeGraph(NullLogger.Instance);
-            graph.Graph = new ConcurrentDictionary<Node, string>(Graph.ToDictionary(d => d, v => v.Identifier));
-            foreach(var item in Graph)
-            {
-                item.IncomingEdges = new ConcurrentBag<Edge>(item.IEdges);
-                item.OutgoingEdges = new ConcurrentBag<Edge>(item.OEdges);
-                if (!graph.ustNodeEdgeCandidates.ContainsKey(item))
-                {
-                    graph.ustNodeEdgeCandidates.TryAdd(item, new ConcurrentBag<UstNode>(item.EdgeCandidates));
-                }
-                else
-                {
-                    item.EdgeCandidates.ForEach(edge =>
-                    {
-                        graph.ustNodeEdgeCandidates[item].Add(edge);
-                    });
-                }
-            }
-            return graph;
+            ConcurrentNodes = new ConcurrentDictionary<Node, string>(Nodes.ToDictionary(n => n, n => n.Identifier));
+            ConcurrentEdges = new ConcurrentBag<Edge>(Edges);
+            Nodes = null;
+            Edges = null;
         }
     }
     public class CodeGraph
@@ -75,6 +56,8 @@ namespace Codelyzer.Analysis
         ConcurrentDictionary<Node, string> _enumNodes;
         ConcurrentDictionary<Node, string> _recordNodes;
         ConcurrentDictionary<Node, string> _methodNodes;
+
+        public CompactGraph CompactGraph { get; set; }
 
         [JsonIgnore]
         protected readonly ILogger Logger;
@@ -208,6 +191,13 @@ namespace Codelyzer.Analysis
         {
             PopulateGraphs(analyzerResults);
         }
+
+        public void GenerateCompactGraph(List<AnalyzerResult> analyzerResults)
+        {
+            CompactGraph = new CompactGraph();
+            PopulateGraphs(analyzerResults, true);
+        }
+
         public void MergeGraphs(List<CodeGraph> codeGraphs)
         {
             //Clear previous variable to re-initiate:
@@ -267,7 +257,6 @@ namespace Codelyzer.Analysis
                         ustNodeEdgeCandidates.TryAdd(kvp.Key, kvp.Value);
                     }
                 }
-
             });
 
             // Remove edges that are external to the projects
@@ -276,13 +265,14 @@ namespace Codelyzer.Analysis
             AddEdges();
         }
 
-        private void PopulateGraphs(List<AnalyzerResult> analyzerResults)
+        private void PopulateGraphs(List<AnalyzerResult> analyzerResults, bool isCompact = false)
         {
             try
             {
                 AddNodes(analyzerResults);
+                if (isCompact) { CompactGraph.ConcurrentNodes = Graph; }
                 RemoveExternalEdges();
-                AddEdges();
+                AddEdges(isCompact);
             }
             catch (Exception ex)
             {
@@ -329,54 +319,70 @@ namespace Codelyzer.Analysis
                 }
             });
         }
-        private void AddEdges()
+        private void AddEdges(bool isCompact = false)
         {
-            AddProjectEdges();
+            AddProjectEdges(isCompact);
             Parallel.ForEach(ClassNodes, classNode =>
             {
                 var ustNode = classNode.Key.UstNode as ClassDeclaration;
-                CreateClassHierarchyEdges(classNode.Key, ustNode.BaseList, ustNode.BaseTypeOriginalDefinition);
+                CreateClassHierarchyEdges(classNode.Key, ustNode.BaseList, ustNode.BaseTypeOriginalDefinition, isCompact);
             });
             Parallel.ForEach(InterfaceNodes, interfaceNode =>
             {
                 var ustNode = interfaceNode.Key.UstNode as InterfaceDeclaration;
-                CreateClassHierarchyEdges(interfaceNode.Key, ustNode.BaseList, ustNode.BaseTypeOriginalDefinition);
+                CreateClassHierarchyEdges(interfaceNode.Key, ustNode.BaseList, ustNode.BaseTypeOriginalDefinition, isCompact);
             });
             Parallel.ForEach(StructNodes, structNode =>
             {
                 var ustNode = structNode.Key.UstNode as StructDeclaration;
-                CreateClassHierarchyEdges(structNode.Key, ustNode.BaseList, ustNode.BaseTypeOriginalDefinition);
+                CreateClassHierarchyEdges(structNode.Key, ustNode.BaseList, ustNode.BaseTypeOriginalDefinition, isCompact);
             });
             Parallel.ForEach(RecordNodes, recordNode =>
             {
                 var ustNode = recordNode.Key.UstNode as RecordDeclaration;
-                CreateClassHierarchyEdges(recordNode.Key, ustNode.BaseList, ustNode.BaseTypeOriginalDefinition);
+                CreateClassHierarchyEdges(recordNode.Key, ustNode.BaseList, ustNode.BaseTypeOriginalDefinition, isCompact);
             });
-            Parallel.ForEach(filteredUstNodeEdgeCandidates.Keys, key => { CreateEdges(key); });
+            Parallel.ForEach(filteredUstNodeEdgeCandidates.Keys, key => { CreateEdges(key, isCompact); });
         }
-        private void AddProjectEdges()
+        private void AddProjectEdges(bool isCompact = false)
         {
             projectWorkspaces?.ToList().ForEach(projectResult =>
             {
                 try
                 {
                     var projectReferences = projectResult.References;
-                    var sourceNode = ProjectNodes.FirstOrDefault(p => p.Key.Identifier.Equals(projectResult.Identifier, StringComparison.InvariantCultureIgnoreCase)).Key;
-
-                    projectReferences?.ForEach(projectReference =>
+                    if (isCompact)
                     {
-                        var targetNode = ProjectNodes.FirstOrDefault(p => p.Key.Identifier.Equals(projectReference, StringComparison.InvariantCultureIgnoreCase)).Key;
-                                                
-                        if (targetNode != null)
-                        {
-                            var edge = new Edge() { EdgeType = EdgeType.ProjectReference, TargetNode = targetNode, SourceNode = sourceNode };
-                            if (!sourceNode.OutgoingEdges.Contains(edge))
+                        projectReferences?.ForEach(projectReference => {
+
+                            CompactGraph.ConcurrentEdges.Add(new Edge()
                             {
-                                sourceNode.OutgoingEdges.Add(edge);
-                                targetNode.IncomingEdges.Add(edge);
+                                SourceNodeId = projectResult.Identifier,
+                                TargetNodeId = projectReference,
+                                EdgeType = EdgeType.ProjectReference
+                            });
+                        });
+                    }
+                    else
+                    {
+                        var sourceNode = ProjectNodes.FirstOrDefault(p => p.Key.Identifier.Equals(projectResult.Identifier, StringComparison.InvariantCultureIgnoreCase)).Key;
+
+                        projectReferences?.ForEach(projectReference =>
+                        {
+                            var targetNode = ProjectNodes.FirstOrDefault(p => p.Key.Identifier.Equals(projectReference, StringComparison.InvariantCultureIgnoreCase)).Key;
+
+                            if (targetNode != null)
+                            {
+                                var edge = new Edge() { EdgeType = EdgeType.ProjectReference, TargetNode = targetNode, SourceNode = sourceNode };
+                                if (!sourceNode.OutgoingEdges.Contains(edge))
+                                {
+                                    sourceNode.OutgoingEdges.Add(edge);
+                                    targetNode.IncomingEdges.Add(edge);
+                                }
                             }
-                        }
-                    });
+
+                        });
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -468,14 +474,15 @@ namespace Codelyzer.Analysis
                             currentNode.NodeType = GetNodeType(child);
                             currentNode.Name = child.Identifier;
                             currentNode.Identifier = child.FullIdentifier;
-                            if (!Graph.Keys.Contains(currentNode))
+                            var existing = Graph.ContainsKey(currentNode);
+                            if (!existing)
                             {
                                 childNodes.Add(currentNode);
                                 Graph.TryAdd(currentNode, currentNode.Identifier);
                             }
                             else
                             {
-                                currentNode = Graph.Keys.FirstOrDefault(n => n.Equals(currentNode));
+                                currentNode = Graph.Keys.FirstOrDefault(g => g.Equals(currentNode));
                             }
                             var children = InitializeNodesHelper(child, currentNode);
                             children.ToList().ForEach(child => currentNode.ChildNodes.Add(child));
@@ -499,7 +506,7 @@ namespace Codelyzer.Analysis
             }
             return childNodes;
         }
-        private void CreateClassHierarchyEdges(Node sourceNode, List<string> baseTypes, string baseTypeOriginalDefinition)
+        private void CreateClassHierarchyEdges(Node sourceNode, List<string> baseTypes, string baseTypeOriginalDefinition, bool isCompact = false)
         {
             if (!string.IsNullOrEmpty(baseTypeOriginalDefinition) && baseTypeOriginalDefinition != "object")
             {
@@ -507,29 +514,66 @@ namespace Codelyzer.Analysis
             }
             baseTypes.ForEach(baseType =>
             {
-                //If edge is already added, we dont need to proceed
-                var existingEdge = sourceNode.OutgoingEdges.FirstOrDefault(e => e.TargetNode.Identifier == baseType);
-                if (existingEdge == null)
+                if (isCompact)
                 {
-                    var targetNode = TypeNodes.Keys.FirstOrDefault(n => n.Identifier == baseType);
-                    if (targetNode != null)
+                    CompactGraph.ConcurrentEdges.Add(new Edge() { SourceNodeId = sourceNode.Identifier, TargetNodeId = baseType, EdgeType = EdgeType.Inheritance });
+                }
+                else
+                {
+                    //If edge is already added, we dont need to proceed                
+                    var existingEdge = sourceNode.OutgoingEdges.FirstOrDefault(e => e.TargetNode.Identifier == baseType);
+                    if (existingEdge == null)
                     {
-                        var edge = new Edge()
+                        var targetNode = TypeNodes.Keys.FirstOrDefault(n => n.Identifier == baseType);
+                        if (targetNode != null)
                         {
-                            EdgeType = EdgeType.Inheritance,
-                            TargetNode = targetNode,
-                            SourceNode = sourceNode
-                        };
-                        sourceNode.OutgoingEdges.Add(edge);
-                        targetNode.IncomingEdges.Add(edge);
+                            var edge = new Edge()
+                            {
+                                EdgeType = EdgeType.Inheritance,
+                                TargetNode = targetNode,
+                                SourceNode = sourceNode
+                            };
+                            sourceNode.OutgoingEdges.Add(edge);
+                            targetNode.IncomingEdges.Add(edge);
+                        }
                     }
                 }
             });
         }
-        private void CreateEdges(Node sourceNode)
+        private void CreateEdges(Node sourceNode, bool isCompact)
         {
             var edgeCandidates = filteredUstNodeEdgeCandidates[sourceNode].ToList();
-            Parallel.ForEach(edgeCandidates, edgeCandidate => {
+            if (isCompact)
+            {
+                Parallel.ForEach(edgeCandidates, edgeCandidate => {
+                    var newEdge = new Edge() { SourceNodeId = sourceNode.Identifier, TargetNodeId = edgeCandidate.Identifier };
+                    CompactGraph.ConcurrentEdges.Add(newEdge);
+                    if (edgeCandidate is DeclarationNode)
+                    {
+                        newEdge.EdgeType = EdgeType.Declaration;
+                    }
+                    else if (edgeCandidate is MemberAccess memberAccess)
+                    {
+                        newEdge.TargetNodeId = memberAccess.SemanticFullClassTypeName;
+                        newEdge.EdgeType = EdgeType.MemberAccess;
+                    } 
+                    else if (edgeCandidate is InvocationExpression invocation)
+                    {
+                        if (invocation is ObjectCreationExpression objectCreationExpression)
+                        {
+                            newEdge.EdgeType = EdgeType.ObjectCreation;
+                            CompactGraph.ConcurrentEdges.Add(new Edge() { SourceNodeId = sourceNode.Identifier, TargetNodeId = objectCreationExpression.SemanticFullClassTypeName, EdgeType = EdgeType.ObjectCreation });
+                        }
+                        else
+                        {
+                            newEdge.EdgeType = EdgeType.Invocation;
+                        }
+                    }
+                });
+            }
+            else
+            {
+                Parallel.ForEach(edgeCandidates, edgeCandidate => {
                 //If edge is already added, we dont need to proceed
                 var existingEdge = sourceNode.OutgoingEdges.FirstOrDefault(e => e.TargetNode.Identifier == edgeCandidate.FullIdentifier);
 
@@ -624,6 +668,7 @@ namespace Codelyzer.Analysis
                     }
                 }
             });
+            }
         }
         private ConcurrentBag<UstNode> GetOrAddEdgeCandidates(Node parentNode)
         {
@@ -636,26 +681,48 @@ namespace Codelyzer.Analysis
         private bool IsNode(UstNode ustNode) => (ustNode is NamespaceDeclaration || ustNode is ClassDeclaration || ustNode is InterfaceDeclaration
             || ustNode is StructDeclaration || ustNode is EnumDeclaration || ustNode is RecordDeclaration || ustNode is MethodDeclaration);
         private bool IsEdgeConnection(UstNode ustNode) => (ustNode is DeclarationNode || ustNode is MemberAccess || ustNode is InvocationExpression);
+
     }
 
     public class Node
     {
-        public Node()
+        public Node() : base()
         {
             Properties = new Dictionary<string, object>();
-            OutgoingEdges = new ConcurrentBag<Edge>();
-            IncomingEdges = new ConcurrentBag<Edge>();
             ChildNodes = new HashSet<Node>();
             EdgeCandidates = new List<UstNode>();
+            OutgoingEdges = new ConcurrentBag<Edge>();
+            IncomingEdges = new ConcurrentBag<Edge>();
         }
-        public Node ParentNode { get; set; }
-        public HashSet<Node> ChildNodes { get; set; }
+
         public string Name { get; set; }
         public string Identifier { get; set; }
         public NodeType NodeType { get; set; }
-        public List<Edge> IEdges { get; set; }
-        public List<Edge> OEdges { get; set; }
+        public Node ParentNode { get; set; }
+        public Dictionary<string, object> Properties { get; set; }
+        public HashSet<Node> ChildNodes { get; set; }
+        public List<UstNode> EdgeCandidates { get; set; }
+        public UstNode UstNode { get; set; }
 
+        public override bool Equals(object obj)
+        {
+            var node = obj as Node;
+            if (node != null)
+            {
+                return node.Identifier == this.Identifier
+                    && node.NodeType == this.NodeType;
+            }
+            return false;
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Identifier, NodeType);
+        }
+
+        [JsonIgnore]
+        public List<Edge> IEdges { get; set; }
+        [JsonIgnore]
+        public List<Edge> OEdges { get; set; }
         [JsonIgnore]
         public ConcurrentBag<Edge> Edges
         {
@@ -680,23 +747,6 @@ namespace Codelyzer.Analysis
         public ConcurrentBag<Edge> AllOutgoingEdges { get => new ConcurrentBag<Edge>(OutgoingEdges.Union(ChildNodes.SelectMany(c => c.AllOutgoingEdges))); }
         [JsonIgnore]
         public ConcurrentBag<Edge> AllIncomingEdges { get => new ConcurrentBag<Edge>(IncomingEdges.Union(ChildNodes.SelectMany(c => c.AllIncomingEdges))); }
-        public UstNode UstNode { get; set; }
-        public Dictionary<string, object> Properties { get; set; }
-        public List<UstNode> EdgeCandidates { get;set; }
-        public override bool Equals(object obj)
-        {
-            var node = obj as Node;
-            if (node != null)
-            {
-                return node.Identifier == this.Identifier
-                    && node.NodeType == this.NodeType;
-            }
-            return false;
-        }
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Identifier, NodeType);
-        }
     }
     public class Edge
     {
@@ -704,11 +754,13 @@ namespace Codelyzer.Analysis
         {
             Properties = new Dictionary<string, object>();
         }
+        public string Identifier { get; set; }
+        public string SourceNodeId { get; set; }
+        public string TargetNodeId { get; set; }
+        public EdgeType EdgeType { get; set; }
         public Node SourceNode { get; set; }
         public Node TargetNode { get; set; }
-        public EdgeType EdgeType { get; set; }
-        public string Identifier { get; set; }
-        public Dictionary<string, object> Properties { get; set; }
+        Dictionary<string, object> Properties { get; set; }
         public override bool Equals(object obj)
         {
             var edge = obj as Edge;
