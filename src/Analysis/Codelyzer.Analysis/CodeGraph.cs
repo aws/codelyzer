@@ -2,6 +2,7 @@
 using Microsoft.Build.Logging.StructuredLogger;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using NuGet.Packaging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -43,6 +44,14 @@ namespace Codelyzer.Analysis
             ConcurrentEdges = new ConcurrentBag<Edge>(Edges);
             Nodes = null;
             Edges = null;
+        }
+
+        public void Merge(ConcurrentBag<CompactGraph> compactGraphs)
+        {
+            Parallel.ForEach(compactGraphs, compactGraph => { 
+                Edges.AddRange(compactGraph.Edges);
+                Nodes.AddRange(compactGraph.Nodes);
+            });
         }
     }
     public class CodeGraph
