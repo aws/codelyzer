@@ -43,8 +43,14 @@ namespace Codelyzer.Analysis
         {
             Parallel.ForEach(compactGraphs, compactGraph =>
             {
-                Edges.AddRange(compactGraph.Edges);
-                Nodes.AddRange(compactGraph.Nodes);
+                foreach(var edge in compactGraph.ConcurrentEdges)
+                {
+                    ConcurrentEdges.Add(edge);
+                }
+                foreach (var node in compactGraph.Graph)
+                {
+                    Graph.TryAdd(node.Key, node.Value);
+                }
             });
         }
         public override void Initialize(List<AnalyzerResult> analyzerResults)
