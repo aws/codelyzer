@@ -30,18 +30,18 @@ namespace Codelyzer.Analysis.Tests
             Setup(GetType());
             tempDir = GetTstPath(Path.Combine(Constants.TempProjectDirectories));
             downloadsDir = GetTstPath(Path.Combine(Constants.TempProjectDownloadDirectories));
-            //DeleteDir(tempDir);
-            //DeleteDir(downloadsDir);
-            //Directory.CreateDirectory(tempDir);
-            //Directory.CreateDirectory(downloadsDir);
-            //DownloadTestProjects();
+            DeleteDir(tempDir);
+            DeleteDir(downloadsDir);
+            Directory.CreateDirectory(tempDir);
+            Directory.CreateDirectory(downloadsDir);
+            DownloadTestProjects();
         }
 
         [OneTimeTearDown]
         public void OneTimeTearDown()
         {
-            //DeleteDir(tempDir);
-            //DeleteDir(downloadsDir);
+            DeleteDir(tempDir);
+            DeleteDir(downloadsDir);
         }
 
         private void DownloadTestProjects()
@@ -1726,9 +1726,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
         [Test]
         public async Task TestModernizeSerializeDeserializeGraph()
         {
-            var solutionPath = @"C:\Users\markfawa\workplace\Github\codelyzer-root\Codelyzer\tst\Projects\Temp\02e20f75-b6e4-4325-9cec-a2ba5fc788b8\Modernize.Web.sln";
-            //var solutionPath = @"C:\w\BigNetProject\FrankenProject.sln";           
-
+            string solutionPath = CopySolutionFolderToTemp("Modernize.Web.sln");
 
             FileAssert.Exists(solutionPath);
 
