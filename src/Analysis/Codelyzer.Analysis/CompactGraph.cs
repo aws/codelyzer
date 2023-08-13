@@ -92,7 +92,7 @@ namespace Codelyzer.Analysis
 
             Parallel.ForEach(edgeCandidates, edgeCandidate =>
             {
-                var newEdge = new Edge() { SourceNodeId = sourceNode.Identifier, TargetNodeId = edgeCandidate.Identifier };
+                var newEdge = new Edge() { SourceNodeId = sourceNode.Identifier, TargetNodeId = edgeCandidate.FullIdentifier };
                 ConcurrentEdges.Add(newEdge);
                 if (edgeCandidate is DeclarationNode)
                 {
