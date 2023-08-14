@@ -1,8 +1,7 @@
 ﻿using Amazon.Lambda.Core;
-using LambdaSharp.Serialization;
 using Newtonsoft.Json;
-using System.IO;
 using System;
+using System.IO;
 
 namespace DataExtractionCommon
 {

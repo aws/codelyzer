@@ -1,8 +1,6 @@
 ﻿using Codelyzer.Analysis.Model;
-using Microsoft.Build.Logging.StructuredLogger;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using NuGet.Packaging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
