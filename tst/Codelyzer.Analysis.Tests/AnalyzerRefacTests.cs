@@ -1767,10 +1767,9 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             var originalGraph = new CompactGraph(NullLogger.Instance);
             originalGraph.Initialize(analyzerResultsParallel);
 
-            var outputFileaname = Path.Combine(@"C:\output\", "graph-serialize.json");
+            var outputFileaname = Path.Combine(Directory.GetCurrentDirectory(), "graph-serialize.json");
             var graphSerializer = new GraphSerializer();
             using var stream = new FileStream(outputFileaname, FileMode.Create);
-            //using var stream = new FileStream(Path.Combine(Directory.GetCurrentDirectory(), outputFileaname), FileMode.Create);
             originalGraph.CreateSerializedForm();
             graphSerializer.Serialize(originalGraph, stream);
             stream.Flush();
