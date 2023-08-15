@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<IsTestProject>false</IsTestProject>
@@ -6,7 +6,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Buildalyzer" Version="4.1.4" />
+		<PackageReference Include="Buildalyzer" Version="5.0.0" />
       <PackageReference Include="Buildalyzer.Logger" Version="4.1.4" />
       <PackageReference Include="Buildalyzer.Workspaces" Version="4.1.4" />
       <PackageReference Include="NuGet.Packaging" Version="6.0.0" />
