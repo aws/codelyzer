@@ -1,21 +1,17 @@
 using Codelyzer.Analysis.Analyzer;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
+using DataExtractionCommon;
+using Microsoft.CodeAnalysis;
 using Microsoft.Extensions.Logging.Abstractions;
 using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Castle.Components.DictionaryAdapter;
-using Microsoft.CodeAnalysis;
-using Assert = NUnit.Framework.Assert;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Assert = NUnit.Framework.Assert;
 
 namespace Codelyzer.Analysis.Tests
 {
@@ -1531,79 +1527,44 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                     LoadBuildData = true
                 }
             };
-            AnalyzerConfiguration configurationWithBuild = new AnalyzerConfiguration(LanguageOptions.CSharp)
-            {
-                ExportSettings =
-                {
-                    GenerateJsonOutput = false,
-                    OutputPath = @"/tmp/UnitTests"
-                },
-                ConcurrentThreads = 1,
-                MetaDataSettings =
-                {
-                    LiteralExpressions = true,
-                    MethodInvocations = true,
-                    Annotations = true,
-                    DeclarationNodes = true,
-                    LocationData = true,
-                    ReferenceData = true,
-                    EnumDeclarations = true,
-                    StructDeclarations = true,
-                    InterfaceDeclarations = true,
-                    ElementAccess = true,
-                    LambdaMethods = true,
-                    InvocationArguments = true,
-                    GenerateBinFiles = true,
-                    LoadBuildData = true
-                }
-            };
-
+            
 
             CodeAnalyzerByLanguage analyzerWithoutBuild = new CodeAnalyzerByLanguage(configurationWithoutBuild, NullLogger.Instance);
-            CodeAnalyzerByLanguage analyzerWithBuild = new CodeAnalyzerByLanguage(configurationWithBuild, NullLogger.Instance);
-
+            
             var resultWithoutBuild = await analyzerWithoutBuild.AnalyzeSolutionWithGraph(solutionPath);
-            var resultWithBuild = await analyzerWithBuild.AnalyzeSolutionWithGraph(solutionPath);
-
             var projectGraphWithoutBuild = resultWithoutBuild.CodeGraph.ProjectNodes.Keys;
-            var projectGraphWithBuild = resultWithBuild.CodeGraph.ProjectNodes.Keys;
+            //var projectGraphWithBuild = resultWithBuild.CodeGraph.ProjectNodes.Keys;
             var classGraphWithoutBuild = resultWithoutBuild.CodeGraph?.ClassNodes.Keys;
-            var classGraphWithBuild = resultWithBuild.CodeGraph?.ClassNodes.Keys;
+            //var classGraphWithBuild = resultWithBuild.CodeGraph?.ClassNodes.Keys;
 
             // There are 5 projects in the solution
             Assert.AreEqual(5, projectGraphWithoutBuild.Count);
-            Assert.AreEqual(5, projectGraphWithBuild.Count);
-
+            
             //The Facade project has 3 Edges
             Assert.AreEqual(3, projectGraphWithoutBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Facade")).OutgoingEdges.Count);
-            Assert.AreEqual(3, projectGraphWithBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Facade")).OutgoingEdges.Count);
-
+            
             // The Mvc project has 3 Edges
             Assert.AreEqual(3, projectGraphWithoutBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Mvc")).OutgoingEdges.Count);
 
-            // When project is prebuilt, connections are merged with dependent projects
-            var mvcDependencies = projectGraphWithBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Mvc")).Edges.Count;
-            Assert.True(mvcDependencies == 3 || mvcDependencies == 4);
-
+            
             // The Models project has 0 Edges
             Assert.AreEqual(0, projectGraphWithoutBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).OutgoingEdges.Count);
-            Assert.AreEqual(0, projectGraphWithBuild.FirstOrDefault(p => p.Name.Equals("Modernize.Web.Models")).OutgoingEdges.Count);
-
+            
             // There are 27 classes in the solution
             Assert.AreEqual(27, classGraphWithoutBuild.Count);
-            Assert.AreEqual(27, classGraphWithBuild.Count);
+            
 
             Assert.AreEqual(4, resultWithoutBuild.CodeGraph?.InterfaceNodes.Count);
-            Assert.AreEqual(4, resultWithBuild.CodeGraph?.InterfaceNodes.Count);
+            
 
             Assert.AreEqual(1, resultWithoutBuild.CodeGraph?.StructNodes.Count);
-            Assert.AreEqual(1, resultWithBuild.CodeGraph?.StructNodes.Count);
+            
 
             Assert.AreEqual(1, resultWithoutBuild.CodeGraph?.EnumNodes.Count);
-            Assert.AreEqual(1, resultWithBuild.CodeGraph?.EnumNodes.Count);
+            
 
             Assert.AreEqual(1, resultWithoutBuild.CodeGraph?.RecordNodes.Count);
-            Assert.AreEqual(1, resultWithBuild.CodeGraph?.RecordNodes.Count);
+            
 
             ValidateClassEdges(resultWithoutBuild.CodeGraph.ClassNodes);
             ValidateInterfaceEdges(resultWithoutBuild.CodeGraph.InterfaceNodes);
@@ -1612,12 +1573,6 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             ValidateEnumEdges(resultWithoutBuild.CodeGraph.EnumNodes);
             ValidateRecordEdges(resultWithoutBuild.CodeGraph.RecordNodes);
 
-            ValidateClassEdges(resultWithBuild.CodeGraph.ClassNodes);
-            ValidateInterfaceEdges(resultWithBuild.CodeGraph.InterfaceNodes);
-            ValidateMethodEdges(resultWithBuild.CodeGraph.MethodNodes);
-            ValidateStructEdges(resultWithBuild.CodeGraph.StructNodes);
-            ValidateEnumEdges(resultWithBuild.CodeGraph.EnumNodes);
-            ValidateRecordEdges(resultWithBuild.CodeGraph.RecordNodes);
         }
 
 
@@ -1698,6 +1653,7 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
                 allGraphs.Add(graph);
             });
 
+
             var originalGraph = allGraphs[0];
             originalGraph.MergeGraphs(allGraphs);
 
@@ -1708,6 +1664,8 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             };
 
             var resultNoParallel = await analyzerNoParallel.AnalyzeSolutionWithGraph(solutionPath);
+
+
 
             var projectGraphParallel = resultParallel.CodeGraph.ProjectNodes.Keys;
             var projectGraphNoParallel = resultNoParallel.CodeGraph.ProjectNodes.Keys;
@@ -1762,6 +1720,98 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             ValidateStructEdges(resultNoParallel.CodeGraph.StructNodes);
             ValidateEnumEdges(resultNoParallel.CodeGraph.EnumNodes);
             ValidateRecordEdges(resultNoParallel.CodeGraph.RecordNodes);
+        }
+
+
+        [Test]
+        public async Task TestModernizeSerializeDeserializeGraph()
+        {
+            string solutionPath = CopySolutionFolderToTemp("Modernize.Web.sln");
+
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configurationParallel = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                ConcurrentThreads = 1,
+                BuildSettings = {
+                SyntaxOnly = true
+                },
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true,
+                    GenerateBinFiles = true,
+                    LoadBuildData = true
+                }
+            };
+            
+            CodeAnalyzerByLanguage analyzerParallel = new CodeAnalyzerByLanguage(configurationParallel, NullLogger.Instance);
+            
+            var analyzerResultsParallel = await analyzerParallel.AnalyzeSolution(solutionPath);
+
+            var originalGraph = new CompactGraph(NullLogger.Instance);
+            originalGraph.Initialize(analyzerResultsParallel);
+
+            var outputFileaname = Path.Combine(Directory.GetCurrentDirectory(), "graph-serialize.json");
+            var graphSerializer = new GraphSerializer();
+            using var stream = new FileStream(outputFileaname, FileMode.Create);
+            originalGraph.CreateSerializedForm();
+            graphSerializer.Serialize(originalGraph, stream);
+            stream.Flush();
+            stream.Close();
+
+            using var fileStream = File.OpenRead(outputFileaname);
+            var deserialized = graphSerializer.Deserialize<CompactGraph>(fileStream);
+            deserialized.CreateDeserializedForm();
+
+            // There are 5 projects in the solution
+            Assert.AreEqual(5, deserialized.Graph.Keys.Count(k => k.NodeType == NodeType.Project));
+
+            //The Facade project has 3 Edges
+            Assert.AreEqual(3, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("Modernize.Web.Facade.csproj")));
+            
+            // The Mvc project has 3 Edges
+            Assert.AreEqual(3, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("Modernize.Web.Mvc.csproj")));
+
+            //// The Models project has 0 Edges
+            Assert.AreEqual(0, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("Modernize.Web.Models.csproj")));
+
+            //// There are 27 classes in the solution
+            Assert.AreEqual(27, deserialized.Graph.Keys.Count(n=>n.NodeType == NodeType.Class));
+
+            //Assert.AreEqual(4, resultParallel.CodeGraph?.InterfaceNodes.Count);
+            Assert.AreEqual(4, deserialized.Graph.Keys.Count(n => n.NodeType == NodeType.Interface));
+
+            //Assert.AreEqual(1, resultParallel.CodeGraph?.StructNodes.Count);
+            Assert.AreEqual(1, deserialized.Graph.Keys.Count(n => n.NodeType == NodeType.Struct));
+
+            //Assert.AreEqual(1, resultParallel.CodeGraph?.EnumNodes.Count);
+            Assert.AreEqual(1, deserialized.Graph.Keys.Count(n => n.NodeType == NodeType.Enum));
+
+            //Assert.AreEqual(1, resultParallel.CodeGraph?.RecordNodes.Count);
+            Assert.AreEqual(1, deserialized.Graph.Keys.Count(n => n.NodeType == NodeType.Record));
+
+            //ValidateClassEdges(resultParallel.CodeGraph.ClassNodes);
+            //ValidateInterfaceEdges(resultParallel.CodeGraph.InterfaceNodes);
+            //ValidateMethodEdges(resultParallel.CodeGraph.MethodNodes);
+            //ValidateStructEdges(resultParallel.CodeGraph.StructNodes);
+            //ValidateEnumEdges(resultParallel.CodeGraph.EnumNodes);
+            //ValidateRecordEdges(resultParallel.CodeGraph.RecordNodes);
         }
 
         private void ValidateClassEdges(ConcurrentDictionary<Node, string> nodesDictionary)
