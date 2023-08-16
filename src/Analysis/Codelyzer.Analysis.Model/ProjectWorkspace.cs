@@ -14,10 +14,10 @@ namespace Codelyzer.Analysis.Model
         public string GeneratedBy { get; set; }
 
         [JsonProperty("workspace-name", Order = 3)]
-        public string ProjectName { get; }
+        public string ProjectName { get; set; }
         
         [JsonProperty("workspace-root-path", Order = 4)]
-        public string ProjectRootPath { get; }
+        public string ProjectRootPath { get; set; }
 
         [JsonProperty("source-files", Order = 5)]
         public UstList<string> SourceFiles;
