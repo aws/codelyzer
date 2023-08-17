@@ -1783,13 +1783,13 @@ namespace Mvc3ToolsUpdateWeb_Default.Controllers
             Assert.AreEqual(5, deserialized.Graph.Keys.Count(k => k.NodeType == NodeType.Project));
 
             //The Facade project has 3 Edges
-            Assert.AreEqual(3, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("Modernize.Web.Facade.csproj")));
+            Assert.AreEqual(3, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("modernize.web.facade.csproj")));
             
             // The Mvc project has 3 Edges
-            Assert.AreEqual(3, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("Modernize.Web.Mvc.csproj")));
+            Assert.AreEqual(3, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("modernize.web.mvc.csproj")));
 
             //// The Models project has 0 Edges
-            Assert.AreEqual(0, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("Modernize.Web.Models.csproj")));
+            Assert.AreEqual(0, deserialized.ConcurrentEdges.Count(e => e.SourceNodeId.EndsWith("modernize.web.models.csproj")));
 
             //// There are 27 classes in the solution
             Assert.AreEqual(27, deserialized.Graph.Keys.Count(n=>n.NodeType == NodeType.Class));
