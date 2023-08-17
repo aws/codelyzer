@@ -181,8 +181,8 @@ namespace Codelyzer.Analysis
                     projectWorkspaces.Add(new ProjectInfo()
                     {
                         Name = analyzerResult.ProjectResult.ProjectName,
-                        Identifier = analyzerResult.ProjectResult.ProjectFilePath,
-                        References = analyzerResult.ProjectResult.ExternalReferences.ProjectReferences.Select(r => r.AssemblyLocation).ToList()
+                        Identifier = analyzerResult.ProjectResult.ProjectFilePath.ToLower(),
+                        References = analyzerResult.ProjectResult.ExternalReferences.ProjectReferences.Select(r => r.AssemblyLocation.ToLower()).ToList()
                     });
 
                     // Add Relevant Children from source files
@@ -457,13 +457,15 @@ namespace Codelyzer.Analysis
                 return edge.Identifier == this.Identifier
                     && edge.EdgeType == this.EdgeType
                     && edge.SourceNode == this.SourceNode
-                    && edge.TargetNode == this.TargetNode;
+                    && edge.TargetNode == this.TargetNode
+                    && edge.SourceNodeId == this.SourceNodeId
+                    && edge.TargetNodeId == this.TargetNodeId;
             }
             return false;
         }
         public override int GetHashCode()
         {
-            return HashCode.Combine(Identifier, SourceNode, TargetNode, EdgeType);
+            return HashCode.Combine(Identifier, SourceNode, TargetNode, SourceNodeId, TargetNodeId, EdgeType);
         }
     }
 

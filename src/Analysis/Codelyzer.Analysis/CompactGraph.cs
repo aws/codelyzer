@@ -67,8 +67,8 @@ namespace Codelyzer.Analysis
                     {
                         ConcurrentEdges.Add(new Edge()
                         {
-                            SourceNodeId = projectResult.Identifier,
-                            TargetNodeId = projectReference,
+                            SourceNodeId = projectResult.Identifier.ToLower(),
+                            TargetNodeId = projectReference.ToLower(),
                             EdgeType = EdgeType.ProjectReference
                         });
                     });
