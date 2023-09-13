@@ -199,7 +199,7 @@ namespace Codelyzer.Analysis.Build
             }
             else
             {
-                Logger.LogDebug($"Missing project found in references {projectPath}");
+                Logger.LogInformation($"Missing project found in references {projectPath}");
             }
         }
 
