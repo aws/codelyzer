@@ -187,15 +187,20 @@ namespace Codelyzer.Analysis.Build
 
         private void CreateDependencyQueueHelper(string projectPath, HashSet<string> builtProjects, Dictionary<string, HashSet<string>> projectReferencesMap, Queue<string> buildOrder)
         {
-            builtProjects.Add(projectPath);
-
-            foreach (var dependency in projectReferencesMap[projectPath])
+            if (projectReferencesMap.ContainsKey(projectPath))
             {
-                if (!builtProjects.Contains(dependency))
-                    CreateDependencyQueueHelper(dependency, builtProjects, projectReferencesMap, buildOrder);
+                builtProjects.Add(projectPath);
+                foreach (var dependency in projectReferencesMap[projectPath])
+                {
+                    if (!builtProjects.Contains(dependency))
+                        CreateDependencyQueueHelper(dependency, builtProjects, projectReferencesMap, buildOrder);
+                }
+                buildOrder.Enqueue(projectPath);
             }
-
-            buildOrder.Enqueue(projectPath);
+            else
+            {
+                Logger.LogInformation($"Missing project found in references {projectPath}");
+            }
         }
 
         public List<ProjectBuildResult> GenerateNoBuildAnalysis(Dictionary<string, List<string>> oldReferences, Dictionary<string, List<string>> references)
