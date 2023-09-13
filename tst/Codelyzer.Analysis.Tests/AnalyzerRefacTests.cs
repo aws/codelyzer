@@ -2238,6 +2238,62 @@ End Namespace");
             var results = await analyzerByLanguage.AnalyzeSolution(solutionPath);
             Assert.AreEqual(232, results[0].ProjectResult.LinesOfCode);
         }
+
+
+
+        [Test]
+        public async Task TestSolutionWithMissingReferences()
+        {
+            string solutionPath = CopySolutionFolderToTemp("SolutionWithMissingReferences.sln");            
+            FileAssert.Exists(solutionPath);
+
+            AnalyzerConfiguration configurationWithoutBuild = new AnalyzerConfiguration(LanguageOptions.CSharp)
+            {
+                ExportSettings =
+                {
+                    GenerateJsonOutput = false,
+                    OutputPath = @"/tmp/UnitTests"
+                },
+                ConcurrentThreads = 1,
+                BuildSettings = {
+                SyntaxOnly = true
+                },
+                MetaDataSettings =
+                {
+                    LiteralExpressions = true,
+                    MethodInvocations = true,
+                    Annotations = true,
+                    DeclarationNodes = true,
+                    LocationData = true,
+                    ReferenceData = true,
+                    EnumDeclarations = true,
+                    StructDeclarations = true,
+                    InterfaceDeclarations = true,
+                    ElementAccess = true,
+                    LambdaMethods = true,
+                    InvocationArguments = true,
+                    GenerateBinFiles = true,
+                    LoadBuildData = true
+                }
+            };
+
+            CodeAnalyzerByLanguage codeAnalyzer = new CodeAnalyzerByLanguage(configurationWithoutBuild, NullLogger.Instance);
+
+            var solutionAnalyzerResult = await codeAnalyzer.AnalyzeSolutionWithGraph(solutionPath);
+
+            Assert.AreEqual(4, solutionAnalyzerResult.AnalyzerResults.Count);
+            Assert.AreEqual(4, solutionAnalyzerResult.CodeGraph.ProjectNodes.Count);
+
+            var solutionWithMissingReferences = solutionAnalyzerResult.CodeGraph.ProjectNodes.FirstOrDefault(p => p.Key.Name.Contains("SolutionWithMissingReferences"));
+            var classLibrary1 = solutionAnalyzerResult.CodeGraph.ProjectNodes.FirstOrDefault(p => p.Key.Name.Contains("ClassLibrary1"));
+            var classLibrary2 = solutionAnalyzerResult.CodeGraph.ProjectNodes.FirstOrDefault(p => p.Key.Name.Contains("ClassLibrary2"));
+            var testProject = solutionAnalyzerResult.CodeGraph.ProjectNodes.FirstOrDefault(p => p.Key.Name.Contains("UnitTestProject1"));
+
+            Assert.AreEqual(2, solutionWithMissingReferences.Key.OutgoingEdges.Count);
+            Assert.AreEqual(0, classLibrary1.Key.OutgoingEdges.Count);
+            Assert.AreEqual(0, classLibrary2.Key.OutgoingEdges.Count);
+            Assert.AreEqual(1, testProject.Key.OutgoingEdges.Count);
+        }
         #region private methods
 
         private static IEnumerable<TestCaseData> TestCliMetaDataSource
