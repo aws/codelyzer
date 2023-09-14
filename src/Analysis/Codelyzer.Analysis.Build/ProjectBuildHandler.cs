@@ -199,14 +199,14 @@ namespace Codelyzer.Analysis.Build
             var extension = Path.GetExtension(ProjectAnalyzer.ProjectFile.Path);
             if (!string.IsNullOrEmpty(extension) && extension.Equals(".csproj", StringComparison.InvariantCultureIgnoreCase))
             {
-                var allCsharpFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                var allCsharpFiles = FileUtils.GetProjectCodeFiles(ProjectAnalyzer.ProjectFile.Path, directory.FullName, "*.csproj", "*.cs");
                 foreach (var file in allCsharpFiles)
                 {
                     try
                     {
-                        using (var stream = File.OpenRead(file.FullName))
+                        using (var stream = File.OpenRead(file))
                         {
-                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file);
                             trees.Add(syntaxTree);
                         }
                     }
@@ -223,14 +223,14 @@ namespace Codelyzer.Analysis.Build
             }
             else if (!string.IsNullOrEmpty(extension) && extension.Equals(".vbproj", StringComparison.InvariantCultureIgnoreCase))
             {
-                var allVbFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
+                var allVbFiles = FileUtils.GetProjectCodeFiles(ProjectAnalyzer.ProjectFile.Path, directory.FullName, "*.vbproj", "*.vb");
                 foreach (var file in allVbFiles)
                 {
                     try
                     {
-                        using (var stream = File.OpenRead(file.FullName))
+                        using (var stream = File.OpenRead(file))
                         {
-                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file);
                             trees.Add(syntaxTree);
                         }
                     }
@@ -255,14 +255,14 @@ namespace Codelyzer.Analysis.Build
             var extension = Path.GetExtension(projectPath);
             if (!string.IsNullOrEmpty(extension) && extension.Equals(".vbproj", StringComparison.InvariantCultureIgnoreCase))
             {
-                var allFiles = directory.GetFiles("*.vb", SearchOption.AllDirectories);
+                var allFiles = FileUtils.GetProjectCodeFiles(projectPath, directory.FullName, "*.vbproj", "*.vb");
                 foreach (var file in allFiles)
                 {
                     try
                     {
-                        using (var stream = File.OpenRead(file.FullName))
+                        using (var stream = File.OpenRead(file))
                         {
-                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            var syntaxTree = VisualBasicSyntaxTree.ParseText(SourceText.From(stream), path: file);
                             trees.Add(syntaxTree);
                         }
                     }
@@ -280,14 +280,14 @@ namespace Codelyzer.Analysis.Build
             }
             else
             {
-                var allCSharpFiles = directory.GetFiles("*.cs", SearchOption.AllDirectories);
+                var allCSharpFiles = FileUtils.GetProjectCodeFiles(projectPath, directory.FullName, "*.csproj", "*.cs");
                 foreach (var file in allCSharpFiles)
                 {
                     try
                     {
-                        using (var stream = File.OpenRead(file.FullName))
+                        using (var stream = File.OpenRead(file))
                         {
-                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file.FullName);
+                            var syntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(stream), path: file);
                             trees.Add(syntaxTree);
                         }
                     }

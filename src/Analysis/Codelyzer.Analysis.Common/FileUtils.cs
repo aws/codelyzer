@@ -128,6 +128,29 @@ namespace Codelyzer.Analysis.Common
             return result;
         }
 
+        public static IEnumerable<string> GetProjectCodeFiles(string projectFile, string projectDir, string projectFileExtension, string fileExtension)
+        {
+            var codeFiles = new List<string>();
+            var thisProjectSubDirs = Directory.EnumerateDirectories(projectDir, string.Empty, SearchOption.AllDirectories).Union(new List<string>() { projectDir });
+
+            // Get all project files within the subdirectories
+            var otherProjectFiles = Directory.EnumerateFiles(projectDir, projectFileExtension, SearchOption.AllDirectories).Except(new List<string> { projectFile });
+            
+            var otherProjectDirs = new List<string>();
+            foreach(var otherProjectFile in otherProjectFiles)
+            {
+                otherProjectDirs.Add(Path.GetDirectoryName(otherProjectFile));
+                otherProjectDirs.AddRange(Directory.EnumerateDirectories(Path.GetDirectoryName(otherProjectFile), "", SearchOption.AllDirectories));
+            }
+
+            thisProjectSubDirs = thisProjectSubDirs.Except(otherProjectDirs);
+
+            foreach(var subProjectDir in thisProjectSubDirs)
+            {
+                codeFiles.AddRange(Directory.EnumerateFiles(subProjectDir, fileExtension));
+            }
+            return codeFiles;
+        }
         private static string GetFullPath(string path, string basePath)
         {
             string currentDirectory = Environment.CurrentDirectory;
