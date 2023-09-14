@@ -255,7 +255,7 @@ namespace Codelyzer.Analysis.Build
             var extension = Path.GetExtension(projectPath);
             if (!string.IsNullOrEmpty(extension) && extension.Equals(".vbproj", StringComparison.InvariantCultureIgnoreCase))
             {
-                var allFiles = FileUtils.GetProjectCodeFiles(ProjectAnalyzer.ProjectFile.Path, directory.FullName, "*.vbproj", "*.vb");
+                var allFiles = FileUtils.GetProjectCodeFiles(projectPath, directory.FullName, "*.vbproj", "*.vb");
                 foreach (var file in allFiles)
                 {
                     try
@@ -280,7 +280,7 @@ namespace Codelyzer.Analysis.Build
             }
             else
             {
-                var allCSharpFiles = FileUtils.GetProjectCodeFiles(ProjectAnalyzer.ProjectFile.Path, directory.FullName, "*.csproj", "*.cs");
+                var allCSharpFiles = FileUtils.GetProjectCodeFiles(projectPath, directory.FullName, "*.csproj", "*.cs");
                 foreach (var file in allCSharpFiles)
                 {
                     try
