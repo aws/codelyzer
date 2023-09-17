@@ -142,17 +142,24 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
                 return classNameWithNamespace;
             }
 
-            // Generic VB classes need to be converted to CSharp syntax
-            // Example: VB: System.Collections.Generic.Dictionary(Of String, String)
-            //          C#: System.Collections.Generic.Dictionary<TKey, TValue>
-            var typeParameters = typeSymbol.TypeParameters.Select(p => p.Name);
-            var cSharpParametersAsString = $"<{string.Join(", ", typeParameters)}>";
+            try
+            {
+                // Generic VB classes need to be converted to CSharp syntax
+                // Example: VB: System.Collections.Generic.Dictionary(Of String, String)
+                //          C#: System.Collections.Generic.Dictionary<TKey, TValue>
+                var typeParameters = typeSymbol.TypeParameters.Select(p => p.Name);
+                var cSharpParametersAsString = $"<{string.Join(", ", typeParameters)}>";
 
-            var vbTypeParamStartIndex = classNameWithNamespace.LastIndexOf("(", StringComparison.OrdinalIgnoreCase);
-            var vbTypeParamEndIndex = classNameWithNamespace.LastIndexOf(")", StringComparison.OrdinalIgnoreCase);
-            var vbTypeParametersAsString = classNameWithNamespace.Substring(vbTypeParamStartIndex, vbTypeParamEndIndex - vbTypeParamStartIndex + 1);
-
-            return classNameWithNamespace.Replace(vbTypeParametersAsString, cSharpParametersAsString);
+                var vbTypeParamStartIndex = classNameWithNamespace.LastIndexOf("(", StringComparison.OrdinalIgnoreCase);
+                var vbTypeParamEndIndex = classNameWithNamespace.LastIndexOf(")", StringComparison.OrdinalIgnoreCase);
+                var vbTypeParametersAsString = classNameWithNamespace.Substring(vbTypeParamStartIndex, vbTypeParamEndIndex - vbTypeParamStartIndex + 1);
+                return classNameWithNamespace.Replace(vbTypeParametersAsString, cSharpParametersAsString);
+            }
+            catch
+            {
+                // Return default value if a type is labeled as generic but does not have type parameters
+                return classNameWithNamespace;
+            }
         }
 
         void HandlePropertySymbol(IPropertySymbol invokedSymbol)
