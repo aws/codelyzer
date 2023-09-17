@@ -1,10 +1,9 @@
+using System;
 using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.VisualBasic.Syntax;
 using System.Linq;
-using Microsoft.Build.Evaluation;
-using Microsoft.CodeAnalysis.VisualBasic.Symbols.Metadata.PE;
 
 namespace Codelyzer.Analysis.VisualBasic.Handlers
 {
@@ -96,26 +95,30 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
             if (invokedSymbol.ReturnType != null)
                 Model.SemanticReturnType = invokedSymbol.ReturnType.Name;
 
+            var classNameWithNamespace = string.Empty;
             if (invokedSymbol.ContainingType != null)
             {
-                string classNameWithNamespace = invokedSymbol.ContainingType.ToString();
-                Model.SemanticClassType = Model.SemanticNamespace == null ? classNameWithNamespace : SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.SemanticNamespace);
+                var typeSymbol = invokedSymbol.ContainingType;
+                classNameWithNamespace = GetClassNameWithNamespace(typeSymbol);
+
+                Model.SemanticClassType = Model.SemanticNamespace == null 
+                    ? classNameWithNamespace 
+                    : SemanticHelper.GetSemanticClassType(classNameWithNamespace, Model.SemanticNamespace);
             }
 
-            string originalDefinition = "";
+            var originalDefinition = "";
             if (invokedSymbol.IsExtensionMethod && invokedSymbol.ReceiverType != null)
             {
                 originalDefinition = invokedSymbol.ReceiverType.ToString();
             }
             else if (invokedSymbol.ContainingType != null)
             {
-                originalDefinition = invokedSymbol.ContainingType.ToString();
+                originalDefinition = classNameWithNamespace;
             }
 
             Model.SemanticOriginalDefinition =
-                $"{originalDefinition}.{Model.MethodName}({string.Join(", ", invokedSymbol.Parameters.Select(p => p.Type))})";
-
-
+                $"{originalDefinition}.{Model.MethodName}({string.Join(", ", invokedSymbol.OriginalDefinition.Parameters.Select(p => p.Type))})";
+            
             Model.Reference.Namespace = GetNamespace(invokedSymbol);
             Model.Reference.Assembly = GetAssembly(invokedSymbol);
             Model.Reference.Version = GetAssemblyVersion(invokedSymbol);
@@ -128,6 +131,28 @@ namespace Codelyzer.Analysis.VisualBasic.Handlers
 
             //Set method properties
             SemanticHelper.AddMethodProperties(invokedSymbol, Model.SemanticProperties);
+        }
+
+        private static string GetClassNameWithNamespace(INamedTypeSymbol typeSymbol)
+        {
+            var classNameWithNamespace = typeSymbol.ToString();
+
+            if (!typeSymbol.IsGenericType)
+            {
+                return classNameWithNamespace;
+            }
+
+            // Generic VB classes need to be converted to CSharp syntax
+            // Example: VB: System.Collections.Generic.Dictionary(Of String, String)
+            //          C#: System.Collections.Generic.Dictionary<TKey, TValue>
+            var typeParameters = typeSymbol.TypeParameters.Select(p => p.Name);
+            var cSharpParametersAsString = $"<{string.Join(", ", typeParameters)}>";
+
+            var vbTypeParamStartIndex = classNameWithNamespace.LastIndexOf("(", StringComparison.OrdinalIgnoreCase);
+            var vbTypeParamEndIndex = classNameWithNamespace.LastIndexOf(")", StringComparison.OrdinalIgnoreCase);
+            var vbTypeParametersAsString = classNameWithNamespace.Substring(vbTypeParamStartIndex, vbTypeParamEndIndex - vbTypeParamStartIndex + 1);
+
+            return classNameWithNamespace.Replace(vbTypeParametersAsString, cSharpParametersAsString);
         }
 
         void HandlePropertySymbol(IPropertySymbol invokedSymbol)
