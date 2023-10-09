@@ -20,6 +20,7 @@ using Codelyzer.Analysis.Common;
 using Microsoft.CodeAnalysis.VisualBasic;
 using Constants = Codelyzer.Analysis.Common.Constants;
 using LanguageVersion = Microsoft.CodeAnalysis.CSharp.LanguageVersion;
+using Microsoft.Build.Utilities;
 
 namespace Codelyzer.Analysis.Build
 {
@@ -61,7 +62,7 @@ namespace Codelyzer.Analysis.Build
                    Compilation.SyntaxTrees.Any() &&
                    Compilation.GetSemanticModel(Compilation.SyntaxTrees.First()) != null;
         }
-        private async Task SetCompilation()
+        private async System.Threading.Tasks.Task SetCompilation()
         {
             PrePortCompilation = await SetPrePortCompilation();
 
@@ -371,28 +372,31 @@ namespace Codelyzer.Analysis.Build
             this.Compilation = CreateManualCompilation(projectPath, references);
             //We don't want a compilation if there are no older references, because it'll slow down the analysis
             this.PrePortCompilation = oldReferences?.Any() == true ? CreateManualCompilation(projectPath, oldReferences) : null;
-
-            Errors = new List<string>();
-            MissingMetaReferences = new List<string>();
-
-            var errors = Compilation.GetDiagnostics()
-               .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.GetMessage()?.Equals(KnownErrors.NoMainMethodMessage) != true);
-
-            if (errors.Any())
+            if (Compilation != null)
             {
-                Logger.LogError($"Build Errors: {Compilation.AssemblyName}: {errors.Count()} " +
-                                $"compilation errors: \n\t{string.Join("\n\t", errors.Select(e => e.ToString()))}"); //TODO: Add telemetry for single build errors as json
-                Logger.LogDebug(String.Join("\n", errors));
+                Errors = new List<string>();
+                MissingMetaReferences = new List<string>();
 
-                foreach (var error in errors)
+                var errors = Compilation.GetDiagnostics()
+                   .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error && diagnostic.GetMessage()?.Equals(KnownErrors.NoMainMethodMessage) != true);
+
+                if (errors.Any())
                 {
-                    Errors.Add(error.ToString());
+                    Logger.LogError($"Build Errors: {Compilation.AssemblyName}: {errors.Count()} " +
+                                    $"compilation errors: \n\t{string.Join("\n\t", errors.Select(e => e.ToString()))}"); //TODO: Add telemetry for single build errors as json
+                    Logger.LogDebug(String.Join("\n", errors));
+
+                    foreach (var error in errors)
+                    {
+                        Errors.Add(error.ToString());
+                    }
+                }
+                else
+                {
+                    Logger.LogInformation($"{Compilation.AssemblyName} compiled with no errors");
                 }
             }
-            else
-            {
-                Logger.LogInformation($"{Compilation.AssemblyName} compiled with no errors");
-            }
+            else { Logger.LogError($"Compilation is null for project {projectPath};"); }
         }
         public async Task<ProjectBuildResult> Build()
         {
@@ -457,6 +461,10 @@ namespace Codelyzer.Analysis.Build
             projectBuildResult.ProjectGuid = ProjectAnalyzer.ProjectGuid.ToString();
             projectBuildResult.ProjectType = ProjectAnalyzer.ProjectInSolution != null ? ProjectAnalyzer.ProjectInSolution.ProjectType.ToString() : string.Empty;
 
+            if (Compilation == null)
+            {
+                return projectBuildResult;
+            }
 
             foreach (var syntaxTree in Compilation?.SyntaxTrees)
             {
@@ -473,6 +481,7 @@ namespace Codelyzer.Analysis.Build
                 projectBuildResult.SourceFileBuildResults.Add(fileResult);
                 projectBuildResult.SourceFiles.Add(sourceFilePath);
             }
+            
 
             if (_analyzerConfiguration != null && _analyzerConfiguration.MetaDataSettings.ReferenceData)
             {
@@ -484,7 +493,7 @@ namespace Codelyzer.Analysis.Build
 
         public async Task<ProjectBuildResult> IncrementalBuild(string filePath, ProjectBuildResult projectBuildResult)
         {
-            await Task.Run(() =>
+            await System.Threading.Tasks.Task.Run(() =>
             {
                 var languageVersion = LanguageVersion.Default;
 
@@ -531,7 +540,6 @@ namespace Codelyzer.Analysis.Build
                 projectBuildResult.Compilation = Compilation;
                 projectBuildResult.PrePortCompilation = PrePortCompilation;
             });
-
 
             return projectBuildResult;
         }
