@@ -204,7 +204,7 @@ namespace Codelyzer.Analysis
             {
                 SourceFiles = new UstList<string>(projectResult.SourceFiles),
                 BuildErrors = projectResult.BuildErrors,
-                BuildErrorsCount = projectResult.BuildErrors.Count
+                BuildErrorsCount = projectResult.BuildErrors == null ? 0: projectResult.BuildErrors.Count
             };
 
             if (AnalyzerConfiguration.MetaDataSettings.ReferenceData)
