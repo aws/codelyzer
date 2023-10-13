@@ -1,12 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 using Codelyzer.Analysis.Analyzers;
 using Codelyzer.Analysis.Build;
+using Codelyzer.Analysis.Common;
 using Codelyzer.Analysis.Model;
+using Codelyzer.Analysis.Model.Build;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Logging;
 
 namespace Codelyzer.Analysis.Analyzer
@@ -214,6 +220,82 @@ namespace Codelyzer.Analysis.Analyzer
         public LanguageAnalyzer GetLanguageAnalyzerByFileType(string fileType)
         {
             return _codeAnalyzer.GetLanguageAnalyzerByFileType(fileType);
+        }
+
+        public async Task<List<AnalyzerResult>> AnalyzeSolutionLiteBuildAsync(string solutionPath, Dictionary<string, List<string>> references)
+        {
+            var analyzerResults = await AnalyzeWithLiteBuild(solutionPath, references);
+            return analyzerResults;
+        }
+
+        private async Task<List<AnalyzerResult>> AnalyzeWithLiteBuild(string path, Dictionary<string, List<string>> references)
+        {
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException(path);
+            }
+
+            WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
+
+            var watch = new Stopwatch();
+            watch.Start();
+            var projectBuildResults = builder.BuildLiteBuildAnalysis(references);
+            watch.Stop();
+            Console.WriteLine($"Total time for building solution level compilation object and adHocWorkspace {watch.ElapsedMilliseconds / 1000} seconds");
+            return await AnalyzeBuildResults(projectBuildResults);
+        }
+
+        private async Task<List<AnalyzerResult>> AnalyzeBuildResults(List<ProjectBuildResult> projectBuildResults)
+        {
+            var analyzerResults = new List<AnalyzerResult>();
+            List<ProjectWorkspace> workspaceResults = new List<ProjectWorkspace>();
+            foreach (var projectBuildResult in projectBuildResults)
+            {
+                var workspaceResult = await Task.Run(() => AnalyzeProject(projectBuildResult));
+                workspaceResult.ProjectGuid = projectBuildResult.ProjectGuid;
+                workspaceResult.ProjectType = projectBuildResult.ProjectType;
+                workspaceResults.Add(workspaceResult);
+
+                //Generate Output result
+                if (AnalyzerConfiguration.MetaDataSettings.LoadBuildData)
+                {
+                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult, ProjectBuildResult = projectBuildResult });
+                }
+                else
+                {
+                    analyzerResults.Add(new AnalyzerResult() { ProjectResult = workspaceResult });
+                }
+            }
+
+            return analyzerResults;
+        }
+
+        public ProjectWorkspace AnalyzeProject(ProjectBuildResult projectResult)
+        {
+            Logger.LogDebug("Analyzing the project: " + projectResult.ProjectPath);
+            var projType = Path.GetExtension(projectResult.ProjectPath).ToLower();
+            LanguageAnalyzer languageAnalyzer = GetLanguageAnalyzerByProjectType(projType);
+            ProjectWorkspace workspace = new ProjectWorkspace(projectResult.ProjectPath)
+            {
+                SourceFiles = new UstList<string>(projectResult.SourceFiles),
+                BuildErrors = projectResult.BuildErrors,
+                BuildErrorsCount = projectResult.BuildErrors.Count
+            };
+
+            if (AnalyzerConfiguration.MetaDataSettings.ReferenceData)
+            {
+                workspace.ExternalReferences = projectResult.ExternalReferences;
+            }
+            workspace.TargetFramework = projectResult.TargetFramework;
+            workspace.TargetFrameworks = projectResult.TargetFrameworks;
+
+            foreach (var fileBuildResult in projectResult.SourceFileBuildResults)
+            {
+                var fileAnalysis = languageAnalyzer.AnalyzeFile(fileBuildResult, workspace.ProjectRootPath);
+                workspace.SourceFileResults.Add(fileAnalysis);
+            }
+
+            return workspace;
         }
     }
 }

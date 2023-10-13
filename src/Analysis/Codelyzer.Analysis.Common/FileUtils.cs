@@ -151,6 +151,20 @@ namespace Codelyzer.Analysis.Common
             }
             return codeFiles;
         }
+
+
+        public static IEnumerable<string> GetProjectCodeFiles(string projectFile, string projectDir, string fileExtension)
+        {
+            var codeFiles = new List<string>();
+            var thisProjectSubDirs = Directory.EnumerateDirectories(projectDir, string.Empty, SearchOption.AllDirectories).Union(new List<string>() { projectDir });
+
+            thisProjectSubDirs = thisProjectSubDirs.Where(c => !c.Contains("bin") && !c.Contains("obj") && !c.Contains("Properties"));
+            foreach (var subProjectDir in thisProjectSubDirs)
+            {
+                codeFiles.AddRange(Directory.EnumerateFiles(subProjectDir, fileExtension));
+            }
+            return codeFiles;
+        }
         private static string GetFullPath(string path, string basePath)
         {
             string currentDirectory = Environment.CurrentDirectory;

@@ -301,11 +301,13 @@ namespace Codelyzer.Analysis.Build
 
                 if (trees.Count != 0)
                 {
-                    return CSharpCompilation.Create(Path.GetFileNameWithoutExtension(projectPath), trees, references?.Select(r => MetadataReference.CreateFromFile(r)));
+                    return CSharpCompilation.Create(Path.GetFileNameWithoutExtension(projectPath), 
+                        trees, references?.Select(r => MetadataReference.CreateFromFile(r)));
                 }
             }
             return null;
         }
+
         private static void DisplayProjectProperties(Project project)
         {
             Console.WriteLine($" Project: {project.Name}");
@@ -320,6 +322,8 @@ namespace Codelyzer.Analysis.Build
             Console.WriteLine($" Project references: {String.Join("\n", project.ProjectReferences)}");
             Console.WriteLine();
         }
+
+        public ProjectBuildHandler() { }
         public ProjectBuildHandler(ILogger logger, AnalyzerConfiguration analyzerConfiguration = null, List<string> metaReferences = null)
         {
             Logger = logger;
@@ -398,6 +402,7 @@ namespace Codelyzer.Analysis.Build
             }
             else { Logger.LogError($"Compilation is null for project {projectPath};"); }
         }
+        
         public async Task<ProjectBuildResult> Build()
         {
             await SetCompilation();
@@ -620,8 +625,12 @@ namespace Codelyzer.Analysis.Build
             }
         }
 
-        private ExternalReferences GetExternalReferences(Compilation compilation, Project project, IEnumerable<MetadataReference> externalReferencesMetaData)
+        public ExternalReferences GetExternalReferences(Compilation compilation, Project project, IEnumerable<MetadataReference> externalReferencesMetaData)
         {
+            if (string.IsNullOrEmpty(_projectPath))
+            {
+                _projectPath = project.FilePath;
+            }
             ExternalReferenceLoader externalReferenceLoader = new ExternalReferenceLoader(
                 Directory.GetParent(_projectPath).FullName,
                 compilation, 
