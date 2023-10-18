@@ -448,7 +448,7 @@ namespace Codelyzer.Analysis
         public EdgeType EdgeType { get; set; }
         public Node SourceNode { get; set; }
         public Node TargetNode { get; set; }
-        Dictionary<string, object> Properties { get; set; }
+        public Dictionary<string, object> Properties { get; set; }
         public override bool Equals(object obj)
         {
             var edge = obj as Edge;
