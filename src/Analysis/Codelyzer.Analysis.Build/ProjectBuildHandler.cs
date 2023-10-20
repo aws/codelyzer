@@ -21,6 +21,7 @@ using Microsoft.CodeAnalysis.VisualBasic;
 using Constants = Codelyzer.Analysis.Common.Constants;
 using LanguageVersion = Microsoft.CodeAnalysis.CSharp.LanguageVersion;
 using Microsoft.Build.Utilities;
+using Newtonsoft.Json;
 
 namespace Codelyzer.Analysis.Build
 {
@@ -329,6 +330,8 @@ namespace Codelyzer.Analysis.Build
             Errors = new List<string>();
             MissingMetaReferences = new List<string>();
         }
+
+        public ProjectBuildHandler() { }
         public ProjectBuildHandler(ILogger logger, Project project, AnalyzerConfiguration analyzerConfiguration = null)
         {
             Logger = logger;
@@ -437,7 +440,7 @@ namespace Codelyzer.Analysis.Build
 
             if (_analyzerConfiguration != null && _analyzerConfiguration.MetaDataSettings.ReferenceData)
             {
-                projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult?.Compilation, projectBuildResult?.Project, projectBuildResult?.Compilation?.References);
+                projectBuildResult.ExternalReferences = GetExternalReferences(projectBuildResult?.Compilation, projectBuildResult?.Project);
             }
 
             return projectBuildResult;
@@ -485,7 +488,7 @@ namespace Codelyzer.Analysis.Build
 
             if (_analyzerConfiguration != null && _analyzerConfiguration.MetaDataSettings.ReferenceData)
             {
-                projectBuildResult.ExternalReferences = GetExternalReferences(Compilation, null, Compilation.References);
+                projectBuildResult.ExternalReferences = GetExternalReferences(Compilation, null);
             }
 
             return projectBuildResult;
@@ -620,13 +623,14 @@ namespace Codelyzer.Analysis.Build
             }
         }
 
-        private ExternalReferences GetExternalReferences(Compilation compilation, Project project, IEnumerable<MetadataReference> externalReferencesMetaData)
+        internal ExternalReferences GetExternalReferences(Compilation compilation, Project project, IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> packageReferences = null)
         {
+            if (string.IsNullOrEmpty(_projectPath)) _projectPath = project.FilePath;
             ExternalReferenceLoader externalReferenceLoader = new ExternalReferenceLoader(
                 Directory.GetParent(_projectPath).FullName,
                 compilation, 
-                project, 
-                AnalyzerResult?.PackageReferences, 
+                project,
+                packageReferences == null? AnalyzerResult?.PackageReferences : packageReferences, 
                 Logger);
 
             return externalReferenceLoader.Load();

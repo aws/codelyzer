@@ -156,7 +156,14 @@ namespace Codelyzer.Analysis.Common
                         if (nugetRef != null)
                         {
                             //Nuget with more than one dll?
-                            nugetRef.AssemblyLocation = filePath;
+                            if (string.IsNullOrEmpty(nugetRef.AssemblyLocation))
+                            {
+                                nugetRef.AssemblyLocation = filePath;
+                            }
+                            else
+                            {
+                                _externalReferences.NugetDependencies.Add(new ExternalReference { Identity = Path.GetFileNameWithoutExtension(filePath), Version = externalReference.Version, AssemblyLocation = filePath });
+                            }
 
                             //If version isn't resolved, get from external reference
                             if (string.IsNullOrEmpty(nugetRef.Version) || !Regex.IsMatch(nugetRef.Version, @"([0-9])+(\.)([0-9])+(\.)([0-9])+"))

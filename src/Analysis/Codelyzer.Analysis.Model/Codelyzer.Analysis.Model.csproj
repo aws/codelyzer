@@ -10,7 +10,7 @@
     <ItemGroup>
       <PackageReference Include="Microsoft.Bcl.HashCode" Version="1.1.1" />
       <PackageReference Include="Microsoft.CodeAnalysis" Version="4.5.0" />
-      <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.5.0" />
+	  <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.5.0" />
       <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" Version="4.5.0" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
@@ -25,5 +25,4 @@
     <ItemGroup>
       <Folder Include="CodeGraph\" />
     </ItemGroup>
-
 </Project>

@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json;
 
 namespace Codelyzer.Analysis.CSharp
 {
@@ -38,7 +40,6 @@ namespace Codelyzer.Analysis.CSharp
             if (semanticModel == null && preportSemanticModel == null) return null;
 
             string type = null;
-
             var typeInfo = semanticModel.GetTypeInfo(typeSyntax);
             if (typeInfo.Type == null && preportSemanticModel != null)
             {
