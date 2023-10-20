@@ -7,6 +7,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Codelyzer.Analysis.Model.Extensions;
+using System.Xml;
+using System.Runtime.InteropServices;
 
 namespace Codelyzer.Analysis.Common
 {
@@ -158,6 +160,68 @@ namespace Codelyzer.Analysis.Common
             string fullPath = Path.GetFullPath(path);
             Environment.CurrentDirectory = currentDirectory;
             return fullPath;
+        }
+
+        public static IEnumerable<string> GetProjectCodeFiles(string projectFile, string projectDir, string fileExtension)
+        {
+            var codeFiles = new List<string>();
+            if (GetCodeFilesFromProjectFile(projectFile, fileExtension, out codeFiles))
+            { 
+                if (codeFiles.Any()) { return codeFiles; }
+            }
+            
+            var thisProjectSubDirs = Directory.EnumerateDirectories(Path.GetDirectoryName(projectFile), projectDir, SearchOption.AllDirectories).Union(new List<string>() { Path.GetDirectoryName(projectFile) });
+
+            thisProjectSubDirs = thisProjectSubDirs.Where(c => !c.Contains("bin") && !c.Contains("obj"));
+            foreach (var subProjectDir in thisProjectSubDirs)
+            {
+                codeFiles.AddRange(Directory.EnumerateFiles(subProjectDir, fileExtension));
+            }
+            return codeFiles;
+        }
+
+        private static bool GetCodeFilesFromProjectFile(string projectFilePath, string fileExtension,
+            out List<string> documents ,
+            string tagName = "Content",
+            string nameAttribute = "Include")
+        {
+            documents = new List<string>();
+            try
+            {
+
+                DirectoryInfo directory = new DirectoryInfo(Path.GetDirectoryName(projectFilePath));
+
+                if (!File.Exists(projectFilePath))
+                {
+                    return false;
+                }
+                
+                var doc = new XmlDocument();
+                doc.Load(projectFilePath);
+
+                var elements = doc.GetElementsByTagName("Compile");
+                if (elements.Count == 0)
+                    return false;
+                foreach (XmlNode element in elements)
+                {
+                    string relativePath = element.Attributes?[nameAttribute]?.Value ?? "";
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        relativePath = relativePath.Replace("\\", "/");
+                    }
+                    if (!string.IsNullOrEmpty(relativePath) && relativePath.EndsWith(fileExtension.Replace("*","")))
+                    {
+                        var document = Path.Combine(directory.FullName, relativePath);
+                        documents.Add(document);
+                    }
+                }
+                return true;
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine( $"Error while retrieving code files from project {projectFilePath}. Details : {ex.Message}");
+                return false; 
+            }
         }
     }
 

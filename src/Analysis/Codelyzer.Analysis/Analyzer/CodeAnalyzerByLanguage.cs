@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using Codelyzer.Analysis.Analyzers;
 using Codelyzer.Analysis.Build;
 using Codelyzer.Analysis.Model;
+using Codelyzer.Analysis.Model.Build;
 using Microsoft.Extensions.Logging;
 
 namespace Codelyzer.Analysis.Analyzer
@@ -215,5 +217,28 @@ namespace Codelyzer.Analysis.Analyzer
         {
             return _codeAnalyzer.GetLanguageAnalyzerByFileType(fileType);
         }
+
+        public async Task<List<AnalyzerResult>> AnalyzeSolutionWithReferenceCompilationAsync(string solutionPath, Dictionary<string, List<string>> references)
+        {
+            var analyzerResults = await AnalyzeWithReferenceCompilation(solutionPath, references);
+            return analyzerResults;
+        }
+
+        private async Task<List<AnalyzerResult>> AnalyzeWithReferenceCompilation(string path, Dictionary<string, List<string>> references)
+        {
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException(path);
+            }
+
+            WorkspaceBuilder builder = new WorkspaceBuilder(Logger, path, AnalyzerConfiguration);
+            var watch = new Stopwatch();
+            watch.Start();
+            var projectBuildResults = builder.BuildReferenceCompilation(references);
+            watch.Stop();
+            Console.WriteLine($"Total time for building solution level compilation object and adHocWorkspace {watch.ElapsedMilliseconds / 1000} seconds");
+            return await _codeAnalyzer.Analyze(projectBuildResults);
+        }
+
     }
 }
