@@ -244,7 +244,7 @@ namespace Codelyzer.Analysis.Build
             List<ProjectBuildResult> projectBuildResults = null;
             using (var builder = new WorkspaceBuilderHelper(Logger, _workspacePath, _analyzerConfiguration))
             {
-                var manager = builder.GenerateNoBuildAnalysis();
+                builder.GenerateNoBuildAnalysis();
                 var workspace = CreateAdhocWorkspace(references, builder.Projects);
                 projectBuildResults = GenerateProjectBuildResultsWithAdHocWorkspace(workspace, builder.Projects);
             }

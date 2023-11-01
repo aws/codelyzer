@@ -327,14 +327,13 @@ namespace Codelyzer.Analysis.Build
         }
 
 
-        public IAnalyzerManager GenerateNoBuildAnalysis()
+        public void GenerateNoBuildAnalysis()
         {
-            IAnalyzerManager analyzerManager;
             if (IsSolutionFile())
             {
                 Logger.LogInformation("Loading the Workspace (Solution): " + WorkspacePath);
 
-                analyzerManager = new AnalyzerManager(WorkspacePath,
+                AnalyzerManager analyzerManager = new AnalyzerManager(WorkspacePath,
                    new AnalyzerManagerOptions
                    {
                        LogWriter = _writer
@@ -353,7 +352,7 @@ namespace Codelyzer.Analysis.Build
             }
             else
             {
-                analyzerManager = new AnalyzerManager(new AnalyzerManagerOptions
+                AnalyzerManager analyzerManager = new AnalyzerManager(new AnalyzerManagerOptions
                 {
                     LogWriter = _writer
                 });
@@ -370,9 +369,6 @@ namespace Codelyzer.Analysis.Build
             _writer.Flush();
             _writer.Close();
             ProcessLog(_writer.ToString());
-            return analyzerManager;
-
-
         }
 
         private void ProcessLog(string currentLog)
