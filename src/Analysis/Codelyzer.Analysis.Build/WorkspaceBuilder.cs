@@ -14,6 +14,10 @@ using Buildalyzer;
 using Newtonsoft.Json;
 using Codelyzer.Analysis.Model;
 using Microsoft.CodeAnalysis.VisualBasic;
+using Microsoft.Build.Utilities;
+using System.Collections.Concurrent;
+using Buildalyzer.Workspaces;
+
 
 namespace Codelyzer.Analysis.Build
 {
@@ -246,6 +250,7 @@ namespace Codelyzer.Analysis.Build
             }
             return projectBuildResults;
         }
+
         
         private AdhocWorkspace CreateAdhocWorkspace(Dictionary<string, List<string>> references, List<ProjectAnalysisResult> projectAnalysisResults)
         {
@@ -294,7 +299,7 @@ namespace Codelyzer.Analysis.Build
                         }
                         catch (Exception e)
                         {
-                            //Console.WriteLine(e.ToString());
+                            Logger.LogError(e, "CreateAdhocWorkspace Error");
                         }
                     }
 
@@ -303,7 +308,8 @@ namespace Codelyzer.Analysis.Build
 
                     if (!TryGetSupportedLanguageName(projectPath, out string languageName))
                     {
-                        return null;
+                        Logger.LogError("Unsupport project " + projectPath);
+                        continue;
                     }
                     
                     var projectInfo = ProjectInfo.Create(
@@ -399,7 +405,7 @@ namespace Codelyzer.Analysis.Build
                     }
                     projectReferencesReadOnly = projectReferencesDic; 
                 }
-                
+
                 try
                 {
                     Console.WriteLine("GetExternalReferences for project: " + project.FilePath);
@@ -409,9 +415,18 @@ namespace Codelyzer.Analysis.Build
                     projectBuildResult.ProjectRootPath = Path.GetDirectoryName(projectBuildResult.ProjectPath);
                     projectBuildResult.ProjectGuid = project.Id.Id.ToString();
                     projectBuildResult.BuildErrors = new List<string>();
-                    CSharpCompilationOptions compilationOptions = new CSharpCompilationOptions(concurrentBuild:true,
+                    if (projectAnalysisResult.ProjectAnalyzer.ProjectInSolution.AbsolutePath.EndsWith("vbproj", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        VisualBasicCompilationOptions compilationOptions = new VisualBasicCompilationOptions(concurrentBuild: true,
                         outputKind: OutputKind.DynamicallyLinkedLibrary);
-                    projectBuildResult.Compilation = CSharpCompilation.Create(null).WithOptions(compilationOptions).AddReferences(project.MetadataReferences);
+                        projectBuildResult.Compilation = VisualBasicCompilation.Create(null).WithOptions(compilationOptions).AddReferences(project.MetadataReferences);
+
+                    }
+                    else {
+                        CSharpCompilationOptions compilationOptions = new CSharpCompilationOptions(concurrentBuild: true,
+                        outputKind: OutputKind.DynamicallyLinkedLibrary);
+                        projectBuildResult.Compilation = CSharpCompilation.Create(null).WithOptions(compilationOptions).AddReferences(project.MetadataReferences);
+                    }
                     projectBuildResult.ExternalReferences = new ProjectBuildHandler().GetExternalReferences(projectBuildResult.Compilation, project, projectReferencesReadOnly);
                     projectBuildResult.ProjectType = projectAnalysisResult.ProjectAnalyzer.ProjectInSolution.ProjectType.ToString();
                     projectBuildResult.TargetFramework = projectAnalysisResult.ProjectAnalyzer.ProjectFile.TargetFrameworks.FirstOrDefault();

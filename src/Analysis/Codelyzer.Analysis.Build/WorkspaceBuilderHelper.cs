@@ -348,6 +348,7 @@ namespace Codelyzer.Analysis.Build
                 });
 
                 Logger.LogInformation("Loading the Solution Done: " + WorkspacePath);
+                
             }
             else
             {
@@ -361,6 +362,7 @@ namespace Codelyzer.Analysis.Build
                 {
                     ProjectAnalyzer = projectAnalyzer
                 });
+                
             }
 
             Logger.LogDebug(_sb.ToString());
