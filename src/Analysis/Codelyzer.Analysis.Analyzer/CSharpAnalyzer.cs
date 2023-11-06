@@ -26,7 +26,7 @@ namespace Codelyzer.Analysis.Analyzers
                 sourceFileBuildResult.SourceFilePath,
                 AnalyzerConfiguration,
                 Logger);
-            //var a = JsonConvert.SerializeObject(sourceFileBuildResult.SemanticModel);
+
             Logger.LogDebug("Analyzing: " + sourceFileBuildResult.SourceFileFullPath);
 
             using (var processor = new CSharpRoslynProcessor(codeContext))

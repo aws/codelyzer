@@ -424,22 +424,14 @@ namespace Codelyzer.Analysis.Build
                         projectBuildResult.Compilation = VisualBasicCompilation.Create(null).WithOptions(compilationOptions).AddReferences(project.MetadataReferences);
 
                     }
-<<<<<<< Updated upstream
-                    else {
-=======
                     else
                     {
->>>>>>> Stashed changes
                         CSharpCompilationOptions compilationOptions = new CSharpCompilationOptions(concurrentBuild: true,
                         outputKind: OutputKind.DynamicallyLinkedLibrary);
                         projectBuildResult.Compilation = CSharpCompilation.Create(null).WithOptions(compilationOptions).AddReferences(project.MetadataReferences);
                     }
-<<<<<<< Updated upstream
-                    projectBuildResult.ExternalReferences = new ProjectBuildHandler().GetExternalReferences(projectBuildResult.Compilation, project, projectReferencesReadOnly);
-=======
                     projectBuildResult.ExternalReferences = new ProjectBuildHandler(Logger).GetExternalReferences(projectBuildResult.Compilation, project, projectReferencesReadOnly);
 
->>>>>>> Stashed changes
                     projectBuildResult.ProjectType = projectAnalysisResult.ProjectAnalyzer.ProjectInSolution.ProjectType.ToString();
                     projectBuildResult.TargetFramework = projectAnalysisResult.ProjectAnalyzer.ProjectFile.TargetFrameworks.FirstOrDefault();
 
