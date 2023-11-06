@@ -6,8 +6,6 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Codelyzer.Analysis.Model.Build;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json;
 
 namespace Codelyzer.Analysis.Analyzers
 {
