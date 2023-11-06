@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json;
 
 namespace Codelyzer.Analysis.CSharp
 {
@@ -254,5 +252,6 @@ namespace Codelyzer.Analysis.CSharp
 
             return $"{joinedModifiers} {semanticMethodNameAndParameters}".Trim();
         }
+
     }
 }
