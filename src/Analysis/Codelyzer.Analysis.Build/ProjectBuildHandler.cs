@@ -330,8 +330,6 @@ namespace Codelyzer.Analysis.Build
             Errors = new List<string>();
             MissingMetaReferences = new List<string>();
         }
-
-        public ProjectBuildHandler() { }
         public ProjectBuildHandler(ILogger logger, Project project, AnalyzerConfiguration analyzerConfiguration = null)
         {
             Logger = logger;

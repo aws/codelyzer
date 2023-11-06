@@ -6,6 +6,8 @@ using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Codelyzer.Analysis.Model.Build;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json;
 
 namespace Codelyzer.Analysis.Analyzers
 {
@@ -24,7 +26,7 @@ namespace Codelyzer.Analysis.Analyzers
                 sourceFileBuildResult.SourceFilePath,
                 AnalyzerConfiguration,
                 Logger);
-
+            //var a = JsonConvert.SerializeObject(sourceFileBuildResult.SemanticModel);
             Logger.LogDebug("Analyzing: " + sourceFileBuildResult.SourceFileFullPath);
 
             using (var processor = new CSharpRoslynProcessor(codeContext))

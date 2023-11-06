@@ -9,6 +9,7 @@ using System.Xml.Linq;
 using Codelyzer.Analysis.Model.Extensions;
 using System.Xml;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 namespace Codelyzer.Analysis.Common
 {
@@ -188,7 +189,6 @@ namespace Codelyzer.Analysis.Common
             documents = new List<string>();
             try
             {
-
                 DirectoryInfo directory = new DirectoryInfo(Path.GetDirectoryName(projectFilePath));
 
                 if (!File.Exists(projectFilePath))
@@ -200,8 +200,7 @@ namespace Codelyzer.Analysis.Common
                 doc.Load(projectFilePath);
 
                 var elements = doc.GetElementsByTagName("Compile");
-                if (elements.Count == 0)
-                    return false;
+
                 foreach (XmlNode element in elements)
                 {
                     string relativePath = element.Attributes?[nameAttribute]?.Value ?? "";
@@ -215,6 +214,27 @@ namespace Codelyzer.Analysis.Common
                         documents.Add(document);
                     }
                 }
+                var sharedProjectElements = doc.GetElementsByTagName("Import");
+
+                foreach (XmlNode node in sharedProjectElements)
+                {
+                    if (node.Attributes != null && node.Attributes["Project"] != null &&
+                        node.Attributes["Project"].Value.EndsWith("projitems", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        // get projitems file absolute Path
+                        var shareProjItemsRelativePath = node.Attributes["Project"].Value;
+                        var shareProjItemsAbsolutePath = Path.Combine(directory.FullName, shareProjItemsRelativePath);
+                        if (File.Exists(shareProjItemsAbsolutePath))
+                        {
+                            documents.AddRange(GetSharedProjectCodeFile(shareProjItemsAbsolutePath));
+                        }
+                    }
+                }
+                if (documents.Count == 0)
+                {
+                    return false;
+                }
+
                 return true;
             }
             catch(Exception ex)
@@ -222,6 +242,37 @@ namespace Codelyzer.Analysis.Common
                 Console.WriteLine( $"Error while retrieving code files from project {projectFilePath}. Details : {ex.Message}");
                 return false; 
             }
+        }
+
+        private static List<string> GetSharedProjectCodeFile(string sharedProjPath)
+        {
+            var documents = new List<string>();
+            try
+            {
+                var sharedDoc = new XmlDocument();
+                sharedDoc.Load(sharedProjPath);
+                var elements = sharedDoc.GetElementsByTagName("Compile");
+                var directory = Path.GetDirectoryName(sharedProjPath);
+
+                foreach (XmlNode element in elements)
+                {
+                    string relativePath = element.Attributes?["Include"]?.Value ?? "";
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    {
+                        relativePath = relativePath.Replace("\\", "/");
+                    }
+                    if (!string.IsNullOrEmpty(relativePath) && (relativePath.EndsWith(".cs") || relativePath.EndsWith(".vb")))
+                    {
+                        var document = Path.Combine(directory, relativePath.Replace("$(MSBuildThisFileDirectory)", ""));
+                        documents.Add(document);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error while retrieving code files from shared project {sharedProjPath}. Details : {ex.Message}");
+            }
+            return documents;
         }
     }
 
