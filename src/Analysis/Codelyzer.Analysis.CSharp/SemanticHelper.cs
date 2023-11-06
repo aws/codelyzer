@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Newtonsoft.Json.Converters;
-using Newtonsoft.Json;
 
 namespace Codelyzer.Analysis.CSharp
 {
@@ -255,25 +253,5 @@ namespace Codelyzer.Analysis.CSharp
             return $"{joinedModifiers} {semanticMethodNameAndParameters}".Trim();
         }
 
-
-        public static bool IsInStructuredTriviaOtherThanCrefOrNameAttribute(CSharpSyntaxNode node)
-        {
-            while (node != null)
-            {
-                if (node.Kind() == SyntaxKind.XmlCrefAttribute || node.Kind() == SyntaxKind.XmlNameAttribute)
-                {
-                    return false;
-                }
-                else if (node.IsStructuredTrivia)
-                {
-                    return true;
-                }
-                else
-                {
-                    node = node;//node.ParentOrStructuredTriviaParent;
-                }
-            }
-            return false;
-        }
     }
 }
