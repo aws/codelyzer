@@ -135,7 +135,7 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore src/Codelyzer.sln
     - name: Tests
-      run: dotnet test --configuration Release --no-build --no-restore --verbosity normal src/Codelyzer.sln --filter "FullyQualifiedName!~Codelyzer.Analysis.Tests.AnalyzerWithGenerator&FullyQualifiedName!~Codelyzer.Analysis.Tests.AnalyzerRefacTests&FullyQualifiedName~Codelyzer.Analysis.Workspace.Tests"
+      run: dotnet test --configuration Release --no-build --no-restore --verbosity normal src/Codelyzer.sln --filter "FullyQualifiedName!~Codelyzer.Analysis.Tests.AnalyzerWithGenerator&FullyQualifiedName!~Codelyzer.Analysis.Tests.AnalyzerRefacTests&FullyQualifiedName!~Codelyzer.Analysis.Workspace.Tests"
               
   deploy:
     needs: [build-test-AnalyzerRefacTests, build-test-AnalyzerWithGenerator, build-test-other, build-test-workspace]
