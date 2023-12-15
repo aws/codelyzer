@@ -9,7 +9,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-test-AnalyzerRefacTests:
     runs-on: windows-2019
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
@@ -38,10 +38,132 @@ jobs:
       run: dotnet restore src/Codelyzer.sln
     - name: Build
       run: dotnet build --configuration Release --no-restore src/Codelyzer.sln
-    - name: Test
-      run: dotnet test --configuration Release --no-build --no-restore --verbosity normal src/Codelyzer.sln --filter "FullyQualifiedName!~Codelyzer.Analysis.Workspace.Tests"
+    - name: Tests for AnalyzerRefacTests
+      run: dotnet test --configuration Release --no-build --no-restore --verbosity normal src/Codelyzer.sln --filter "FullyQualifiedName~Codelyzer.Analysis.Tests.AnalyzerRefacTests"
+  
+  build-test-AnalyzerWithGenerator:
+    runs-on: windows-2019
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Check for secrets leak on the repo
+      run: |
+          git clone https://github.com/awslabs/git-secrets.git target
+          cd target
+          ./install.ps1
+          echo "Git-secrets installation completed"
+          git secrets --register-aws --global
+          echo "Added aws secret templates"
+          git secrets --scan -r ../
+          echo "Repository scan completed"
+    - name: Setup .NET Versions
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: | 
+          3.1.x
+          5.0.x
+          6.0.x
+    - name: Install dependencies
+      run: dotnet restore src/Codelyzer.sln
+    - name: Build
+      run: dotnet build --configuration Release --no-restore src/Codelyzer.sln
+    - name: Tests for AnalyzerWithGenerator
+      run: dotnet test --configuration Release --no-build --no-restore --verbosity normal src/Codelyzer.sln --filter "FullyQualifiedName~Codelyzer.Analysis.Tests.AnalyzerWithGenerator"
+          
+  build-test-workspace:
+    runs-on: windows-2019
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Check for secrets leak on the repo
+      run: |
+          git clone https://github.com/awslabs/git-secrets.git target
+          cd target
+          ./install.ps1
+          echo "Git-secrets installation completed"
+          git secrets --register-aws --global
+          echo "Added aws secret templates"
+          git secrets --scan -r ../
+          echo "Repository scan completed"
+    - name: Setup .NET Versions
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: | 
+          3.1.x
+          5.0.x
+          6.0.x
+    - name: Install dependencies
+      run: dotnet restore src/Codelyzer.sln
+    - name: Build
+      run: dotnet build --configuration Release --no-restore src/Codelyzer.sln
     - name: Tests for Workspaces
-      run: dotnet test --configuration Release --no-build --no-restore --verbosity normal src/Codelyzer.sln --filter "FullyQualifiedName~Codelyzer.Analysis.Workspace.Tests"  
+      run: dotnet test --configuration Release --no-build --no-restore --verbosity normal src/Codelyzer.sln --filter "FullyQualifiedName~Codelyzer.Analysis.Workspace.Tests"
+
+  build-test-other:
+    runs-on: windows-2019
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Check for secrets leak on the repo
+      run: |
+          git clone https://github.com/awslabs/git-secrets.git target
+          cd target
+          ./install.ps1
+          echo "Git-secrets installation completed"
+          git secrets --register-aws --global
+          echo "Added aws secret templates"
+          git secrets --scan -r ../
+          echo "Repository scan completed"
+    - name: Setup .NET Versions
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: | 
+          3.1.x
+          5.0.x
+          6.0.x
+    - name: Install dependencies
+      run: dotnet restore src/Codelyzer.sln
+    - name: Build
+      run: dotnet build --configuration Release --no-restore src/Codelyzer.sln
+    - name: Tests
+      run: dotnet test --configuration Release --no-build --no-restore --verbosity normal src/Codelyzer.sln --filter "FullyQualifiedName!~Codelyzer.Analysis.Tests.AnalyzerWithGenerator&FullyQualifiedName!~Codelyzer.Analysis.Tests.AnalyzerRefacTests&FullyQualifiedName!~Codelyzer.Analysis.Workspace.Tests"
+              
+  deploy:
+    needs: [build-test-AnalyzerRefacTests, build-test-AnalyzerWithGenerator, build-test-other, build-test-workspace]
+    runs-on: windows-2019
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Check for secrets leak on the repo
+      run: |
+          git clone https://github.com/awslabs/git-secrets.git target
+          cd target
+          ./install.ps1
+          echo "Git-secrets installation completed"
+          git secrets --register-aws --global
+          echo "Added aws secret templates"
+          git secrets --scan -r ../
+          echo "Repository scan completed"
+    - name: Setup .NET Versions
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+    - name: Install dependencies
+      run: dotnet restore src/Codelyzer.sln
+    - name: Build
+      run: dotnet build --configuration Release --no-restore src/Codelyzer.sln
     - name: Pack
       if: ${{ github.event_name == 'push' }}
       run: dotnet pack --configuration Release --no-restore -o dist src/Codelyzer.sln
