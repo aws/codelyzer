@@ -12,7 +12,7 @@
       <PackageReference Include="Microsoft.Build" Version="17.0.0" />
       <PackageReference Include="Microsoft.VisualStudio.Setup.Configuration.Interop" Version="3.1.2196" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-      <PackageReference Include="NuGet.Packaging" Version="6.0.0" />
+      <PackageReference Include="NuGet.Packaging" Version="6.0.6" />
     </ItemGroup>
 
     <ItemGroup>
